@@ -35,11 +35,14 @@ export default function EquipmentSlots({
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4">
-      <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-        <span className="text-2xl">🛡️</span>
-        장착 장비
-      </h2>
+    <div className="card">
+      <div className="card-header">
+        <h2 className="text-base font-bold text-[var(--color-text-primary)] flex items-center gap-2">
+          <span className="text-xl">🛡️</span>
+          장착 장비
+        </h2>
+      </div>
+      <div className="card-body">
 
       {/* 7 Equipment Slots Grid */}
       <div className="grid grid-cols-4 gap-2">
@@ -99,6 +102,7 @@ export default function EquipmentSlots({
           />
         </div>
       </div>
+      </div>
 
       {/* Equipment Detail Modal */}
       {selectedEquipment && (
@@ -138,16 +142,13 @@ function EquipmentSlotBox({ slot, equipment, onClick, isLarge }: EquipmentSlotBo
         onClick={onClick}
         className={`
           ${isLarge ? 'w-20 h-24' : 'w-16 h-16'}
-          bg-gray-700/50 border-2 border-dashed border-gray-600
-          rounded-lg flex flex-col items-center justify-center
-          hover:border-gray-500 hover:bg-gray-700 transition-all
-          cursor-pointer
+          item-slot border-dashed flex-col gap-1
         `}
       >
-        <span className={`${isLarge ? 'text-2xl' : 'text-xl'} opacity-50`}>
+        <span className={`${isLarge ? 'text-2xl' : 'text-lg'} opacity-40`}>
           {slotEmoji}
         </span>
-        <span className="text-xs text-gray-500 mt-1">{slotName}</span>
+        <span className="text-[10px] text-[var(--color-text-muted)]">{slotName}</span>
       </button>
     )
   }
@@ -158,22 +159,19 @@ function EquipmentSlotBox({ slot, equipment, onClick, isLarge }: EquipmentSlotBo
       onClick={onClick}
       className={`
         ${isLarge ? 'w-20 h-24' : 'w-16 h-16'}
-        bg-gray-700/50 border border-gray-600
-        rounded-lg flex flex-col items-center justify-center
-        hover:scale-105 transition-all cursor-pointer
-        relative overflow-hidden
+        item-slot equipped flex-col relative
       `}
     >
       {/* Star level badge */}
       {equipment.starLevel > 0 && (
-        <div className="absolute top-0 right-0 bg-yellow-500 text-black text-[10px] font-bold px-1 rounded-bl">
+        <div className="star-badge">
           {equipment.starLevel}
         </div>
       )}
 
       <EquipmentImage equipment={equipment} size={isLarge ? 'lg' : 'md'} />
 
-      <span className="text-[10px] text-white truncate max-w-full px-1">
+      <span className="text-[10px] text-[var(--color-text-primary)] truncate max-w-full px-1 mt-0.5">
         {getEquipmentDisplayName(equipment).split(' ')[0]}
       </span>
     </button>

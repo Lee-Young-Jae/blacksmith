@@ -104,17 +104,17 @@ export default function PotentialPanel({
   const headerBg = unlockedCount > 0 ? POTENTIAL_TIER_BG[bestTier] : 'bg-gray-800'
 
   return (
-    <div className="bg-gray-900 rounded-xl overflow-hidden">
+    <div className="card overflow-hidden">
       {/* Header */}
-      <div className={`${headerBg} p-4 border-b border-gray-700`}>
+      <div className={`${headerBg} p-4 border-b border-[var(--color-border)]`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <EquipmentImage equipment={equipment} size="xl" />
             <div>
-              <h2 className="font-bold text-white">
+              <h2 className="font-bold text-[var(--color-text-primary)]">
                 {getEquipmentDisplayName(equipment)}
               </h2>
-              <div className="text-sm text-gray-400">
+              <div className="text-sm text-[var(--color-text-secondary)]">
                 잠재옵션 {unlockedCount}/3 해제
               </div>
             </div>
@@ -122,7 +122,7 @@ export default function PotentialPanel({
           {onClose && (
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white text-2xl"
+              className="w-10 h-10 flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] text-2xl rounded-full hover:bg-[var(--color-bg-elevated-2)]"
             >
               ×
             </button>
@@ -143,24 +143,18 @@ export default function PotentialPanel({
             return (
               <div
                 key={index}
-                className="flex items-center gap-3 p-3 rounded-lg border bg-gray-800 border-gray-700"
+                className="flex items-center gap-3 p-3 rounded-lg border bg-[var(--color-bg-elevated-1)] border-[var(--color-border)] min-h-[56px]"
               >
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-700 text-gray-500">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-[var(--color-bg-elevated-2)] text-[var(--color-text-muted)]">
                   🔒
                 </div>
                 <div className="flex-1">
-                  <span className="text-gray-500">슬롯 {index + 1} 잠김</span>
+                  <span className="text-[var(--color-text-muted)]">슬롯 {index + 1} 잠김</span>
                 </div>
                 <button
                   onClick={() => handleUnlockSlot(index)}
                   disabled={!canAffordUnlock || isUnlocking !== null}
-                  className={`
-                    px-3 py-1.5 rounded-lg text-sm font-medium transition-all
-                    ${canAffordUnlock && isUnlocking === null
-                      ? 'bg-green-600 hover:bg-green-700 text-white'
-                      : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                    }
-                  `}
+                  className={`btn btn-sm ${canAffordUnlock && isUnlocking === null ? 'btn-success' : 'btn-ghost opacity-50'}`}
                 >
                   {isUnlocking === index ? (
                     <span className="flex items-center gap-1">
@@ -180,10 +174,10 @@ export default function PotentialPanel({
             <div
               key={index}
               className={`
-                flex items-center gap-3 p-3 rounded-lg border transition-all
+                flex items-center gap-3 p-3 rounded-lg border transition-all min-h-[56px]
                 ${lockedLines[index]
-                  ? 'bg-yellow-900/20 border-yellow-500/50'
-                  : `${tierBg} border-gray-700`
+                  ? 'bg-[var(--color-accent)]/10 border-[var(--color-accent)]/50'
+                  : `${tierBg} border-[var(--color-border)]`
                 }
               `}
             >
@@ -191,10 +185,10 @@ export default function PotentialPanel({
               <button
                 onClick={() => toggleLock(index)}
                 className={`
-                  w-8 h-8 rounded-lg flex items-center justify-center transition-all
+                  w-10 h-10 rounded-lg flex items-center justify-center transition-all
                   ${lockedLines[index]
-                    ? 'bg-yellow-600 text-white'
-                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                    ? 'bg-[var(--color-accent)] text-white'
+                    : 'bg-[var(--color-bg-elevated-2)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-elevated-3)]'
                   }
                 `}
                 title={lockedLines[index] ? '고정 해제' : '고정 (리롤 시 유지)'}
@@ -210,7 +204,7 @@ export default function PotentialPanel({
               </div>
 
               {/* Tier Badge */}
-              <div className={`text-xs px-2 py-0.5 rounded ${tierColor}`}>
+              <div className={`text-xs px-2 py-1 rounded-lg ${tierColor}`}>
                 {POTENTIAL_TIER_NAMES[line.tier]}
               </div>
             </div>
@@ -218,18 +212,18 @@ export default function PotentialPanel({
         })}
 
         {potentials.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            잠재옵션이 없습니다
+          <div className="empty-state">
+            <span className="empty-state-text">잠재옵션이 없습니다</span>
           </div>
         )}
       </div>
 
       {/* Reroll Section */}
-      <div className="px-4 pb-4 space-y-3">
+      <div className="px-4 pb-4 space-y-3 safe-area-bottom">
         {/* Lock Cost Warning */}
         {lockedCount > 0 && (
-          <div className="bg-yellow-900/30 border border-yellow-600/50 rounded-lg p-3 text-sm">
-            <div className="flex items-center gap-2 text-yellow-400">
+          <div className="info-box warning">
+            <div className="flex items-center gap-2 text-[var(--color-accent)] text-sm">
               <span>⚠️</span>
               <span>{lockedCount}줄 고정 - 비용 증가</span>
             </div>
@@ -237,16 +231,16 @@ export default function PotentialPanel({
         )}
 
         {/* Cost Display */}
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-400">리롤 비용</span>
-          <span className={`font-bold ${canAffordReroll ? 'text-yellow-400' : 'text-red-400'}`}>
+        <div className="stat-row">
+          <span className="stat-label">리롤 비용</span>
+          <span className={`stat-value ${canAffordReroll ? 'gold' : 'negative'}`}>
             {rerollCost.toLocaleString()} G
           </span>
         </div>
 
         {/* Info about reroll */}
         {unlockedCount > 0 && (
-          <div className="text-xs text-gray-500 text-center">
+          <div className="text-xs text-[var(--color-text-muted)] text-center">
             리롤 시 고정되지 않은 라인은 새로운 등급과 옵션을 받습니다
           </div>
         )}
@@ -255,13 +249,7 @@ export default function PotentialPanel({
         <button
           onClick={handleReroll}
           disabled={!canAffordReroll || !canReroll || isRerolling}
-          className={`
-            w-full py-3 rounded-lg font-bold text-lg transition-all
-            ${canAffordReroll && canReroll && !isRerolling
-              ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700'
-              : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-            }
-          `}
+          className={`btn w-full py-3.5 text-base ${canAffordReroll && canReroll && !isRerolling ? 'btn-magic' : 'btn-ghost opacity-50'}`}
         >
           {isRerolling ? (
             <span className="flex items-center justify-center gap-2">
@@ -271,18 +259,18 @@ export default function PotentialPanel({
           ) : !canReroll ? (
             '리롤할 라인이 없습니다'
           ) : (
-            '잠재옵션 리롤'
+            '✨ 잠재옵션 리롤'
           )}
         </button>
 
         {!canAffordReroll && canReroll && (
-          <div className="text-center text-sm text-red-400">
+          <div className="text-center text-sm text-[var(--color-danger)]">
             골드가 부족합니다
           </div>
         )}
 
         {unlockedCount === 0 && (
-          <div className="text-center text-sm text-gray-400">
+          <div className="text-center text-sm text-[var(--color-text-muted)]">
             먼저 슬롯을 해제하세요
           </div>
         )}

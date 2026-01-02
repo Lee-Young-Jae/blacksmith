@@ -1,4 +1,4 @@
-// 6대 스탯 인터페이스
+// 7대 스탯 인터페이스
 export interface CharacterStats {
   attack: number        // 공격력
   defense: number       // 방어력
@@ -6,6 +6,7 @@ export interface CharacterStats {
   critRate: number      // 치명타 확률 (%)
   critDamage: number    // 치명타 데미지 (%)
   penetration: number   // 관통력 (%)
+  attackSpeed: number   // 공격속도 (%)
 }
 
 export const STAT_NAMES: Record<keyof CharacterStats, string> = {
@@ -15,6 +16,7 @@ export const STAT_NAMES: Record<keyof CharacterStats, string> = {
   critRate: '치명타 확률',
   critDamage: '치명타 데미지',
   penetration: '관통력',
+  attackSpeed: '공격속도',
 }
 
 export const STAT_ICONS: Record<keyof CharacterStats, string> = {
@@ -24,6 +26,7 @@ export const STAT_ICONS: Record<keyof CharacterStats, string> = {
   critRate: '🎯',
   critDamage: '💥',
   penetration: '🔪',
+  attackSpeed: '⚡',
 }
 
 export const STAT_COLORS: Record<keyof CharacterStats, string> = {
@@ -33,6 +36,7 @@ export const STAT_COLORS: Record<keyof CharacterStats, string> = {
   critRate: 'text-yellow-400',
   critDamage: 'text-orange-400',
   penetration: 'text-purple-400',
+  attackSpeed: 'text-cyan-400',
 }
 
 // 기본 캐릭터 스탯 (장비 미착용 시)
@@ -43,6 +47,7 @@ export const DEFAULT_CHARACTER_STATS: CharacterStats = {
   critRate: 5,       // 5%
   critDamage: 150,   // 150% (1.5배)
   penetration: 0,    // 0%
+  attackSpeed: 100,  // 100% (기본 속도)
 }
 
 // 빈 스탯 (합산용)
@@ -53,6 +58,7 @@ export const EMPTY_STATS: CharacterStats = {
   critRate: 0,
   critDamage: 0,
   penetration: 0,
+  attackSpeed: 0,
 }
 
 // 스탯 합산 헬퍼
@@ -66,6 +72,7 @@ export function mergeStats(...statsList: Partial<CharacterStats>[]): CharacterSt
       critRate: acc.critRate + (stats.critRate || 0),
       critDamage: acc.critDamage + (stats.critDamage || 0),
       penetration: acc.penetration + (stats.penetration || 0),
+      attackSpeed: acc.attackSpeed + (stats.attackSpeed || 0),
     }),
     initial
   )
@@ -80,6 +87,7 @@ export function calculateCombatPower(stats: CharacterStats): number {
     critRate: 5.0,
     critDamage: 0.5,
     penetration: 3.0,
+    attackSpeed: 2.0,  // 공격속도 가중치
   }
 
   return Math.floor(
@@ -88,13 +96,14 @@ export function calculateCombatPower(stats: CharacterStats): number {
     stats.hp * weights.hp +
     stats.critRate * weights.critRate +
     stats.critDamage * weights.critDamage +
-    stats.penetration * weights.penetration
+    stats.penetration * weights.penetration +
+    stats.attackSpeed * weights.attackSpeed
   )
 }
 
 // 스탯 포맷팅 (표시용)
 export function formatStat(stat: keyof CharacterStats, value: number): string {
-  const isPercentage = ['critRate', 'critDamage', 'penetration'].includes(stat)
+  const isPercentage = ['critRate', 'critDamage', 'penetration', 'attackSpeed'].includes(stat)
   return isPercentage ? `${value}%` : value.toLocaleString()
 }
 
@@ -110,5 +119,6 @@ export function compareStats(
     critRate: after.critRate - before.critRate,
     critDamage: after.critDamage - before.critDamage,
     penetration: after.penetration - before.penetration,
+    attackSpeed: after.attackSpeed - before.attackSpeed,
   }
 }

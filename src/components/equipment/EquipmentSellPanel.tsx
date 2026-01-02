@@ -17,10 +17,12 @@ export default function EquipmentSellPanel({
 }: EquipmentSellPanelProps) {
   if (!equipment) {
     return (
-      <div className="bg-gray-800 rounded-xl p-8 text-center">
-        <div className="text-4xl mb-4">💰</div>
-        <h2 className="text-xl font-bold text-white mb-2">장비 판매</h2>
-        <p className="text-gray-400">인벤토리에서 판매할 장비를 선택하세요</p>
+      <div className="card">
+        <div className="card-body text-center py-12">
+          <div className="text-5xl mb-4 opacity-50">💰</div>
+          <h2 className="text-lg font-bold text-[var(--color-text-primary)] mb-2">장비 판매</h2>
+          <p className="text-[var(--color-text-secondary)] text-sm">좌측에서 판매할 장비를 선택하세요</p>
+        </div>
       </div>
     )
   }
@@ -48,61 +50,61 @@ export default function EquipmentSellPanel({
   }
 
   return (
-    <div className="bg-gray-800 rounded-xl overflow-hidden">
+    <div className="card">
       {/* Header */}
-      <div className="p-4 bg-gray-700/50 border-b border-gray-700">
-        <h2 className="text-lg font-bold text-white text-center">장비 판매</h2>
+      <div className="card-header">
+        <h2 className="text-base font-bold text-[var(--color-text-primary)] text-center">장비 판매</h2>
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="card-body space-y-4">
         {/* Equipment Info */}
-        <div className="flex items-center gap-4 bg-gray-700/30 rounded-lg p-4">
+        <div className="info-box flex items-center gap-4">
           <div className="relative">
             <EquipmentImage equipment={equipment} size="xl" />
             {equipment.starLevel > 0 && (
-              <div className="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+              <div className="star-badge">
                 {equipment.starLevel}
               </div>
             )}
           </div>
           <div className="flex-1">
-            <h3 className="text-white font-bold">{displayName}</h3>
-            <p className="text-gray-400 text-sm">{slotName}</p>
+            <h3 className="text-[var(--color-text-primary)] font-bold">{displayName}</h3>
+            <p className="text-[var(--color-text-secondary)] text-sm">{slotName}</p>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-yellow-400 text-sm">★ {equipment.starLevel}</span>
-              <span className="text-gray-500">|</span>
-              <span className="text-blue-400 text-sm">전투력 {combatPower.toLocaleString()}</span>
+              <span className="text-[var(--color-accent)] text-sm">★ {equipment.starLevel}</span>
+              <span className="text-[var(--color-text-muted)]">|</span>
+              <span className="text-[var(--color-primary)] text-sm">전투력 {combatPower.toLocaleString()}</span>
             </div>
           </div>
         </div>
 
         {/* Price Calculation */}
-        <div className="bg-gray-700/30 rounded-lg p-4 space-y-2">
-          <h4 className="text-gray-400 text-sm mb-3">판매 가격 계산</h4>
+        <div className="info-box space-y-2">
+          <h4 className="text-[var(--color-text-secondary)] text-xs mb-2">판매 가격 계산</h4>
 
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-400">기본 가격</span>
-            <span className="text-white">100 G</span>
+          <div className="stat-row">
+            <span className="stat-label">기본 가격</span>
+            <span className="stat-value">100 G</span>
           </div>
 
           {equipment.starLevel > 0 && (
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">강화 보너스 (+{equipment.starLevel}성)</span>
-              <span className="text-green-400">x{levelBonus.toFixed(0)}</span>
+            <div className="stat-row">
+              <span className="stat-label">강화 보너스 (+{equipment.starLevel}성)</span>
+              <span className="stat-value positive">x{levelBonus.toFixed(0)}</span>
             </div>
           )}
 
           {unlockedSlots > 0 && (
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">잠재능력 슬롯 ({unlockedSlots}개)</span>
-              <span className="text-purple-400">x{potentialBonus.toFixed(1)}</span>
+            <div className="stat-row">
+              <span className="stat-label">잠재능력 슬롯 ({unlockedSlots}개)</span>
+              <span className="stat-value magic">x{potentialBonus.toFixed(1)}</span>
             </div>
           )}
 
-          <div className="border-t border-gray-600/50 pt-2 mt-2">
-            <div className="flex justify-between text-lg font-bold">
-              <span className="text-white">최종 가격</span>
-              <span className={canSell ? 'text-yellow-400' : 'text-gray-500'}>
+          <div className="border-t border-[var(--color-border)] pt-2 mt-2">
+            <div className="stat-row">
+              <span className="text-[var(--color-text-primary)] font-bold">최종 가격</span>
+              <span className={`font-bold text-lg ${canSell ? 'stat-value gold' : 'text-[var(--color-text-muted)]'}`}>
                 {canSell ? `${sellPrice.toLocaleString()} G` : '0 G'}
               </span>
             </div>
@@ -111,45 +113,45 @@ export default function EquipmentSellPanel({
 
         {/* Warning or Error Messages */}
         {equipment.isEquipped && (
-          <div className="bg-gray-700/30 border border-gray-600/50 rounded-lg p-3">
+          <div className="info-box">
             <div className="flex items-center justify-center gap-2 text-sm">
               <span>⚠️</span>
-              <p className="text-gray-300">장착 중인 장비는 판매할 수 없습니다</p>
+              <p className="text-[var(--color-text-secondary)]">장착 중인 장비는 판매할 수 없습니다</p>
             </div>
           </div>
         )}
 
         {!equipment.isEquipped && equipment.starLevel === 0 && (
-          <div className="bg-gray-700/30 border border-gray-600/50 rounded-lg p-3">
+          <div className="info-box">
             <div className="flex items-center justify-center gap-2 text-sm">
               <span>⚠️</span>
-              <p className="text-gray-300">0성 장비는 판매할 수 없습니다</p>
+              <p className="text-[var(--color-text-secondary)]">0성 장비는 판매할 수 없습니다</p>
             </div>
           </div>
         )}
 
         {canSell && (
-          <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-3">
-            <p className="text-red-400 text-sm text-center">
+          <div className="info-box danger">
+            <p className="text-[var(--color-danger)] text-sm text-center">
               ⚠️ 판매한 장비는 되돌릴 수 없습니다
             </p>
           </div>
         )}
 
         {/* Buttons */}
-        <div className="flex gap-3">
+        <div className="flex gap-3 pt-2">
           <button
             onClick={onCancel}
-            className="flex-1 py-3 px-4 bg-gray-600 hover:bg-gray-500 text-white font-bold rounded-lg transition-colors"
+            className="btn btn-ghost flex-1 py-2.5"
           >
             {canSell ? '취소' : '돌아가기'}
           </button>
           {canSell && (
             <button
               onClick={handleSell}
-              className="flex-1 py-3 px-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white font-bold rounded-lg transition-all"
+              className="btn btn-accent flex-1 py-2.5"
             >
-              판매하기
+              💰 판매하기
             </button>
           )}
         </div>

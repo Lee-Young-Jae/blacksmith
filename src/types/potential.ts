@@ -59,6 +59,7 @@ export const POTENTIAL_POOLS: Record<PotentialTier, PotentialOption[]> = {
     { stat: 'critRate', minValue: 1, maxValue: 2, isPercentage: true, weight: 5 },
     { stat: 'critDamage', minValue: 1, maxValue: 3, isPercentage: true, weight: 3 },
     { stat: 'penetration', minValue: 1, maxValue: 2, isPercentage: true, weight: 2 },
+    { stat: 'attackSpeed', minValue: 1, maxValue: 2, isPercentage: true, weight: 5 },
   ],
   rare: [
     { stat: 'attack', minValue: 3, maxValue: 10, isPercentage: false, weight: 25 },
@@ -68,6 +69,7 @@ export const POTENTIAL_POOLS: Record<PotentialTier, PotentialOption[]> = {
     { stat: 'critRate', minValue: 2, maxValue: 4, isPercentage: true, weight: 8 },
     { stat: 'critDamage', minValue: 3, maxValue: 6, isPercentage: true, weight: 7 },
     { stat: 'penetration', minValue: 2, maxValue: 4, isPercentage: true, weight: 5 },
+    { stat: 'attackSpeed', minValue: 2, maxValue: 4, isPercentage: true, weight: 6 },
   ],
   epic: [
     { stat: 'attack', minValue: 5, maxValue: 15, isPercentage: false, weight: 20 },
@@ -78,6 +80,7 @@ export const POTENTIAL_POOLS: Record<PotentialTier, PotentialOption[]> = {
     { stat: 'critRate', minValue: 4, maxValue: 7, isPercentage: true, weight: 10 },
     { stat: 'critDamage', minValue: 5, maxValue: 10, isPercentage: true, weight: 8 },
     { stat: 'penetration', minValue: 4, maxValue: 7, isPercentage: true, weight: 7 },
+    { stat: 'attackSpeed', minValue: 4, maxValue: 7, isPercentage: true, weight: 8 },
   ],
   unique: [
     { stat: 'attack', minValue: 6, maxValue: 9, isPercentage: true, weight: 18 },
@@ -87,6 +90,7 @@ export const POTENTIAL_POOLS: Record<PotentialTier, PotentialOption[]> = {
     { stat: 'critRate', minValue: 6, maxValue: 10, isPercentage: true, weight: 15 },
     { stat: 'critDamage', minValue: 8, maxValue: 15, isPercentage: true, weight: 13 },
     { stat: 'penetration', minValue: 6, maxValue: 10, isPercentage: true, weight: 12 },
+    { stat: 'attackSpeed', minValue: 6, maxValue: 10, isPercentage: true, weight: 10 },
   ],
   legendary: [
     { stat: 'attack', minValue: 9, maxValue: 12, isPercentage: true, weight: 20 },
@@ -96,6 +100,7 @@ export const POTENTIAL_POOLS: Record<PotentialTier, PotentialOption[]> = {
     { stat: 'critRate', minValue: 9, maxValue: 15, isPercentage: true, weight: 15 },
     { stat: 'critDamage', minValue: 12, maxValue: 20, isPercentage: true, weight: 13 },
     { stat: 'penetration', minValue: 9, maxValue: 15, isPercentage: true, weight: 12 },
+    { stat: 'attackSpeed', minValue: 8, maxValue: 15, isPercentage: true, weight: 10 },
   ],
 }
 
@@ -142,6 +147,7 @@ export const STAT_NAMES: Record<keyof CharacterStats, string> = {
   critRate: '치명타 확률',
   critDamage: '치명타 데미지',
   penetration: '관통력',
+  attackSpeed: '공격속도',
 }
 
 // 잠재옵션 포맷팅 (표시용)

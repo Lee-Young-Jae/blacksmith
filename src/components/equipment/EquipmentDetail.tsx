@@ -65,69 +65,70 @@ export default function EquipmentDetail({
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 sm:p-4"
       onClick={onClose}
     >
       <div
-        className="bg-gray-900 rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+        className="bg-[var(--color-bg-elevated-1)] rounded-t-2xl sm:rounded-xl w-full sm:max-w-md max-h-[85vh] sm:max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-4 bg-gray-700/50 rounded-t-xl border-b border-gray-700">
+        <div className="p-4 bg-[var(--color-bg-elevated-2)] border-b border-[var(--color-border)] flex-shrink-0">
+          {/* Mobile drag handle */}
+          <div className="w-10 h-1 bg-[var(--color-text-muted)] rounded-full mx-auto mb-3 sm:hidden" />
+
           <div className="flex items-center gap-3">
             <EquipmentImage equipment={equipment} size="xl" />
-            <div className="flex-1">
-              <h2 className="text-xl font-bold text-white">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-bold text-[var(--color-text-primary)] truncate">
                 {displayName}
               </h2>
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-gray-400">
+                <span className="text-[var(--color-text-secondary)]">
                   {EQUIPMENT_SLOT_NAMES[equipmentBase.slot]}
                 </span>
                 {isEquipped && (
                   <>
-                    <span className="text-gray-600">•</span>
-                    <span className="text-green-400">장착중</span>
+                    <span className="text-[var(--color-text-muted)]">•</span>
+                    <span className="text-[var(--color-success)]">장착중</span>
                   </>
                 )}
               </div>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white text-2xl"
+              className="w-10 h-10 flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] text-2xl rounded-full hover:bg-[var(--color-bg-elevated-3)]"
             >
               ×
             </button>
           </div>
 
           {/* Blacksmith Comment */}
-          <div className="mt-3 text-sm text-gray-300 italic">"{comment}"</div>
+          <div className="mt-3 text-sm text-[var(--color-text-secondary)] italic">"{comment}"</div>
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 overflow-y-auto flex-1">
           {/* Star Level */}
           {starLevel > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-yellow-400 text-xl">★</span>
-              <span className="text-yellow-400 text-lg font-bold">
+              <span className="text-[var(--color-accent)] text-xl">★</span>
+              <span className="text-[var(--color-accent)] text-lg font-bold">
                 {starLevel}
               </span>
-              <span className="text-gray-400 text-sm">장비레벨</span>
+              <span className="text-[var(--color-text-muted)] text-sm">장비레벨</span>
             </div>
           )}
 
           {/* Combat Power */}
-          <div className="bg-gray-800 rounded-lg p-3 text-center">
-            <div className="text-sm text-gray-400">전투력</div>
-            <div className="text-2xl font-bold text-yellow-400">
-              {combatPower.toLocaleString()}
-            </div>
+          <div className="combat-power">
+            <span className="combat-power-label">전투력</span>
+            <span className="combat-power-value">{combatPower.toLocaleString()}</span>
           </div>
 
           {/* Stats */}
-          <div className="bg-gray-800 rounded-lg p-3">
-            <h3 className="text-sm font-bold text-gray-400 mb-2">장비 스탯</h3>
+          <div className="info-box">
+            <h3 className="text-sm font-bold text-[var(--color-text-secondary)] mb-3">장비 스탯</h3>
             <div className="grid grid-cols-2 gap-2">
               {(Object.keys(stats) as (keyof CharacterStats)[]).map((stat) => {
                 const value = stats[stat];
@@ -138,9 +139,9 @@ export default function EquipmentDetail({
                   "penetration",
                 ].includes(stat);
                 return (
-                  <div key={stat} className="flex items-center gap-2">
+                  <div key={stat} className="flex items-center gap-2 py-1">
                     <span>{STAT_ICONS[stat]}</span>
-                    <span className="text-gray-400 text-sm">
+                    <span className="text-[var(--color-text-secondary)] text-sm">
                       {STAT_NAMES[stat]}
                     </span>
                     <span className={`font-bold ${STAT_COLORS[stat]}`}>
@@ -154,10 +155,10 @@ export default function EquipmentDetail({
           </div>
 
           {/* Potentials */}
-          <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-bold text-gray-400">잠재옵션</h3>
-              <span className="text-sm text-gray-400">
+          <div className="info-box">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-[var(--color-text-secondary)]">잠재옵션</h3>
+              <span className="text-sm text-[var(--color-text-muted)]">
                 {unlockedCount}/3 해제
               </span>
             </div>
@@ -169,15 +170,15 @@ export default function EquipmentDetail({
                   <div
                     key={index}
                     className={`
-                      flex items-center gap-2 text-sm p-2 rounded
-                      ${line.isUnlocked ? tierBg : 'bg-gray-900'}
+                      flex items-center gap-2 text-sm p-2.5 rounded-lg min-h-[40px]
+                      ${line.isUnlocked ? tierBg : 'bg-[var(--color-bg-elevated-2)]'}
                     `}
                   >
                     {!line.isUnlocked ? (
-                      <span className="text-gray-500">🔒 슬롯 잠김</span>
+                      <span className="text-[var(--color-text-muted)]">🔒 슬롯 잠김</span>
                     ) : (
                       <>
-                        {line.isLocked && <span className="text-yellow-400">📌</span>}
+                        {line.isLocked && <span className="text-[var(--color-accent)]">📌</span>}
                         <span className={tierColor}>{formatPotentialLine(line)}</span>
                         <span className={`text-xs ${tierColor} ml-auto`}>
                           {POTENTIAL_TIER_NAMES[line.tier as PotentialTier]}
@@ -191,9 +192,9 @@ export default function EquipmentDetail({
           </div>
 
           {/* Sell Price */}
-          <div className="text-sm text-gray-400">
+          <div className="text-sm text-[var(--color-text-secondary)]">
             판매가:{" "}
-            <span className="text-yellow-400 font-bold">
+            <span className="text-[var(--color-accent)] font-bold">
               {sellPrice.toLocaleString()}
             </span>{" "}
             골드
@@ -204,38 +205,10 @@ export default function EquipmentDetail({
             )}
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2">
-            {isEquipped && onUnequip && (
-              <button
-                onClick={onUnequip}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-              >
-                해제
-              </button>
-            )}
-            {!isEquipped && onEquip && (
-              <button
-                onClick={() => onEquip(equipment.id)}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-              >
-                장착
-              </button>
-            )}
-            {!isEquipped && onSell && (
-              <button
-                onClick={onSell}
-                className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
-              >
-                판매 ({sellPrice.toLocaleString()}G)
-              </button>
-            )}
-          </div>
-
           {/* Other Equipment in Same Slot */}
           {sameSlotItems.length > 0 && (
-            <div className="border-t border-gray-700 pt-4">
-              <h3 className="text-sm font-bold text-gray-400 mb-2">
+            <div className="border-t border-[var(--color-border)] pt-4">
+              <h3 className="text-sm font-bold text-[var(--color-text-secondary)] mb-2">
                 같은 슬롯 장비 ({sameSlotItems.length})
               </h3>
               <div className="space-y-2 max-h-40 overflow-y-auto">
@@ -250,6 +223,27 @@ export default function EquipmentDetail({
               </div>
             </div>
           )}
+        </div>
+
+        {/* Actions - Fixed at bottom */}
+        <div className="p-4 border-t border-[var(--color-border)] bg-[var(--color-bg-elevated-1)] flex-shrink-0 safe-area-bottom">
+          <div className="flex gap-3">
+            {isEquipped && onUnequip && (
+              <button onClick={onUnequip} className="btn btn-danger flex-1">
+                해제
+              </button>
+            )}
+            {!isEquipped && onEquip && (
+              <button onClick={() => onEquip(equipment.id)} className="btn btn-primary flex-1">
+                장착
+              </button>
+            )}
+            {!isEquipped && onSell && (
+              <button onClick={onSell} className="btn btn-accent flex-1">
+                판매 ({sellPrice.toLocaleString()}G)
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -54,27 +54,19 @@ export default function EquipmentCard({
       <button
         onClick={onClick}
         className={`
-          w-full flex items-center gap-2 p-2 rounded-lg transition-all
-          bg-gray-700/50 border border-gray-600
-          ${isSelected ? 'ring-2 ring-blue-400' : ''}
-          ${onClick ? 'hover:scale-[1.02] cursor-pointer' : ''}
+          list-item w-full min-h-[56px]
+          ${isSelected ? 'ring-2 ring-[var(--color-primary)]' : ''}
         `}
       >
         <EquipmentImage equipment={equipment} size="lg" />
-        <div className="flex-1 text-left min-w-0">
-          <div className="text-sm font-medium text-white truncate">
-            {displayName}
-          </div>
-          <div className="text-xs text-gray-400">
-            {EQUIPMENT_SLOT_NAMES[equipmentBase.slot]}
-          </div>
+        <div className="list-item-content">
+          <span className="list-item-title">{displayName}</span>
+          <span className="list-item-subtitle">{EQUIPMENT_SLOT_NAMES[equipmentBase.slot]}</span>
         </div>
         {isEquipped && (
-          <span className="text-xs bg-green-600 text-white px-1.5 py-0.5 rounded">
-            장착
-          </span>
+          <span className="badge badge-success">장착</span>
         )}
-        <div className="text-xs text-yellow-400 font-bold">
+        <div className="text-xs text-[var(--color-accent)] font-bold">
           CP {combatPower.toLocaleString()}
         </div>
       </button>
@@ -85,80 +77,73 @@ export default function EquipmentCard({
     <button
       onClick={onClick}
       className={`
-        w-full p-3 rounded-lg transition-all
-        bg-gray-700/50 border border-gray-600
-        ${isSelected ? 'ring-2 ring-blue-400' : ''}
-        ${onClick ? 'hover:scale-[1.02] cursor-pointer' : ''}
+        w-full p-3 sm:p-4 rounded-xl transition-all min-h-[80px]
+        bg-[var(--color-bg-elevated-1)] border border-[var(--color-border)]
+        ${isSelected ? 'ring-2 ring-[var(--color-primary)]' : ''}
+        ${onClick ? 'hover:bg-[var(--color-bg-elevated-2)] active:scale-[0.98] cursor-pointer' : ''}
       `}
     >
       {/* Header: Image + Name + Star */}
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-3 mb-2">
         <EquipmentImage equipment={equipment} size="xl" />
         <div className="flex-1 text-left min-w-0">
-          <div className="font-bold text-white truncate">
+          <div className="font-bold text-[var(--color-text-primary)] truncate">
             {displayName}
           </div>
-          <div className="flex items-center gap-1 text-xs">
-            <span className="text-gray-400">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-[var(--color-text-secondary)]">
               {EQUIPMENT_SLOT_NAMES[equipmentBase.slot]}
             </span>
+            {starLevel > 0 && (
+              <span className="text-[var(--color-accent)] font-bold">★{starLevel}</span>
+            )}
           </div>
         </div>
         {isEquipped && (
-          <span className="text-xs bg-green-600 text-white px-2 py-1 rounded">
-            장착중
-          </span>
+          <span className="badge badge-success">장착중</span>
         )}
       </div>
-
-      {/* Star Level */}
-      {starLevel > 0 && (
-        <div className="flex items-center gap-1 mb-2">
-          <span className="text-yellow-400 text-sm">★</span>
-          <span className="text-yellow-400 text-sm font-bold">{starLevel}</span>
-        </div>
-      )}
 
       {/* Potential Info */}
       <div className="text-xs mb-2">
         {unlockedCount > 0 ? (
-          <span className={bestTier ? POTENTIAL_TIER_COLORS[bestTier as keyof typeof POTENTIAL_TIER_COLORS] : 'text-gray-400'}>
-            잠재옵션 {unlockedCount}/3 해제
+          <span className={bestTier ? POTENTIAL_TIER_COLORS[bestTier as keyof typeof POTENTIAL_TIER_COLORS] : 'text-[var(--color-text-secondary)]'}>
+            잠재옵션 {unlockedCount}/3
             {bestTier && ` (${POTENTIAL_TIER_NAMES[bestTier as keyof typeof POTENTIAL_TIER_NAMES]})`}
           </span>
         ) : (
-          <span className="text-gray-500">잠재옵션 잠김</span>
+          <span className="text-[var(--color-text-muted)]">잠재옵션 잠김</span>
         )}
       </div>
 
       {/* Stats (optional) */}
       {showStats && (
-        <div className="grid grid-cols-2 gap-1 text-xs border-t border-gray-600 pt-2 mt-2">
+        <div className="grid grid-cols-2 gap-1 text-xs border-t border-[var(--color-border)] pt-2 mt-2">
           {stats.attack > 0 && (
-            <div className="text-red-400">공격력 +{stats.attack}</div>
+            <div className="text-[var(--color-danger)]">공격력 +{stats.attack}</div>
           )}
           {stats.defense > 0 && (
-            <div className="text-blue-400">방어력 +{stats.defense}</div>
+            <div className="text-[var(--color-primary)]">방어력 +{stats.defense}</div>
           )}
           {stats.hp > 0 && (
-            <div className="text-green-400">HP +{stats.hp}</div>
+            <div className="text-[var(--color-success)]">HP +{stats.hp}</div>
           )}
           {stats.critRate > 0 && (
-            <div className="text-yellow-400">치명타 +{stats.critRate}%</div>
+            <div className="text-[var(--color-accent)]">치명타 +{stats.critRate}%</div>
           )}
           {stats.critDamage > 0 && (
             <div className="text-orange-400">치명타 뎀 +{stats.critDamage}%</div>
           )}
           {stats.penetration > 0 && (
-            <div className="text-purple-400">관통력 +{stats.penetration}%</div>
+            <div className="text-[var(--color-magic)]">관통력 +{stats.penetration}%</div>
           )}
         </div>
       )}
 
       {/* Combat Power */}
       <div className="text-right mt-2">
-        <span className="text-xs text-gray-400">전투력 </span>
-        <span className="text-yellow-400 font-bold">{combatPower.toLocaleString()}</span>
+        <span className="text-xs text-[var(--color-text-muted)]">전투력 </span>
+        <span className="text-[var(--color-accent)] font-bold">{combatPower.toLocaleString()}</span>
       </div>
     </button>
   )

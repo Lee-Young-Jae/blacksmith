@@ -164,6 +164,7 @@ export function calculateEquipmentStats(equipment: UserEquipment): CharacterStat
     critRate: equipmentBase.baseStats.critRate || 0,
     critDamage: equipmentBase.baseStats.critDamage || 0,
     penetration: equipmentBase.baseStats.penetration || 0,
+    attackSpeed: equipmentBase.baseStats.attackSpeed || 0,
   }
 
   // 잠재옵션 적용 (해제된 슬롯만)

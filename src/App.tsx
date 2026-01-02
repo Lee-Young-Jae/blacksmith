@@ -200,13 +200,20 @@ function GameContent() {
   const hasEquipment = equipmentSystem.inventory.length > 0
   const totalCombatPower = equipmentSystem.getTotalCombatPower()
 
+  // 착용중인 장비를 맨 위로 정렬
+  const sortedInventory = [...equipmentSystem.inventory].sort((a, b) => {
+    if (a.isEquipped && !b.isEquipped) return -1
+    if (!a.isEquipped && b.isEquipped) return 1
+    return 0
+  })
+
   // 장비 탭에서 인벤토리 슬롯 필터 열기
   const handleOpenInventory = (slot: EquipmentSlot) => {
     setInventoryFilterSlot(slot)
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-950">
+    <div className="min-h-screen" style={{ background: 'var(--color-bg-base)' }}>
       {/* 이펙트 */}
       <DestroyEffect
         isActive={showDestroyEffect}
@@ -220,17 +227,20 @@ function GameContent() {
       )}
 
       {/* 헤더 */}
-      <header className="p-4 flex flex-wrap justify-between items-center gap-2 border-b border-gray-800">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold text-white">⚒️ 대장장이</h1>
+      <header className="px-4 py-3 flex flex-wrap justify-between items-center gap-3 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated-1)]">
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text-primary)] flex items-center gap-2">
+            <span>⚒️</span>
+            <span className="hidden sm:inline">대장장이</span>
+          </h1>
           {totalCombatPower > 0 && (
-            <div className="bg-yellow-900/30 border border-yellow-600/50 rounded-lg px-3 py-1">
-              <span className="text-xs text-yellow-400">전투력</span>
-              <span className="ml-2 font-bold text-yellow-400">{totalCombatPower.toLocaleString()}</span>
+            <div className="info-box warning py-1 px-3 flex items-center gap-2">
+              <span className="text-xs text-[var(--color-accent)]">전투력</span>
+              <span className="font-bold text-[var(--color-accent)]">{totalCombatPower.toLocaleString()}</span>
             </div>
           )}
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <GoldDisplay
             gold={gold}
             canClaimDaily={canClaimDaily}
@@ -321,43 +331,48 @@ function GameContent() {
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* 장비 선택 */}
                 <div className="lg:w-80 flex-shrink-0">
-                  <div className="bg-gray-800 rounded-lg p-4">
-                    <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                      <span className="text-2xl">🎒</span>
-                      장비 선택
-                    </h2>
-                    <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                      {equipmentSystem.inventory.map(equip => (
-                        <button
-                          key={equip.id}
-                          onClick={() => setSelectedPotentialEquipment(equip)}
-                          className={`
-                            w-full flex items-center gap-3 p-3 rounded-lg transition-all
-                            ${selectedPotentialEquipment?.id === equip.id
-                              ? 'bg-purple-600/30 border border-purple-500'
-                              : 'bg-gray-700 hover:bg-gray-600'
-                            }
-                          `}
-                        >
-                          <EquipmentImage equipment={equip} size="lg" />
-                          <div className="flex-1 text-left">
-                            <div className="text-sm font-medium text-white truncate">
-                              {equip.equipmentBase.levels[equip.starLevel]?.name || equip.equipmentBase.levels[0].name}
+                  <div className="card">
+                    <div className="card-header">
+                      <h2 className="text-base font-bold text-[var(--color-text-primary)] flex items-center gap-2">
+                        <span className="text-xl">🎒</span>
+                        장비 선택
+                      </h2>
+                    </div>
+                    <div className="card-body">
+                      <div className="space-y-2 max-h-[50vh] sm:max-h-[400px] overflow-y-auto">
+                        {sortedInventory.map(equip => (
+                          <button
+                            key={equip.id}
+                            onClick={() => setSelectedPotentialEquipment(equip)}
+                            className={`
+                              list-item w-full min-h-[56px]
+                              ${selectedPotentialEquipment?.id === equip.id
+                                ? 'ring-2 ring-[var(--color-magic)] bg-[var(--color-magic)]/10'
+                                : ''
+                              }
+                            `}
+                          >
+                            <EquipmentImage equipment={equip} size="lg" />
+                            <div className="list-item-content">
+                              <span className="list-item-title">
+                                {equip.equipmentBase.levels[equip.starLevel]?.name || equip.equipmentBase.levels[0].name}
+                              </span>
+                              <span className="list-item-subtitle">
+                                잠재옵션 {equip.potentials.filter(p => p.isUnlocked).length}/3 해제
+                              </span>
                             </div>
-                            <div className="text-xs text-gray-400">
-                              {equip.potentials.filter(p => p.isUnlocked).length}/3 해제
-                            </div>
+                            {equip.isEquipped && (
+                              <span className="badge badge-success">장착</span>
+                            )}
+                          </button>
+                        ))}
+                        {sortedInventory.length === 0 && (
+                          <div className="empty-state">
+                            <span className="empty-state-icon">📦</span>
+                            <span className="empty-state-text">장비가 없습니다</span>
                           </div>
-                          {equip.isEquipped && (
-                            <span className="text-xs bg-green-600 text-white px-1.5 py-0.5 rounded">장착</span>
-                          )}
-                        </button>
-                      ))}
-                      {equipmentSystem.inventory.length === 0 && (
-                        <div className="text-center py-8 text-gray-500">
-                          장비가 없습니다
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -402,10 +417,12 @@ function GameContent() {
                       onUpdateGold={userData.updateGold}
                     />
                   ) : (
-                    <div className="bg-gray-800 rounded-lg p-8 text-center">
-                      <div className="text-4xl mb-4">✨</div>
-                      <div className="text-gray-400">
-                        좌측에서 장비를 선택하세요
+                    <div className="card">
+                      <div className="card-body">
+                        <div className="empty-state">
+                          <span className="empty-state-icon">✨</span>
+                          <span className="empty-state-text">좌측에서 장비를 선택하세요</span>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -415,52 +432,105 @@ function GameContent() {
 
             {/* 강화 탭 */}
             {activeTab === 'enhance' && (
-              <div className="flex flex-col lg:flex-row gap-6">
-                {/* 장비 선택 */}
+              <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+                {/* 장비 선택 - 모바일: 가로 스크롤, 데스크탑: 세로 리스트 */}
                 <div className="lg:w-80 flex-shrink-0">
-                  <div className="bg-gray-800 rounded-lg p-4">
-                    <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                      <span className="text-2xl">⬆️</span>
-                      강화할 장비
-                    </h2>
-                    <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                      {equipmentSystem.inventory.map(equip => (
+                  {/* 모바일: 가로 스크롤 카드 */}
+                  <div className="lg:hidden">
+                    <div className="flex items-center justify-between mb-2 px-1">
+                      <h2 className="text-sm font-bold text-[var(--color-text-primary)] flex items-center gap-2">
+                        <span>⬆️</span>
+                        강화할 장비
+                      </h2>
+                      <span className="text-xs text-[var(--color-text-muted)]">{equipmentSystem.inventory.length}개</span>
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
+                      {sortedInventory.map(equip => (
                         <button
                           key={equip.id}
                           onClick={() => equipmentStarForce.selectEquipment(equip)}
                           className={`
-                            w-full flex items-center gap-3 p-3 rounded-lg transition-all
+                            flex-shrink-0 w-20 flex flex-col items-center gap-1 p-2 rounded-xl snap-start
+                            bg-[var(--color-bg-elevated-1)] border-2 transition-all
                             ${equipmentStarForce.selectedEquipment?.id === equip.id
-                              ? 'bg-blue-600/30 border border-blue-500'
-                              : 'bg-gray-700 hover:bg-gray-600'
+                              ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10'
+                              : 'border-[var(--color-border)]'
                             }
                           `}
                         >
-                          <EquipmentImage equipment={equip} size="lg" />
-                          <div className="flex-1 text-left">
-                            <div className="text-sm font-medium text-white truncate">
-                              {equip.equipmentBase.levels[equip.starLevel]?.name || equip.equipmentBase.levels[0].name}
-                            </div>
-                            <div className="text-xs text-yellow-400">
-                              ★ {equip.starLevel}
-                            </div>
+                          <div className="relative">
+                            <EquipmentImage equipment={equip} size="lg" />
+                            {equip.starLevel > 0 && (
+                              <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[var(--color-accent)] text-black text-[10px] font-bold flex items-center justify-center">
+                                {equip.starLevel}
+                              </div>
+                            )}
                           </div>
+                          <span className="text-[10px] text-[var(--color-text-secondary)] truncate w-full text-center">
+                            {(equip.equipmentBase.levels[equip.starLevel]?.name || equip.equipmentBase.levels[0].name).split(' ')[0]}
+                          </span>
                           {equip.isEquipped && (
-                            <span className="text-xs bg-green-600 text-white px-1.5 py-0.5 rounded">장착</span>
+                            <span className="text-[8px] text-[var(--color-success)] font-bold">장착중</span>
                           )}
                         </button>
                       ))}
-                      {equipmentSystem.inventory.length === 0 && (
-                        <div className="text-center py-8 text-gray-500">
+                      {sortedInventory.length === 0 && (
+                        <div className="flex-1 text-center py-4 text-[var(--color-text-muted)] text-sm">
                           장비가 없습니다
                         </div>
                       )}
                     </div>
                   </div>
+
+                  {/* 데스크탑: 세로 리스트 */}
+                  <div className="hidden lg:block card">
+                    <div className="card-header">
+                      <h2 className="text-base font-bold text-[var(--color-text-primary)] flex items-center gap-2">
+                        <span className="text-xl">⬆️</span>
+                        강화할 장비
+                      </h2>
+                    </div>
+                    <div className="card-body">
+                      <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                        {sortedInventory.map(equip => (
+                          <button
+                            key={equip.id}
+                            onClick={() => equipmentStarForce.selectEquipment(equip)}
+                            className={`
+                              list-item w-full min-h-[56px]
+                              ${equipmentStarForce.selectedEquipment?.id === equip.id
+                                ? 'ring-2 ring-[var(--color-primary)] bg-[var(--color-primary)]/10'
+                                : ''
+                              }
+                            `}
+                          >
+                            <EquipmentImage equipment={equip} size="lg" />
+                            <div className="list-item-content">
+                              <span className="list-item-title">
+                                {equip.equipmentBase.levels[equip.starLevel]?.name || equip.equipmentBase.levels[0].name}
+                              </span>
+                              <span className="list-item-subtitle text-[var(--color-accent)]">
+                                ★ {equip.starLevel}
+                              </span>
+                            </div>
+                            {equip.isEquipped && (
+                              <span className="badge badge-success">장착</span>
+                            )}
+                          </button>
+                        ))}
+                        {sortedInventory.length === 0 && (
+                          <div className="empty-state">
+                            <span className="empty-state-icon">📦</span>
+                            <span className="empty-state-text">장비가 없습니다</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* 강화 패널 */}
-                <div className="flex-1 max-w-md">
+                <div className="flex-1 lg:max-w-md">
                   <EquipmentEnhancePanel
                     equipment={equipmentStarForce.selectedEquipment}
                     isEnhancing={equipmentStarForce.isEnhancing}
@@ -537,46 +607,51 @@ function GameContent() {
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* 장비 선택 */}
                 <div className="lg:w-80 flex-shrink-0">
-                  <div className="bg-gray-800 rounded-lg p-4">
-                    <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                      <span className="text-2xl">💰</span>
-                      판매할 장비
-                    </h2>
-                    <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                      {equipmentSystem.inventory
-                        .filter(e => !e.isEquipped)
-                        .map(equip => (
-                          <button
-                            key={equip.id}
-                            onClick={() => setSelectedSellEquipment(equip)}
-                            className={`
-                              w-full flex items-center gap-3 p-3 rounded-lg transition-all
-                              ${selectedSellEquipment?.id === equip.id
-                                ? 'bg-yellow-600/30 border border-yellow-500'
-                                : 'bg-gray-700 hover:bg-gray-600'
-                              }
-                              ${equip.starLevel === 0 ? 'opacity-50' : ''}
-                            `}
-                          >
-                            <EquipmentImage equipment={equip} size="lg" />
-                            <div className="flex-1 text-left">
-                              <div className="text-sm font-medium text-white truncate">
-                                {equip.equipmentBase.levels[equip.starLevel]?.name || equip.equipmentBase.levels[0].name}
+                  <div className="card">
+                    <div className="card-header">
+                      <h2 className="text-base font-bold text-[var(--color-text-primary)] flex items-center gap-2">
+                        <span className="text-xl">💰</span>
+                        판매할 장비
+                      </h2>
+                    </div>
+                    <div className="card-body">
+                      <div className="space-y-2 max-h-[50vh] sm:max-h-[500px] overflow-y-auto">
+                        {equipmentSystem.inventory
+                          .filter(e => !e.isEquipped)
+                          .map(equip => (
+                            <button
+                              key={equip.id}
+                              onClick={() => setSelectedSellEquipment(equip)}
+                              className={`
+                                list-item w-full min-h-[56px]
+                                ${selectedSellEquipment?.id === equip.id
+                                  ? 'ring-2 ring-[var(--color-accent)] bg-[var(--color-accent)]/10'
+                                  : ''
+                                }
+                                ${equip.starLevel === 0 ? 'opacity-50' : ''}
+                              `}
+                            >
+                              <EquipmentImage equipment={equip} size="lg" />
+                              <div className="list-item-content">
+                                <span className="list-item-title">
+                                  {equip.equipmentBase.levels[equip.starLevel]?.name || equip.equipmentBase.levels[0].name}
+                                </span>
+                                <span className="list-item-subtitle text-[var(--color-accent)]">
+                                  ★ {equip.starLevel}
+                                </span>
                               </div>
-                              <div className="text-xs text-yellow-400">
-                                ★ {equip.starLevel}
-                              </div>
-                            </div>
-                            {equip.starLevel === 0 && (
-                              <span className="text-xs text-gray-400">판매불가</span>
-                            )}
-                          </button>
-                        ))}
-                      {equipmentSystem.inventory.filter(e => !e.isEquipped).length === 0 && (
-                        <div className="text-center py-8 text-gray-500">
-                          판매 가능한 장비가 없습니다
-                        </div>
-                      )}
+                              {equip.starLevel === 0 && (
+                                <span className="badge badge-muted">판매불가</span>
+                              )}
+                            </button>
+                          ))}
+                        {equipmentSystem.inventory.filter(e => !e.isEquipped).length === 0 && (
+                          <div className="empty-state">
+                            <span className="empty-state-icon">📦</span>
+                            <span className="empty-state-text">판매 가능한 장비가 없습니다</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -607,7 +682,7 @@ function GameContent() {
       </main>
 
       {/* 푸터 */}
-      <footer className="p-4 text-center text-gray-500 text-sm border-t border-gray-800">
+      <footer className="py-4 px-4 text-center text-[var(--color-text-muted)] text-xs border-t border-[var(--color-border)] bg-[var(--color-bg-elevated-1)]">
         <p>12성 이상에서 파괴 가능 | 2연속 실패 시 찬스타임 | 5, 10, 15, 20성 100% 성공</p>
       </footer>
     </div>
