@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS equipment_potentials (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   equipment_id UUID NOT NULL REFERENCES user_equipment(id) ON DELETE CASCADE,
   line_index INTEGER NOT NULL CHECK (line_index >= 0 AND line_index <= 2),
-  stat_type VARCHAR(20) NOT NULL CHECK (stat_type IN ('attack', 'defense', 'hp', 'critRate', 'critDamage', 'penetration')),
+  stat_type VARCHAR(20) NOT NULL CHECK (stat_type IN ('attack', 'defense', 'hp', 'critRate', 'critDamage', 'penetration', 'attackSpeed')),
   stat_value INTEGER NOT NULL,
   is_percentage BOOLEAN NOT NULL DEFAULT FALSE,
   tier VARCHAR(20) NOT NULL DEFAULT 'common' CHECK (tier IN ('common', 'rare', 'epic', 'unique', 'legendary')),

@@ -36,13 +36,19 @@ export default function EquipmentImage({
 
   // Get equipment base and star level from either source
   const base = equipment?.equipmentBase ?? propBase
-  const level = equipment?.starLevel ?? propLevel ?? 0
+  const rawLevel = equipment?.starLevel ?? propLevel ?? 0
+
+  // 레벨이 배열 범위를 벗어나면 최대 레벨로 제한
+  const maxLevel = base ? base.levels.length - 1 : 0
+  const level = Math.min(rawLevel, maxLevel)
 
   // Reset error state when equipment or level changes
   const imagePath = base?.levels[level]?.image ?? base?.levels[0]?.image
+  const equipmentId = equipment?.id ?? base?.id ?? ''
+
   useEffect(() => {
     setImageError(false)
-  }, [imagePath])
+  }, [imagePath, equipmentId, level])
 
   if (!base) {
     return <span className={`${EMOJI_SIZE_CLASSES[size]} ${className}`}>❓</span>

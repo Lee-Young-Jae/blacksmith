@@ -9,6 +9,7 @@ import {
   calculateRerollCost,
   getLockedLineCount,
   hasRerollableLines,
+  generateInitialPotentials,
 } from '../types/potential'
 
 interface UsePotentialOptions {
@@ -41,7 +42,13 @@ export function usePotential({
     lockedLines: boolean[]
   ): Promise<RerollResult | null> => {
     try {
-      const { potentials } = equipment
+      // 잠재옵션이 없거나 부족하면 초기화
+      let potentials = equipment.potentials
+      const requiredSlots = equipment.equipmentBase.potentialSlots || 3
+
+      if (!potentials || potentials.length < requiredSlots) {
+        potentials = generateInitialPotentials(requiredSlots)
+      }
 
       // Apply lock states to current potentials
       const currentWithLocks: PotentialLine[] = potentials.map((p, i) => ({
@@ -87,7 +94,15 @@ export function usePotential({
       const cost = getSlotUnlockCost(slotIndex)
       if (cost <= 0) return null
 
-      const newPotentials = unlockPotentialSlot(equipment.potentials, slotIndex)
+      // 잠재옵션이 없거나 부족하면 초기화
+      let currentPotentials = equipment.potentials
+      const requiredSlots = equipment.equipmentBase.potentialSlots || 3
+
+      if (!currentPotentials || currentPotentials.length < requiredSlots) {
+        currentPotentials = generateInitialPotentials(requiredSlots)
+      }
+
+      const newPotentials = unlockPotentialSlot(currentPotentials, slotIndex)
 
       const success = await onUpdatePotentials(equipment.id, newPotentials)
       if (!success) return null

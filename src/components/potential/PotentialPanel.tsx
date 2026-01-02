@@ -43,18 +43,26 @@ export default function PotentialPanel({
   const [isRerolling, setIsRerolling] = useState(false)
   const [isUnlocking, setIsUnlocking] = useState<number | null>(null)
 
+  const slotCount = equipment.equipmentBase.potentialSlots || 3
   const { potentials } = equipment
+
+  // 잠재옵션이 없거나 부족하면 빈 슬롯으로 채움
+  const displayPotentials: (PotentialLine | null)[] = Array.from({ length: slotCount }, (_, i) =>
+    potentials[i] || null
+  )
+
   const unlockedCount = getUnlockedSlotCount(potentials)
-  const lockedCount = lockedLines.filter((locked, i) => locked && potentials[i].isUnlocked).length
+  const lockedCount = lockedLines.filter((locked, i) => locked && potentials[i]?.isUnlocked).length
   const rerollCost = calculateRerollCost(lockedCount)
   const canAffordReroll = gold >= rerollCost
-  const canReroll = hasRerollableLines(potentials.map((p, i) => ({
+  const canReroll = potentials.length > 0 && hasRerollableLines(potentials.map((p, i) => ({
     ...p,
     isLocked: lockedLines[i] ?? false,
   })))
 
   const toggleLock = (index: number) => {
-    if (!potentials[index].isUnlocked) return
+    const line = potentials[index]
+    if (!line || !line.isUnlocked) return
     setLockedLines(prev => {
       const newLocked = [...prev]
       newLocked[index] = !newLocked[index]
@@ -132,14 +140,12 @@ export default function PotentialPanel({
 
       {/* Potential Lines */}
       <div className="p-4 space-y-3">
-        {potentials.map((line, index) => {
-          const tierColor = POTENTIAL_TIER_COLORS[line.tier]
-          const tierBg = POTENTIAL_TIER_BG[line.tier]
+        {displayPotentials.map((line, index) => {
           const unlockCost = SLOT_UNLOCK_COSTS[index]
           const canAffordUnlock = gold >= unlockCost
 
-          if (!line.isUnlocked) {
-            // Locked slot - show unlock button
+          // 잠재옵션이 없거나 해제되지 않은 슬롯 - 해제 버튼 표시
+          if (!line || !line.isUnlocked) {
             return (
               <div
                 key={index}
@@ -168,6 +174,9 @@ export default function PotentialPanel({
               </div>
             )
           }
+
+          const tierColor = POTENTIAL_TIER_COLORS[line.tier]
+          const tierBg = POTENTIAL_TIER_BG[line.tier]
 
           // Unlocked slot - show potential line
           return (
@@ -210,12 +219,6 @@ export default function PotentialPanel({
             </div>
           )
         })}
-
-        {potentials.length === 0 && (
-          <div className="empty-state">
-            <span className="empty-state-text">잠재옵션이 없습니다</span>
-          </div>
-        )}
       </div>
 
       {/* Reroll Section */}

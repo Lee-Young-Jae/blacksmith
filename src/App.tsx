@@ -28,6 +28,7 @@ import { useEquipment } from './hooks/useEquipment'
 import { getTotalAttack } from './utils/starforce'
 import type { AIDifficulty } from './types/battle'
 import type { UserWeapon } from './types/weapon'
+import { getEquipmentName } from './types/equipment'
 import type { EquipmentSlot, UserEquipment } from './types/equipment'
 // import { getWeaponComment } from './types/weapon'  // Legacy weapon system
 
@@ -355,7 +356,7 @@ function GameContent() {
                             <EquipmentImage equipment={equip} size="lg" />
                             <div className="list-item-content">
                               <span className="list-item-title">
-                                {equip.equipmentBase.levels[equip.starLevel]?.name || equip.equipmentBase.levels[0].name}
+                                {getEquipmentName(equip.equipmentBase, equip.starLevel)}
                               </span>
                               <span className="list-item-subtitle">
                                 잠재옵션 {equip.potentials.filter(p => p.isUnlocked).length}/3 해제
@@ -467,7 +468,7 @@ function GameContent() {
                             )}
                           </div>
                           <span className="text-[10px] text-[var(--color-text-secondary)] truncate w-full text-center">
-                            {(equip.equipmentBase.levels[equip.starLevel]?.name || equip.equipmentBase.levels[0].name).split(' ')[0]}
+                            {getEquipmentName(equip.equipmentBase, equip.starLevel).split(' ')[0]}
                           </span>
                           {equip.isEquipped && (
                             <span className="text-[8px] text-[var(--color-success)] font-bold">장착중</span>
@@ -507,7 +508,7 @@ function GameContent() {
                             <EquipmentImage equipment={equip} size="lg" />
                             <div className="list-item-content">
                               <span className="list-item-title">
-                                {equip.equipmentBase.levels[equip.starLevel]?.name || equip.equipmentBase.levels[0].name}
+                                {getEquipmentName(equip.equipmentBase, equip.starLevel)}
                               </span>
                               <span className="list-item-subtitle text-[var(--color-accent)]">
                                 ★ {equip.starLevel}
@@ -635,7 +636,7 @@ function GameContent() {
                               <EquipmentImage equipment={equip} size="lg" />
                               <div className="list-item-content">
                                 <span className="list-item-title">
-                                  {equip.equipmentBase.levels[equip.starLevel]?.name || equip.equipmentBase.levels[0].name}
+                                  {getEquipmentName(equip.equipmentBase, equip.starLevel)}
                                 </span>
                                 <span className="list-item-subtitle text-[var(--color-accent)]">
                                   ★ {equip.starLevel}
