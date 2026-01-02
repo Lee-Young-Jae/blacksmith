@@ -56,7 +56,9 @@ export default function EquipmentEnhancePanel({
     return (
       <div className="card">
         <div className="card-body text-center py-8 sm:py-12">
-          <div className="text-4xl sm:text-5xl mb-3 sm:mb-4 opacity-50">⬆️</div>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--color-bg-elevated-2)] flex items-center justify-center">
+            <span className="text-2xl text-[var(--color-text-muted)]">★</span>
+          </div>
           <h2 className="text-base sm:text-lg font-bold text-[var(--color-text-primary)] mb-2">장비 강화</h2>
           <p className="text-[var(--color-text-secondary)] text-sm">위에서 강화할 장비를 선택하세요</p>
         </div>
@@ -68,7 +70,9 @@ export default function EquipmentEnhancePanel({
     return (
       <div className="card">
         <div className="card-body text-center py-6 sm:py-8">
-          <div className="text-5xl sm:text-6xl mb-3 sm:mb-4 animate-pulse">💥</div>
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[var(--color-danger)]/20 flex items-center justify-center animate-pulse">
+            <span className="text-3xl font-bold text-[var(--color-danger)]">X</span>
+          </div>
           <h2 className="text-lg sm:text-xl font-bold text-[var(--color-danger)] mb-2">장비 파괴!</h2>
           <p className="text-[var(--color-text-secondary)] text-sm mb-4 sm:mb-6">
             {getEquipmentDisplayName(equipment)}이(가) 파괴되었습니다...
@@ -101,42 +105,40 @@ export default function EquipmentEnhancePanel({
 
   return (
     <div className="card overflow-hidden">
-      {/* Header - 모바일 최적화 */}
+      {/* Header - 장비 이미지 중앙 배치 */}
       <div className={`card-header ${chanceTimeActive ? 'bg-gradient-to-r from-amber-900/30 to-orange-900/30' : ''}`}>
-        <div className="flex items-center gap-3">
-          {/* 장비 이미지 + 스타 레벨 */}
-          <div className="relative flex-shrink-0">
-            <div className={`${chanceTimeActive ? 'animate-pulse' : ''}`}>
-              <EquipmentImage equipment={equipment} size="xl" />
+        {/* 장비 이미지 + 스타 레벨 - 중앙 크게 */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative">
+            <div className={`p-3 rounded-2xl bg-[var(--color-bg-elevated-2)] border-2 border-[var(--color-border)] ${chanceTimeActive ? 'animate-pulse border-[var(--color-accent)]' : ''}`}>
+              <EquipmentImage equipment={equipment} size="2xl" />
             </div>
             {currentLevel > 0 && (
-              <div className="star-badge">
-                {currentLevel}
+              <div className="absolute -top-2 -right-2 min-w-8 h-8 px-2 rounded-full bg-gradient-to-r from-[var(--color-accent)] to-orange-500 text-black text-sm font-bold flex items-center justify-center shadow-lg">
+                ★{currentLevel}
               </div>
             )}
           </div>
 
-          {/* 장비 정보 */}
-          <div className="flex-1 min-w-0">
-            <h2 className="text-sm sm:text-base font-bold text-[var(--color-text-primary)] truncate">{displayName}</h2>
+          {/* 장비 이름 */}
+          <h2 className="text-base sm:text-lg font-bold text-[var(--color-text-primary)] text-center">{displayName}</h2>
 
-            {/* 레벨 변화 표시 - 더 시각적으로 */}
-            <div className="flex items-center gap-1.5 mt-1.5">
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--color-bg-elevated-2)]">
-                <span className="text-[var(--color-accent)] text-sm">★</span>
-                <span className="text-[var(--color-text-primary)] text-sm font-bold">{currentLevel}</span>
-              </div>
-              <span className="text-[var(--color-text-muted)] text-lg">→</span>
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--color-accent)]/20 border border-[var(--color-accent)]/30">
-                <span className="text-[var(--color-accent)] text-sm">★</span>
-                <span className="text-[var(--color-accent)] text-sm font-bold">{currentLevel + 1}</span>
-              </div>
+          {/* 레벨 변화 표시 */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 px-3 py-1 rounded-lg bg-[var(--color-bg-elevated-2)]">
+              <span className="text-[var(--color-accent)]">★</span>
+              <span className="text-[var(--color-text-primary)] font-bold">{currentLevel}</span>
+            </div>
+            <span className="text-[var(--color-text-muted)] text-xl">→</span>
+            <div className="flex items-center gap-1 px-3 py-1 rounded-lg bg-[var(--color-accent)]/20 border border-[var(--color-accent)]/30">
+              <span className="text-[var(--color-accent)]">★</span>
+              <span className="text-[var(--color-accent)] font-bold">{currentLevel + 1}</span>
             </div>
           </div>
-        </div>
 
-        {/* 대장장이 코멘트 - 모바일에서 숨김 가능 */}
-        <p className="hidden sm:block mt-3 text-xs text-[var(--color-text-secondary)] italic">"{comment}"</p>
+          {/* 대장장이 코멘트 */}
+          <p className="text-xs text-[var(--color-text-secondary)] italic text-center">"{comment}"</p>
+        </div>
       </div>
 
       {/* Stats */}
@@ -162,7 +164,7 @@ export default function EquipmentEnhancePanel({
             <span className="text-xs text-[var(--color-text-secondary)]">강화 확률</span>
             {chanceTimeActive && (
               <span className="text-xs font-bold text-[var(--color-accent)] bg-[var(--color-accent)]/20 px-2 py-1 rounded animate-pulse">
-                🔥 찬스타임!
+                찬스타임!
               </span>
             )}
           </div>
@@ -226,8 +228,7 @@ export default function EquipmentEnhancePanel({
         <div className="space-y-2">
           {/* 다음 레벨 100% 성공 */}
           {isNextSpecialLevel && (
-            <div className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-[var(--color-success)]/10 border border-[var(--color-success)]/30">
-              <span className="text-lg">🌟</span>
+            <div className="flex items-center justify-center py-2 px-3 rounded-lg bg-[var(--color-success)]/10 border border-[var(--color-success)]/30">
               <span className="text-[var(--color-success)] text-sm font-medium">다음 레벨 100% 성공!</span>
             </div>
           )}
@@ -235,10 +236,7 @@ export default function EquipmentEnhancePanel({
           {/* 연속 실패 카운터 */}
           {consecutiveFails > 0 && !chanceTimeActive && (
             <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/30">
-              <div className="flex items-center gap-2">
-                <span className="text-base">⚡</span>
-                <span className="text-[var(--color-accent)] text-sm">연속 실패</span>
-              </div>
+              <span className="text-[var(--color-accent)] text-sm">연속 실패</span>
               <div className="flex items-center gap-1">
                 {[1, 2].map(i => (
                   <div
@@ -253,8 +251,7 @@ export default function EquipmentEnhancePanel({
 
           {/* 파괴 경고 */}
           {canDestroy && !chanceTimeActive && (
-            <div className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/30">
-              <span className="text-base">⚠️</span>
+            <div className="flex items-center justify-center py-2 px-3 rounded-lg bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/30">
               <span className="text-[var(--color-danger)] text-sm font-medium">파괴 위험!</span>
             </div>
           )}
@@ -262,7 +259,7 @@ export default function EquipmentEnhancePanel({
 
         {/* 마지막 결과 */}
         {lastResult && !isEnhancing && (
-          <div className={`flex items-center justify-center gap-2 py-3 rounded-lg ${
+          <div className={`flex items-center justify-center py-3 rounded-lg ${
             lastResult === 'success'
               ? 'bg-[var(--color-success)]/20 border border-[var(--color-success)]/50'
               : lastResult === 'maintain'
@@ -270,16 +267,10 @@ export default function EquipmentEnhancePanel({
               : 'bg-[var(--color-danger)]/20 border border-[var(--color-danger)]/50'
           }`}>
             {lastResult === 'success' && (
-              <>
-                <span className="text-2xl">✨</span>
-                <span className="text-[var(--color-success)] font-bold">강화 성공!</span>
-              </>
+              <span className="text-[var(--color-success)] font-bold">강화 성공!</span>
             )}
             {lastResult === 'maintain' && (
-              <>
-                <span className="text-2xl">😅</span>
-                <span className="text-[var(--color-accent)] font-bold">실패... 레벨 유지</span>
-              </>
+              <span className="text-[var(--color-accent)] font-bold">실패... 레벨 유지</span>
             )}
           </div>
         )}
@@ -289,12 +280,9 @@ export default function EquipmentEnhancePanel({
           {/* 비용 표시 */}
           <div className="flex items-center justify-between px-1">
             <span className="text-xs text-[var(--color-text-muted)]">강화 비용</span>
-            <div className="flex items-center gap-1.5">
-              <span className="text-lg">🪙</span>
-              <span className={`font-bold ${canAfford ? 'text-[var(--color-accent)]' : 'text-[var(--color-danger)]'}`}>
-                {enhanceCost.toLocaleString()}
-              </span>
-            </div>
+            <span className={`font-bold ${canAfford ? 'text-[var(--color-accent)]' : 'text-[var(--color-danger)]'}`}>
+              {enhanceCost.toLocaleString()} G
+            </span>
           </div>
 
           {/* 강화 버튼 - 더 크고 터치 친화적 */}
@@ -309,23 +297,8 @@ export default function EquipmentEnhancePanel({
                 <span>강화 중...</span>
               </span>
             ) : (
-              <span className="flex items-center justify-center gap-2">
-                {chanceTimeActive ? (
-                  <>
-                    <span className="text-xl">🔥</span>
-                    <span>찬스타임 강화!</span>
-                  </>
-                ) : canDestroy ? (
-                  <>
-                    <span className="text-xl">⚠️</span>
-                    <span>위험! 강화하기</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-xl">⬆️</span>
-                    <span>강화하기</span>
-                  </>
-                )}
+              <span>
+                {chanceTimeActive ? '찬스타임 강화!' : canDestroy ? '위험! 강화하기' : '강화하기'}
               </span>
             )}
           </button>
