@@ -1,4 +1,10 @@
 import type { UserWeapon } from './weapon'
+import type { CharacterStats } from './stats'
+import type { UserEquipment } from './equipment'
+
+// =============================================
+// AI 대결 (기존)
+// =============================================
 
 // 대결 상태
 export type BattleStatus = 'idle' | 'matchmaking' | 'fighting' | 'finished'
@@ -111,4 +117,159 @@ export function calculateBattleReward(
     const reward = baseLoseReward + playerAttack * loseAttackFactor + playerLevel * loseLevelFactor
     return Math.floor(reward * difficultyMultiplier)
   }
+}
+
+// =============================================
+// PvP 대결 (신규)
+// =============================================
+
+// PvP 배틀 상태
+export type PvPBattleStatus = 'idle' | 'searching' | 'calculating' | 'finished'
+
+// PvP 결과
+export type PvPBattleResult = 'attacker_win' | 'defender_win' | 'draw'
+
+// 플레이어 스냅샷 (비동기 PvP용)
+export interface PvPPlayerSnapshot {
+  id: string
+  visibleId: string             // 표시용 ID
+  username: string
+  combatPower: number
+  stats: CharacterStats
+  equipment: UserEquipment[]     // 착용 장비 스냅샷
+  createdAt: Date
+}
+
+// PvP 배틀 기록
+export interface PvPBattle {
+  id: string
+  attackerId: string
+  defenderId: string
+  attacker: PvPPlayerSnapshot
+  defender: PvPPlayerSnapshot
+
+  // 배틀 계산 상세
+  attackerDamageDealt: number
+  defenderDamageDealt: number
+  attackerCritTriggered: boolean
+  defenderCritTriggered: boolean
+
+  // 결과
+  winnerId: string | null        // null = 무승부
+  result: PvPBattleResult
+  attackerReward: number
+  defenderReward: number
+
+  // 레이팅 변화
+  attackerRatingChange: number
+  defenderRatingChange: number
+
+  createdAt: Date
+}
+
+// PvP 티어
+export type PvPTier = 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond' | 'master' | 'grandmaster'
+
+export const PVP_TIERS: PvPTier[] = [
+  'bronze', 'silver', 'gold', 'platinum', 'diamond', 'master', 'grandmaster'
+]
+
+export const PVP_TIER_THRESHOLDS: Record<PvPTier, number> = {
+  bronze: 0,
+  silver: 1100,
+  gold: 1300,
+  platinum: 1500,
+  diamond: 1700,
+  master: 1900,
+  grandmaster: 2100,
+}
+
+export const PVP_TIER_NAMES: Record<PvPTier, string> = {
+  bronze: '브론즈',
+  silver: '실버',
+  gold: '골드',
+  platinum: '플래티넘',
+  diamond: '다이아몬드',
+  master: '마스터',
+  grandmaster: '그랜드마스터',
+}
+
+export const PVP_TIER_COLORS: Record<PvPTier, string> = {
+  bronze: 'text-amber-600',
+  silver: 'text-gray-400',
+  gold: 'text-yellow-400',
+  platinum: 'text-cyan-400',
+  diamond: 'text-blue-400',
+  master: 'text-purple-400',
+  grandmaster: 'text-red-400',
+}
+
+export const PVP_TIER_EMOJIS: Record<PvPTier, string> = {
+  bronze: '🥉',
+  silver: '🥈',
+  gold: '🥇',
+  platinum: '💎',
+  diamond: '💠',
+  master: '👑',
+  grandmaster: '🏆',
+}
+
+// PvP 랭킹
+export interface PvPRanking {
+  userId: string
+  username: string
+  rating: number
+  wins: number
+  losses: number
+  draws: number
+  winStreak: number
+  highestRating: number
+  combatPower: number
+  rank: number
+  tier: PvPTier
+}
+
+// PvP 설정
+export const PVP_CONFIG = {
+  baseWinReward: 500,
+  baseLoseReward: 100,
+  baseDrawReward: 250,
+  ratingBaseChange: 25,
+  streakBonus: 0.1,           // 연승 보너스 10%
+  powerDifferenceBonus: 0.05, // 강자 격파 보너스
+  dailyBattleLimit: 10,       // 일일 PvP 횟수 제한
+  matchmakingRange: 200,      // 레이팅 매칭 범위
+}
+
+// 레이팅으로 티어 결정
+export function getTierFromRating(rating: number): PvPTier {
+  const tiers = [...PVP_TIERS].reverse()
+  for (const tier of tiers) {
+    if (rating >= PVP_TIER_THRESHOLDS[tier]) {
+      return tier
+    }
+  }
+  return 'bronze'
+}
+
+// ELO 레이팅 변화 계산
+export function calculateRatingChange(
+  winnerRating: number,
+  loserRating: number,
+  isDraw: boolean = false
+): { winnerChange: number; loserChange: number } {
+  const K = 32 // K-factor
+
+  const expectedWinner = 1 / (1 + Math.pow(10, (loserRating - winnerRating) / 400))
+  const expectedLoser = 1 - expectedWinner
+
+  if (isDraw) {
+    const change = Math.round(K * (0.5 - expectedWinner))
+    return { winnerChange: change, loserChange: -change }
+  }
+
+  const winnerChange = Math.round(K * (1 - expectedWinner))
+  const loserChange = Math.round(K * (0 - expectedLoser))
+
+  return { winnerChange, loserChange }
 }
