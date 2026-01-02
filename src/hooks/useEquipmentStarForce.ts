@@ -8,6 +8,7 @@ import {
   isSpecialLevel,
   executeEnhance,
   getDangerLevel,
+  MAX_STAR_LEVEL,
 } from '../utils/starforce'
 import { calculateEquipmentStats } from '../types/equipment'
 import { calculateCombatPower } from '../types/stats'
@@ -36,8 +37,10 @@ export function useEquipmentStarForce(options: UseEquipmentStarForceOptions = {}
     setIsDestroyed(false)
   }, [])
 
+  const isMaxLevel = level >= MAX_STAR_LEVEL
+
   const enhance = useCallback(async (): Promise<EnhanceResult | null> => {
-    if (!selectedEquipment || isEnhancing || isDestroyed) return null
+    if (!selectedEquipment || isEnhancing || isDestroyed || level >= MAX_STAR_LEVEL) return null
 
     setIsEnhancing(true)
     setLastResult(null)
@@ -129,6 +132,7 @@ export function useEquipmentStarForce(options: UseEquipmentStarForceOptions = {}
     combatPowerGain,
 
     // Level info
+    isMaxLevel,
     isNextSpecialLevel: isSpecialLevel(level + 1),
     dangerLevel: getDangerLevel(level),
     canDestroy: destroyRate > 0,

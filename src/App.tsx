@@ -14,7 +14,7 @@ import { BattleCardSelect } from './components/BattleCardSelect'
 import { LiveFeed } from './components/LiveFeed'
 import { DestroyEffect } from './components/DestroyEffect'
 import { EnhanceEffect } from './components/EnhanceEffect'
-import { EquipmentSlots, EquipmentInventory, EquipmentImage, EquipmentEnhancePanel, EquipmentSellPanel } from './components/equipment'
+import { EquipmentSlots, EquipmentInventory, EquipmentImage, EquipmentEnhancePanel, EquipmentSellPanel, EquipmentDisplay } from './components/equipment'
 import { StatsPanel } from './components/stats'
 import { PotentialPanel } from './components/potential'
 import { GachaPanel } from './components/gacha'
@@ -29,10 +29,73 @@ import { useBattleCards } from './hooks/useBattleCards'
 import { useEquipment } from './hooks/useEquipment'
 import { getTotalAttack } from './utils/starforce'
 import type { AIDifficulty } from './types/battle'
-import type { UserWeapon } from './types/weapon'
+import type { UserWeapon, WeaponType, WeaponLevel } from './types/weapon'
 import { getEquipmentName } from './types/equipment'
 import type { EquipmentSlot, UserEquipment } from './types/equipment'
 // import { getWeaponComment } from './types/weapon'  // Legacy weapon system
+
+// 장착된 모든 장비 → 배틀용 무기 변환 (전체 스탯 기반)
+function createBattleWeaponFromEquipment(
+  equippedItems: Partial<Record<EquipmentSlot, UserEquipment>>,
+  totalStats: { attack: number }
+): UserWeapon | null {
+  const equippedWeapon = equippedItems.weapon
+
+  // 장착된 장비가 하나도 없으면 null
+  const hasAnyEquipment = Object.values(equippedItems).some(e => e !== undefined)
+  if (!hasAnyEquipment) return null
+
+  // 무기가 있으면 무기 정보 사용, 없으면 기본값
+  if (equippedWeapon) {
+    const weaponLevels: WeaponLevel[] = equippedWeapon.equipmentBase.levels.map(level => ({
+      name: level.name,
+      comment: level.comment,
+      image: level.image,
+    }))
+
+    const weaponType: WeaponType = {
+      id: equippedWeapon.equipmentBase.id,
+      category: 'hammer',
+      baseAttack: equippedWeapon.equipmentBase.baseStats.attack || 0,
+      sellPriceBase: 0,
+      emoji: equippedWeapon.equipmentBase.emoji,
+      levels: weaponLevels,
+    }
+
+    return {
+      id: equippedWeapon.id,
+      weaponTypeId: equippedWeapon.equipmentBaseId,
+      weaponType,
+      starLevel: equippedWeapon.starLevel,
+      isDestroyed: false,
+      consecutiveFails: equippedWeapon.consecutiveFails,
+      createdAt: equippedWeapon.createdAt,
+      totalAttack: totalStats.attack, // 모든 장비의 총 공격력
+    }
+  }
+
+  // 무기 없이 다른 장비만 있는 경우 (맨손 전투)
+  const anyEquipment = Object.values(equippedItems).find(e => e !== undefined)!
+  const defaultWeaponType: WeaponType = {
+    id: 'unarmed',
+    category: 'club',
+    baseAttack: 0,
+    sellPriceBase: 0,
+    emoji: '👊',
+    levels: [{ name: '맨손', comment: '장비의 힘으로 싸웁니다.', image: undefined }],
+  }
+
+  return {
+    id: 'equipped-stats',
+    weaponTypeId: 'unarmed',
+    weaponType: defaultWeaponType,
+    starLevel: 0,
+    isDestroyed: false,
+    consecutiveFails: 0,
+    createdAt: anyEquipment.createdAt,
+    totalAttack: totalStats.attack, // 모든 장비의 총 공격력
+  }
+}
 
 type GameView = 'acquire' | 'main'
 
@@ -119,7 +182,14 @@ function GameContent() {
     onChanceTimeActivated: () => {},
   })
 
-  const battleSystem = useBattle(localWeapon)
+  // 배틀용 무기: 모든 장착 장비의 총 스탯 기반
+  const equippedStats = equipmentSystem.getEquippedStats()
+  const battleWeapon: UserWeapon | null = createBattleWeaponFromEquipment(
+    equipmentSystem.equipped,
+    equippedStats
+  ) || localWeapon // 장비가 없으면 레거시 무기 폴백
+
+  const battleSystem = useBattle(battleWeapon)
   const battleCards = useBattleCards()
 
   // 대기 중인 난이도 (카드 선택 대기)
@@ -460,95 +530,65 @@ function GameContent() {
             {/* 강화 탭 */}
             {activeTab === 'enhance' && (
               <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-                {/* 장비 선택 - 모바일: 가로 스크롤, 데스크탑: 세로 리스트 */}
-                <div className="lg:w-80 flex-shrink-0">
-                  {/* 모바일: 가로 스크롤 카드 */}
-                  <div className="lg:hidden">
-                    <div className="flex items-center justify-between mb-2 px-1">
-                      <h2 className="text-sm font-bold text-[var(--color-text-primary)] flex items-center gap-2">
-                        <span>⬆️</span>
-                        강화할 장비
-                      </h2>
-                      <span className="text-xs text-[var(--color-text-muted)]">{equipmentSystem.inventory.length}개</span>
+                {/* 좌측: 장비 디스플레이 + 장비 선택 */}
+                <div className="lg:w-80 flex-shrink-0 space-y-4">
+                  {/* 장비 디스플레이 (선택된 장비) */}
+                  {equipmentStarForce.selectedEquipment && !equipmentStarForce.isDestroyed && (
+                    <EquipmentDisplay
+                      equipment={equipmentStarForce.selectedEquipment}
+                      isEnhancing={equipmentStarForce.isEnhancing}
+                    />
+                  )}
+                  {!equipmentStarForce.selectedEquipment && (
+                    <div className="card p-8 text-center">
+                      <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[var(--color-bg-elevated-2)] flex items-center justify-center">
+                        <span className="text-4xl">⬆️</span>
+                      </div>
+                      <p className="text-[var(--color-text-secondary)]">
+                        아래에서 강화할 장비를 선택하세요
+                      </p>
                     </div>
-                    <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
-                      {sortedInventory.map(equip => (
-                        <button
-                          key={equip.id}
-                          onClick={() => equipmentStarForce.selectEquipment(equip)}
-                          className={`
-                            flex-shrink-0 w-20 flex flex-col items-center gap-1 p-2 rounded-xl snap-start
-                            bg-[var(--color-bg-elevated-1)] border-2 transition-all
-                            ${equipmentStarForce.selectedEquipment?.id === equip.id
-                              ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10'
-                              : 'border-[var(--color-border)]'
-                            }
-                          `}
-                        >
-                          <div className="relative">
-                            <EquipmentImage equipment={equip} size="lg" />
-                            {equip.starLevel > 0 && (
-                              <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[var(--color-accent)] text-black text-[10px] font-bold flex items-center justify-center">
-                                {equip.starLevel}
-                              </div>
-                            )}
-                          </div>
-                          <span className="text-[10px] text-[var(--color-text-secondary)] truncate w-full text-center">
-                            {getEquipmentName(equip.equipmentBase, equip.starLevel).split(' ')[0]}
-                          </span>
-                          {equip.isEquipped && (
-                            <span className="text-[8px] text-[var(--color-success)] font-bold">장착중</span>
-                          )}
-                        </button>
-                      ))}
-                      {sortedInventory.length === 0 && (
-                        <div className="flex-1 text-center py-4 text-[var(--color-text-muted)] text-sm">
-                          장비가 없습니다
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  )}
 
-                  {/* 데스크탑: 세로 리스트 */}
-                  <div className="hidden lg:block card">
-                    <div className="card-header">
-                      <h2 className="text-base font-bold text-[var(--color-text-primary)] flex items-center gap-2">
-                        <span className="text-xl">⬆️</span>
-                        강화할 장비
-                      </h2>
+                  {/* 장비 선택 리스트 */}
+                  <div className="card">
+                    <div className="card-header py-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-[var(--color-text-primary)]">보유 장비</h3>
+                        <span className="text-xs text-[var(--color-text-muted)]">{equipmentSystem.inventory.length}개</span>
+                      </div>
                     </div>
-                    <div className="card-body">
-                      <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                    <div className="card-body py-2">
+                      {/* 가로 스크롤 그리드 */}
+                      <div className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3">
                         {sortedInventory.map(equip => (
                           <button
                             key={equip.id}
                             onClick={() => equipmentStarForce.selectEquipment(equip)}
                             className={`
-                              list-item w-full min-h-[56px]
+                              flex-shrink-0 w-16 flex flex-col items-center gap-1 p-2 rounded-lg transition-all
                               ${equipmentStarForce.selectedEquipment?.id === equip.id
-                                ? 'ring-2 ring-[var(--color-primary)] bg-[var(--color-primary)]/10'
-                                : ''
+                                ? 'bg-[var(--color-primary)]/20 ring-2 ring-[var(--color-primary)]'
+                                : 'bg-[var(--color-bg-elevated-2)] hover:bg-[var(--color-bg-elevated-3)]'
                               }
                             `}
                           >
-                            <EquipmentImage equipment={equip} size="lg" />
-                            <div className="list-item-content">
-                              <span className="list-item-title">
-                                {getEquipmentName(equip.equipmentBase, equip.starLevel)}
-                              </span>
-                              <span className="list-item-subtitle text-[var(--color-accent)]">
-                                ★ {equip.starLevel}
-                              </span>
+                            <div className="relative">
+                              <EquipmentImage equipment={equip} size="md" />
+                              {equip.starLevel > 0 && (
+                                <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--color-accent)] text-black text-[8px] font-bold flex items-center justify-center">
+                                  {equip.starLevel}
+                                </div>
+                              )}
                             </div>
-                            {equip.isEquipped && (
-                              <span className="badge badge-success">장착</span>
-                            )}
+                            <span className="text-[9px] text-[var(--color-text-secondary)] truncate w-full text-center">
+                              {getEquipmentName(equip.equipmentBase, equip.starLevel).split(' ')[0]}
+                            </span>
                           </button>
                         ))}
                         {sortedInventory.length === 0 && (
-                          <div className="empty-state">
-                            <span className="empty-state-icon">📦</span>
-                            <span className="empty-state-text">장비가 없습니다</span>
+                          <div className="flex-1 text-center py-4 text-[var(--color-text-muted)] text-sm">
+                            장비가 없습니다
                           </div>
                         )}
                       </div>
@@ -574,6 +614,7 @@ function GameContent() {
                     combatPowerGain={equipmentStarForce.combatPowerGain}
                     consecutiveFails={equipmentStarForce.consecutiveFails}
                     chanceTimeActive={equipmentStarForce.chanceTimeActive}
+                    isMaxLevel={equipmentStarForce.isMaxLevel}
                     isNextSpecialLevel={equipmentStarForce.isNextSpecialLevel}
                     canDestroy={equipmentStarForce.canDestroy}
                     onEnhance={async () => {
@@ -587,17 +628,24 @@ function GameContent() {
               </div>
             )}
 
-            {/* 대결 탭 (기존 무기 시스템) */}
+            {/* 대결 탭 (장비 시스템 무기 사용) */}
             {activeTab === 'battle' && (
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* 좌측: 무기 + 실시간 피드 */}
                 <div className="lg:w-80 flex-shrink-0 space-y-4">
                   {/* 무기 디스플레이 */}
-                  {localWeapon && (
+                  {battleWeapon && (
                     <WeaponDisplay
-                      weapon={localWeapon}
-                      isEnhancing={starForce.isEnhancing}
+                      weapon={battleWeapon}
+                      isEnhancing={false}
                     />
+                  )}
+                  {!battleWeapon && (
+                    <div className="card p-6 text-center">
+                      <p className="text-[var(--color-text-secondary)]">
+                        무기를 장착해주세요
+                      </p>
+                    </div>
                   )}
 
                   {/* 실시간 피드 */}
@@ -606,10 +654,10 @@ function GameContent() {
 
                 {/* 우측: 액션 패널 */}
                 <div className="flex-1 max-w-md">
-                  {localWeapon && (
+                  {battleWeapon && (
                     battleSystem.status === 'idle' ? (
                       <BattleMatchmaking
-                        weapon={localWeapon}
+                        weapon={battleWeapon}
                         onSelectDifficulty={handleStartBattle}
                         getExpectedReward={battleSystem.getExpectedReward}
                         battlesRemaining={dailyBattle.battlesRemaining}
@@ -625,6 +673,13 @@ function GameContent() {
                         onClaimReward={handleClaimBattleReward}
                       />
                     )
+                  )}
+                  {!battleWeapon && (
+                    <div className="card p-6 text-center">
+                      <p className="text-[var(--color-text-secondary)]">
+                        장비 탭에서 무기를 장착한 후<br />대결에 참여할 수 있습니다.
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>

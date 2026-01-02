@@ -1,7 +1,6 @@
 import type { UserEquipment } from '../../types/equipment'
 import { getEquipmentDisplayName, getEquipmentComment } from '../../types/equipment'
 import type { EnhanceResult } from '../../types/starforce'
-import EquipmentImage from './EquipmentImage'
 
 interface EquipmentEnhancePanelProps {
   equipment: UserEquipment | null
@@ -23,6 +22,7 @@ interface EquipmentEnhancePanelProps {
   // Chance time
   consecutiveFails: number
   chanceTimeActive: boolean
+  isMaxLevel: boolean
   isNextSpecialLevel: boolean
   canDestroy: boolean
 
@@ -47,6 +47,7 @@ export default function EquipmentEnhancePanel({
   combatPowerGain,
   consecutiveFails,
   chanceTimeActive,
+  isMaxLevel,
   isNextSpecialLevel,
   canDestroy,
   onEnhance,
@@ -88,8 +89,31 @@ export default function EquipmentEnhancePanel({
     )
   }
 
+  // 최대 레벨 도달
+  if (isMaxLevel) {
+    return (
+      <div className="card">
+        <div className="card-body text-center py-6 sm:py-8">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center animate-pulse">
+            <span className="text-2xl font-bold text-white">★25</span>
+          </div>
+          <h2 className="text-lg sm:text-xl font-bold text-[var(--color-accent)] mb-2">최대 강화 달성!</h2>
+          <p className="text-[var(--color-text-secondary)] text-sm mb-2">
+            {getEquipmentDisplayName(equipment)}
+          </p>
+          <p className="text-[var(--color-text-muted)] text-xs">
+            더 이상 강화할 수 없습니다
+          </p>
+          <div className="mt-4 p-3 rounded-lg bg-[var(--color-bg-elevated-2)]">
+            <div className="text-xs text-[var(--color-text-muted)] mb-1">전투력</div>
+            <div className="text-xl font-bold text-[var(--color-accent)]">{currentCombatPower.toLocaleString()}</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const canAfford = gold >= enhanceCost
-  const displayName = getEquipmentDisplayName(equipment)
   const comment = getEquipmentComment(equipment.equipmentBase, currentLevel)
 
   // Button style based on state
@@ -105,39 +129,24 @@ export default function EquipmentEnhancePanel({
 
   return (
     <div className="card overflow-hidden">
-      {/* Header - 장비 이미지 중앙 배치 */}
+      {/* Header - 간소화된 레벨 변화 표시 */}
       <div className={`card-header ${chanceTimeActive ? 'bg-gradient-to-r from-amber-900/30 to-orange-900/30' : ''}`}>
-        {/* 장비 이미지 + 스타 레벨 - 중앙 크게 */}
         <div className="flex flex-col items-center gap-3">
-          <div className="relative">
-            <div className={`p-3 rounded-2xl bg-[var(--color-bg-elevated-2)] border-2 border-[var(--color-border)] ${chanceTimeActive ? 'animate-pulse border-[var(--color-accent)]' : ''}`}>
-              <EquipmentImage equipment={equipment} size="2xl" />
-            </div>
-            {currentLevel > 0 && (
-              <div className="absolute -top-2 -right-2 min-w-8 h-8 px-2 rounded-full bg-gradient-to-r from-[var(--color-accent)] to-orange-500 text-black text-sm font-bold flex items-center justify-center shadow-lg">
-                ★{currentLevel}
-              </div>
-            )}
-          </div>
-
-          {/* 장비 이름 */}
-          <h2 className="text-base sm:text-lg font-bold text-[var(--color-text-primary)] text-center">{displayName}</h2>
-
           {/* 레벨 변화 표시 */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 px-3 py-1 rounded-lg bg-[var(--color-bg-elevated-2)]">
-              <span className="text-[var(--color-accent)]">★</span>
-              <span className="text-[var(--color-text-primary)] font-bold">{currentLevel}</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 px-4 py-2 rounded-lg bg-[var(--color-bg-elevated-2)]">
+              <span className="text-[var(--color-accent)] text-lg">★</span>
+              <span className="text-[var(--color-text-primary)] font-bold text-xl">{currentLevel}</span>
             </div>
-            <span className="text-[var(--color-text-muted)] text-xl">→</span>
-            <div className="flex items-center gap-1 px-3 py-1 rounded-lg bg-[var(--color-accent)]/20 border border-[var(--color-accent)]/30">
-              <span className="text-[var(--color-accent)]">★</span>
-              <span className="text-[var(--color-accent)] font-bold">{currentLevel + 1}</span>
+            <span className="text-[var(--color-text-muted)] text-2xl">→</span>
+            <div className="flex items-center gap-1 px-4 py-2 rounded-lg bg-[var(--color-accent)]/20 border border-[var(--color-accent)]/30">
+              <span className="text-[var(--color-accent)] text-lg">★</span>
+              <span className="text-[var(--color-accent)] font-bold text-xl">{currentLevel + 1}</span>
             </div>
           </div>
 
           {/* 대장장이 코멘트 */}
-          <p className="text-xs text-[var(--color-text-secondary)] italic text-center">"{comment}"</p>
+          <p className="text-sm text-[var(--color-text-secondary)] italic text-center">"{comment}"</p>
         </div>
       </div>
 

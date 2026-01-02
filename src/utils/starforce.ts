@@ -1,5 +1,8 @@
 import type { EnhanceResult } from '../types/starforce'
 
+// 최대 스타포스 레벨
+export const MAX_STAR_LEVEL = 25
+
 /**
  * 특별 레벨 체크 (5, 10, 15, 20... → 100% 성공)
  */
