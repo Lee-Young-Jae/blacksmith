@@ -6,14 +6,12 @@ import EquipmentImage from './EquipmentImage'
 
 interface EquipmentSellPanelProps {
   equipment: UserEquipment | null
-  gold: number
   onSell: (equipment: UserEquipment) => Promise<void>
   onCancel: () => void
 }
 
 export default function EquipmentSellPanel({
   equipment,
-  gold,
   onSell,
   onCancel,
 }: EquipmentSellPanelProps) {

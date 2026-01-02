@@ -9,7 +9,7 @@ import { GoldDisplay } from './components/GoldDisplay'
 import { NavigationTabs, type TabType } from './components/NavigationTabs'
 import { BattleMatchmaking } from './components/BattleMatchmaking'
 import { BattleArena } from './components/BattleArena'
-import { SellPanel } from './components/SellPanel'
+// import { SellPanel } from './components/SellPanel'  // Legacy weapon sell
 import { LiveFeed } from './components/LiveFeed'
 import { DestroyEffect } from './components/DestroyEffect'
 import { EnhanceEffect } from './components/EnhanceEffect'
@@ -25,7 +25,7 @@ import { useStarForce } from './hooks/useStarForce'
 import { useEquipmentStarForce } from './hooks/useEquipmentStarForce'
 import { useBattle } from './hooks/useBattle'
 import { useEquipment } from './hooks/useEquipment'
-import { getTotalAttack, getSellPrice } from './utils/starforce'
+import { getTotalAttack } from './utils/starforce'
 import type { AIDifficulty } from './types/battle'
 import type { UserWeapon } from './types/weapon'
 import type { EquipmentSlot, UserEquipment } from './types/equipment'
@@ -191,26 +191,10 @@ function GameContent() {
     battleSystem.resetBattle()
   }
 
-  // 무기 판매
-  const handleSellWeapon = async () => {
-    if (!localWeapon) return
-    const sellPrice = calcSellPrice(localWeapon)
-    await userData.updateGold(gold + sellPrice)
-    await userData.removeWeapon()
-    setLocalWeapon(null)
-    setView('acquire')
-  }
-
-  // 판매 취소
-  const handleCancelSell = () => {
-    setActiveTab('enhance')
-  }
-
-  // 판매 가격 계산 (starforce.ts의 공식 사용)
-  const calcSellPrice = (weapon: UserWeapon): number => {
-    const basePrice = weapon.weaponType.sellPriceBase
-    return getSellPrice(weapon.starLevel, basePrice)
-  }
+  // Legacy weapon sell - now using equipment system
+  // const handleSellWeapon = async () => { ... }
+  // const handleCancelSell = () => { ... }
+  // const calcSellPrice = (weapon: UserWeapon): number => { ... }
 
   const hasWeapon = !!localWeapon && !localWeapon.isDestroyed
   const hasEquipment = equipmentSystem.inventory.length > 0
@@ -601,7 +585,6 @@ function GameContent() {
                 <div className="flex-1 max-w-md">
                   <EquipmentSellPanel
                     equipment={selectedSellEquipment}
-                    gold={gold}
                     onSell={async (equip) => {
                       const sellPrice = await equipmentSystem.sellEquipment(equip.id)
                       if (sellPrice > 0) {

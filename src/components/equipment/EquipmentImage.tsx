@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { UserEquipment, EquipmentBase } from '../../types/equipment'
 
 interface EquipmentImageProps {
@@ -36,13 +36,18 @@ export default function EquipmentImage({
   const base = equipment?.equipmentBase ?? propBase
   const level = equipment?.starLevel ?? propLevel ?? 0
 
+  // Reset error state when equipment or level changes
+  const imagePath = base?.levels[level]?.image ?? base?.levels[0]?.image
+  useEffect(() => {
+    setImageError(false)
+  }, [imagePath])
+
   if (!base) {
     return <span className={`${EMOJI_SIZE_CLASSES[size]} ${className}`}>❓</span>
   }
 
-  // Get the image path for the current star level
+  // Get the level data for display name
   const levelData = base.levels[level] ?? base.levels[0]
-  const imagePath = levelData?.image
 
   // If image path exists and no error, try to show image
   if (imagePath && !imageError) {
