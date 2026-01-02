@@ -562,22 +562,23 @@ function GameContent() {
 
             {/* 대결 탭 (기존 무기 시스템) */}
             {activeTab === 'battle' && (
-              <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-8">
-                {/* 실시간 피드 (데스크톱) */}
-                <div className="hidden lg:block">
+              <div className="flex flex-col lg:flex-row gap-6">
+                {/* 좌측: 무기 + 실시간 피드 */}
+                <div className="lg:w-80 flex-shrink-0 space-y-4">
+                  {/* 무기 디스플레이 */}
+                  {localWeapon && (
+                    <WeaponDisplay
+                      weapon={localWeapon}
+                      isEnhancing={starForce.isEnhancing}
+                    />
+                  )}
+
+                  {/* 실시간 피드 */}
                   <LiveFeed items={[]} />
                 </div>
 
-                {/* 무기 디스플레이 */}
-                {localWeapon && (
-                  <WeaponDisplay
-                    weapon={localWeapon}
-                    isEnhancing={starForce.isEnhancing}
-                  />
-                )}
-
-                {/* 액션 패널 */}
-                <div className="w-full max-w-sm">
+                {/* 우측: 액션 패널 */}
+                <div className="flex-1 max-w-md">
                   {localWeapon && (
                     battleSystem.status === 'idle' ? (
                       <BattleMatchmaking
@@ -673,10 +674,6 @@ function GameContent() {
               </div>
             )}
 
-            {/* 실시간 피드 (모바일) */}
-            <div className="mt-8 lg:hidden flex justify-center">
-              <LiveFeed items={[]} />
-            </div>
           </>
         )}
       </main>
