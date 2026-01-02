@@ -10,6 +10,7 @@ import type {
 } from '../types/battle'
 import { BATTLE_CONFIG, AI_DIFFICULTY_CONFIG, calculateBattleReward } from '../types/battle'
 import type { UserWeapon } from '../types/weapon'
+import type { BattleCard } from '../types/battleCard'
 
 // AI 무기 생성
 function generateAIWeapon(difficulty: AIDifficulty, playerAttack: number): UserWeapon {
@@ -50,6 +51,69 @@ function calculateDamage(attack: number): number {
   return Math.max(1, Math.floor(attack + randomBonus))
 }
 
+// 카드 효과 적용된 스탯 계산
+interface CardBonuses {
+  attackMultiplier: number
+  defenseMultiplier: number
+  critRateBonus: number
+  critDamageBonus: number
+  penetrationBonus: number
+  guaranteedCrit: boolean
+  damageReflect: number
+  firstStrikeDamage: number
+  goldMultiplier: number
+}
+
+function getCardBonuses(card: BattleCard | null): CardBonuses {
+  const bonuses: CardBonuses = {
+    attackMultiplier: 1,
+    defenseMultiplier: 1,
+    critRateBonus: 0,
+    critDamageBonus: 0,
+    penetrationBonus: 0,
+    guaranteedCrit: false,
+    damageReflect: 0,
+    firstStrikeDamage: 0,
+    goldMultiplier: 1,
+  }
+
+  if (!card) return bonuses
+
+  const { type, value } = card.effect
+
+  switch (type) {
+    case 'attack_boost':
+      bonuses.attackMultiplier = 1 + value / 100
+      break
+    case 'defense_boost':
+      bonuses.defenseMultiplier = 1 + value / 100
+      break
+    case 'crit_rate_boost':
+      bonuses.critRateBonus = value
+      break
+    case 'crit_damage_boost':
+      bonuses.critDamageBonus = value
+      break
+    case 'penetration_boost':
+      bonuses.penetrationBonus = value
+      break
+    case 'guaranteed_crit':
+      bonuses.guaranteedCrit = true
+      break
+    case 'damage_reflect':
+      bonuses.damageReflect = value / 100
+      break
+    case 'first_strike':
+      bonuses.firstStrikeDamage = value
+      break
+    case 'gold_bonus':
+      bonuses.goldMultiplier = 1 + value / 100
+      break
+  }
+
+  return bonuses
+}
+
 // AI 이름 생성
 const AI_NAMES = [
   '그림자 기사', '불의 마법사', '얼음 궁수', '대지의 전사',
@@ -85,15 +149,22 @@ export function useBattle(playerWeapon: UserWeapon | null) {
     }
   }, [playerWeapon])
 
-  // AI 대전 시작
-  const startBattle = useCallback(async (difficulty: AIDifficulty): Promise<{
+  // AI 대전 시작 (카드 효과 적용)
+  const startBattle = useCallback(async (
+    difficulty: AIDifficulty,
+    selectedCard: BattleCard | null = null
+  ): Promise<{
     result: BattleResult
     goldReward: number
+    cardUsed: BattleCard | null
   } | null> => {
     if (!playerWeapon || status !== 'idle') return null
 
     setSelectedDifficulty(difficulty)
     setStatus('matchmaking')
+
+    // 카드 보너스 계산
+    const cardBonuses = getCardBonuses(selectedCard)
 
     // 매칭 연출
     await new Promise(r => setTimeout(r, BATTLE_CONFIG.matchmakingDelay))
@@ -102,11 +173,14 @@ export function useBattle(playerWeapon: UserWeapon | null) {
     const aiWeapon = generateAIWeapon(difficulty, playerWeapon.totalAttack)
     const aiName = getRandomAIName()
 
+    // 카드 효과가 적용된 공격력
+    const boostedPlayerAttack = Math.floor(playerWeapon.totalAttack * cardBonuses.attackMultiplier)
+
     const player: BattleParticipant = {
       id: 'player',
       name: '나',
       weapon: playerWeapon,
-      baseAttack: playerWeapon.totalAttack,
+      baseAttack: boostedPlayerAttack,
       rollValue: 0,
       finalDamage: 0,
     }
@@ -137,9 +211,30 @@ export function useBattle(playerWeapon: UserWeapon | null) {
     // 대결 애니메이션
     await new Promise(r => setTimeout(r, BATTLE_CONFIG.animationDuration))
 
-    // 대미지 계산
-    player.finalDamage = calculateDamage(player.baseAttack)
+    // 대미지 계산 (카드 효과 적용)
+    let playerDamage = calculateDamage(player.baseAttack)
+
+    // 선제 공격 보너스
+    if (cardBonuses.firstStrikeDamage > 0) {
+      playerDamage += cardBonuses.firstStrikeDamage
+    }
+
+    // 치명타 처리 (확정 치명타 또는 치명타 확률 보너스)
+    const baseCritRate = 5 + cardBonuses.critRateBonus  // 기본 5% + 보너스
+    const isCrit = cardBonuses.guaranteedCrit || Math.random() * 100 < baseCritRate
+    if (isCrit) {
+      const critMultiplier = (150 + cardBonuses.critDamageBonus) / 100  // 기본 150% + 보너스
+      playerDamage = Math.floor(playerDamage * critMultiplier)
+    }
+
+    player.finalDamage = playerDamage
     opponent.finalDamage = calculateDamage(opponent.baseAttack)
+
+    // 데미지 반사 처리
+    if (cardBonuses.damageReflect > 0) {
+      const reflectedDamage = Math.floor(opponent.finalDamage * cardBonuses.damageReflect)
+      player.finalDamage += reflectedDamage
+    }
 
     // 승패 결정
     let result: BattleResult
@@ -153,13 +248,14 @@ export function useBattle(playerWeapon: UserWeapon | null) {
       result = 'draw'
     }
 
-    // 보상 계산 (새 공식: 레벨 + 공격력 기반)
-    const goldReward = calculateBattleReward(
+    // 보상 계산 (카드 골드 보너스 적용)
+    let goldReward = calculateBattleReward(
       result,
-      player.baseAttack,
+      playerWeapon.totalAttack,  // 원본 공격력 기준
       playerWeapon.starLevel,
       config.rewardMultiplier
     )
+    goldReward = Math.floor(goldReward * cardBonuses.goldMultiplier)
 
     const finishedBattle: BattleMatch = {
       ...battle,
@@ -175,7 +271,7 @@ export function useBattle(playerWeapon: UserWeapon | null) {
     setCurrentBattle(finishedBattle)
     setStatus('finished')
 
-    return { result, goldReward }
+    return { result, goldReward, cardUsed: selectedCard }
   }, [playerWeapon, status])
 
   // 대결 리셋

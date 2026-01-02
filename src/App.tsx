@@ -9,6 +9,7 @@ import { GoldDisplay } from './components/GoldDisplay'
 import { NavigationTabs, type TabType } from './components/NavigationTabs'
 import { BattleMatchmaking } from './components/BattleMatchmaking'
 import { BattleArena } from './components/BattleArena'
+import { BattleCardSelect } from './components/BattleCardSelect'
 // import { SellPanel } from './components/SellPanel'  // Legacy weapon sell
 import { LiveFeed } from './components/LiveFeed'
 import { DestroyEffect } from './components/DestroyEffect'
@@ -24,6 +25,7 @@ import { useDailyBattle } from './hooks/useDailyBattle'
 import { useStarForce } from './hooks/useStarForce'
 import { useEquipmentStarForce } from './hooks/useEquipmentStarForce'
 import { useBattle } from './hooks/useBattle'
+import { useBattleCards } from './hooks/useBattleCards'
 import { useEquipment } from './hooks/useEquipment'
 import { getTotalAttack } from './utils/starforce'
 import type { AIDifficulty } from './types/battle'
@@ -118,6 +120,10 @@ function GameContent() {
   })
 
   const battleSystem = useBattle(localWeapon)
+  const battleCards = useBattleCards()
+
+  // 대기 중인 난이도 (카드 선택 대기)
+  const [pendingDifficulty, setPendingDifficulty] = useState<AIDifficulty | null>(null)
 
   // 로딩 화면
   if (authLoading || userData.isLoading || equipmentSystem.isLoading) {
@@ -168,10 +174,23 @@ function GameContent() {
     await userData.claimDailyReward(1000)
   }
 
-  // 대결 시작
+  // 대결 시작 - 카드 선택 화면 표시
   const handleStartBattle = async (difficulty: AIDifficulty) => {
     if (!dailyBattle.canBattle) return null
-    const battleResult = await battleSystem.startBattle(difficulty)
+    // 난이도 저장 후 카드 선택 화면 표시
+    setPendingDifficulty(difficulty)
+    battleCards.startCardSelection()
+    return null
+  }
+
+  // 카드 선택 후 실제 대결 시작
+  const handleCardSelected = async (cardIndex: number) => {
+    if (!pendingDifficulty) return
+
+    battleCards.selectCard(cardIndex)
+    const selectedCard = battleCards.cardSlots[cardIndex]?.card ?? null
+
+    const battleResult = await battleSystem.startBattle(pendingDifficulty, selectedCard)
 
     // 대결 종료 즉시 기록 (승패와 관계없이 횟수 차감)
     if (battleResult) {
@@ -179,7 +198,13 @@ function GameContent() {
       await dailyBattle.recordBattle(isWin, battleResult.goldReward)
     }
 
-    return battleResult
+    setPendingDifficulty(null)
+  }
+
+  // 카드 선택 취소
+  const handleCancelCardSelection = () => {
+    battleCards.cancelSelection()
+    setPendingDifficulty(null)
   }
 
   // 대결 보상 수령 (골드만 추가, 기록은 이미 완료)
@@ -190,6 +215,7 @@ function GameContent() {
   // 대결 종료
   const handleCloseBattle = () => {
     battleSystem.resetBattle()
+    battleCards.resetCards()
   }
 
   // Legacy weapon sell - now using equipment system
@@ -683,6 +709,17 @@ function GameContent() {
       <footer className="py-4 px-4 text-center text-[var(--color-text-muted)] text-xs border-t border-[var(--color-border)] bg-[var(--color-bg-elevated-1)]">
         <p>12성 이상에서 파괴 가능 | 2연속 실패 시 찬스타임 | 5, 10, 15, 20성 100% 성공</p>
       </footer>
+
+      {/* 배틀 카드 선택 */}
+      {battleCards.isSelectingCards && (
+        <BattleCardSelect
+          cardSlots={battleCards.cardSlots}
+          onReroll={battleCards.rerollCard}
+          onSelect={handleCardSelected}
+          onCancel={handleCancelCardSelection}
+          canReroll={battleCards.canReroll}
+        />
+      )}
     </div>
   )
 }
