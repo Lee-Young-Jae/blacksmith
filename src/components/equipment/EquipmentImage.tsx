@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { UserEquipment, EquipmentBase } from '../../types/equipment'
 
 interface EquipmentImageProps {
@@ -32,7 +32,8 @@ export default function EquipmentImage({
   size = 'md',
   className = '',
 }: EquipmentImageProps) {
-  const [imageError, setImageError] = useState(false)
+  // Track which image indices have failed to load
+  const [failedIndices, setFailedIndices] = useState<Set<number>>(new Set())
 
   // Get equipment base and star level from either source
   const base = equipment?.equipmentBase ?? propBase
@@ -42,13 +43,33 @@ export default function EquipmentImage({
   const maxLevel = base ? base.levels.length - 1 : 0
   const level = Math.min(rawLevel, maxLevel)
 
-  // Reset error state when equipment or level changes
-  const imagePath = base?.levels[level]?.image ?? base?.levels[0]?.image
   const equipmentId = equipment?.id ?? base?.id ?? ''
 
+  // Reset failed indices when equipment changes
   useEffect(() => {
-    setImageError(false)
-  }, [imagePath, equipmentId, level])
+    setFailedIndices(new Set())
+  }, [equipmentId, base?.id])
+
+  // Find the best available image path (current level, or fallback backwards)
+  const { imagePath, currentIndex } = useMemo(() => {
+    if (!base) return { imagePath: undefined, currentIndex: -1 }
+
+    // Start from current level and go backwards to find a working image
+    for (let i = level; i >= 0; i--) {
+      if (base.levels[i]?.image && !failedIndices.has(i)) {
+        return { imagePath: base.levels[i].image, currentIndex: i }
+      }
+    }
+
+    return { imagePath: undefined, currentIndex: -1 }
+  }, [base, level, failedIndices])
+
+  // Handle image load error - mark this index as failed and try next
+  const handleImageError = () => {
+    if (currentIndex >= 0) {
+      setFailedIndices(prev => new Set([...prev, currentIndex]))
+    }
+  }
 
   if (!base) {
     return <span className={`${EMOJI_SIZE_CLASSES[size]} ${className}`}>❓</span>
@@ -57,14 +78,14 @@ export default function EquipmentImage({
   // Get the level data for display name
   const levelData = base.levels[level] ?? base.levels[0]
 
-  // If image path exists and no error, try to show image
-  if (imagePath && !imageError) {
+  // If image path exists, try to show image
+  if (imagePath) {
     return (
       <img
         src={imagePath}
         alt={levelData?.name || base.levels[0].name}
         className={`${SIZE_CLASSES[size]} object-contain ${className}`}
-        onError={() => setImageError(true)}
+        onError={handleImageError}
       />
     )
   }

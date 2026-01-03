@@ -141,6 +141,8 @@ function GameContent() {
     onDestroy: async (equipment) => {
       await equipmentSystem.sellEquipment(equipment.id)
     },
+    // Sync with inventory for list updates
+    inventory: equipmentSystem.inventory,
   })
 
   // 무기 동기화

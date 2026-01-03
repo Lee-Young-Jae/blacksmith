@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import {
   getSuccessRate,
   getMaintainRate,
@@ -19,6 +19,8 @@ interface UseEquipmentStarForceOptions {
   onSuccess?: (equipment: UserEquipment, newLevel: number) => Promise<void>
   onMaintain?: (equipment: UserEquipment, newFails: number) => Promise<void>
   onDestroy?: (equipment: UserEquipment) => Promise<void>
+  // Inventory for syncing selected equipment
+  inventory?: UserEquipment[]
 }
 
 export function useEquipmentStarForce(options: UseEquipmentStarForceOptions = {}) {
@@ -26,6 +28,26 @@ export function useEquipmentStarForce(options: UseEquipmentStarForceOptions = {}
   const [isEnhancing, setIsEnhancing] = useState(false)
   const [lastResult, setLastResult] = useState<EnhanceResult | null>(null)
   const [isDestroyed, setIsDestroyed] = useState(false)
+
+  // Sync selected equipment with inventory changes
+  useEffect(() => {
+    if (!selectedEquipment || !options.inventory || isDestroyed) return
+
+    const updated = options.inventory.find(e => e.id === selectedEquipment.id)
+    if (updated) {
+      // Update if star level or consecutive fails changed
+      if (
+        updated.starLevel !== selectedEquipment.starLevel ||
+        updated.consecutiveFails !== selectedEquipment.consecutiveFails
+      ) {
+        setSelectedEquipment(updated)
+      }
+    } else {
+      // Equipment was removed (sold/destroyed)
+      setSelectedEquipment(null)
+      setIsDestroyed(false)
+    }
+  }, [options.inventory, selectedEquipment?.id, isDestroyed])
 
   const level = selectedEquipment?.starLevel ?? 0
   const consecutiveFails = selectedEquipment?.consecutiveFails ?? 0
