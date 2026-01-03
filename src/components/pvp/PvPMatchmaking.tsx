@@ -32,8 +32,7 @@ interface PvPMatchmakingProps {
     error: string | null
     isLoading: boolean
     searchOpponent: (combatPower: number) => Promise<boolean>
-    selectAttackDeck: (cards: CardSlots) => void
-    startBattle: (snapshot: BattleSnapshot, defenderCards: BattleCard[]) => Promise<any>
+    startBattle: (snapshot: BattleSnapshot, attackerCards: BattleCard[], defenderCards: BattleCard[]) => Promise<any>
     cancelSearch: () => void
     resetBattle: () => void
   }
@@ -252,7 +251,6 @@ export function PvPMatchmaking({
     error,
     isLoading,
     searchOpponent,
-    selectAttackDeck,
     startBattle,
     cancelSearch,
     resetBattle,
@@ -267,7 +265,10 @@ export function PvPMatchmaking({
 
   // 대전 시작
   const handleStartBattle = async () => {
-    selectAttackDeck(selectedCards)
+    // 공격 카드 변환
+    const attackCards = selectedCards
+      .filter((c): c is OwnedCard => c !== null)
+      .map(ownedCardToBattleCard)
 
     const snapshot: BattleSnapshot = {
       oderId: '', // 서버에서 채워짐
@@ -275,16 +276,13 @@ export function PvPMatchmaking({
       stats: playerStats,
       combatPower,
       equipment,
-      cards: selectedCards
-        .filter((c): c is OwnedCard => c !== null)
-        .map(ownedCardToBattleCard),
+      cards: attackCards,
       tier: 'bronze', // TODO: 실제 티어
       rating: myRating,
     }
 
-    // 상대 방어덱 카드 조회 필요 - 지금은 빈 배열로 시작
-    // 실제로는 상대 방어덱을 조회해야 함
-    const result = await startBattle(snapshot, [])
+    // 공격 카드를 직접 전달 (상대 방어덱은 빈 배열 - AI는 카드 없음)
+    const result = await startBattle(snapshot, attackCards, [])
 
     if (result && onGoldUpdate) {
       onGoldUpdate(result.attackerReward)

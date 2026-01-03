@@ -157,6 +157,7 @@ export interface RoundCardEffects {
   lifesteal: number
   doubleAttack: boolean
   stun: boolean
+  goldBonus: number
 }
 
 /**
@@ -193,6 +194,7 @@ export function parseCardEffects(card: BattleCard | null): RoundCardEffects {
     lifesteal: 0,
     doubleAttack: false,
     stun: false,
+    goldBonus: 0,
   }
 
   if (!card) return effects
@@ -242,9 +244,24 @@ export function parseCardEffects(card: BattleCard | null): RoundCardEffects {
     case 'stun':
       effects.stun = true
       break
+    case 'gold_bonus':
+      effects.goldBonus = value
+      break
   }
 
   return effects
+}
+
+/**
+ * 모든 카드에서 골드 보너스 합계를 계산합니다.
+ */
+export function calculateTotalGoldBonus(cards: BattleCard[]): number {
+  return cards.reduce((total, card) => {
+    if (card.effect.type === 'gold_bonus') {
+      return total + card.effect.value
+    }
+    return total
+  }, 0)
 }
 
 // =============================================

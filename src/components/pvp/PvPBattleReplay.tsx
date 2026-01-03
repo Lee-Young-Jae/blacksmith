@@ -128,6 +128,16 @@ export function PvPBattleReplay({
   const [showResult, setShowResult] = useState(false)
   const [rewardClaimed, setRewardClaimed] = useState(false)
 
+  // 새로운 배틀이 시작되면 상태 초기화
+  useEffect(() => {
+    if (battle && isPlaying) {
+      // 새 배틀 시작 시 상태 완전 초기화
+      setCurrentRoundIndex(0)
+      setShowResult(false)
+      setRewardClaimed(false)
+    }
+  }, [battle?.id, isPlaying])
+
   // 자동 재생
   useEffect(() => {
     if (!battle || !isPlaying) return
@@ -135,14 +145,14 @@ export function PvPBattleReplay({
     if (currentRoundIndex < battle.rounds.length) {
       const timer = setTimeout(() => {
         setCurrentRoundIndex(prev => prev + 1)
-      }, 1500) // 1.5초마다 다음 라운드
+      }, 2500) // 2.5초마다 다음 라운드
 
       return () => clearTimeout(timer)
     } else {
       // 모든 라운드 완료
       const timer = setTimeout(() => {
         setShowResult(true)
-      }, 1000)
+      }, 1500)
 
       return () => clearTimeout(timer)
     }
@@ -168,8 +178,8 @@ export function PvPBattleReplay({
     onClose()
   }
 
-  // 결과 화면
-  if (showResult || !isPlaying) {
+  // 결과 화면 (showResult가 true일 때만 표시)
+  if (showResult) {
     const isWin = battle.result === 'attacker_win'
     const isLose = battle.result === 'defender_win'
 
@@ -269,6 +279,63 @@ export function PvPBattleReplay({
         </div>
       </div>
 
+      {/* 스탯 비교 */}
+      <div className="bg-gray-700/30 rounded-lg p-2">
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          {/* 나 */}
+          <div className="bg-blue-900/30 rounded p-2">
+            <p className="text-blue-400 font-bold text-center mb-1">나</p>
+            <div className="grid grid-cols-3 gap-1 text-center">
+              <div>
+                <span className="text-red-400">{battle.attackerStats.attack}</span>
+                <p className="text-[9px] text-gray-500">공격</p>
+              </div>
+              <div>
+                <span className="text-blue-400">{battle.attackerStats.defense}</span>
+                <p className="text-[9px] text-gray-500">방어</p>
+              </div>
+              <div>
+                <span className="text-yellow-400">{battle.attackerStats.critRate}%</span>
+                <p className="text-[9px] text-gray-500">치확</p>
+              </div>
+            </div>
+          </div>
+          {/* 적 */}
+          <div className="bg-red-900/30 rounded p-2">
+            <p className="text-red-400 font-bold text-center mb-1">적</p>
+            <div className="grid grid-cols-3 gap-1 text-center">
+              <div>
+                <span className="text-red-400">{battle.defenderStats.attack}</span>
+                <p className="text-[9px] text-gray-500">공격</p>
+              </div>
+              <div>
+                <span className="text-blue-400">{battle.defenderStats.defense}</span>
+                <p className="text-[9px] text-gray-500">방어</p>
+              </div>
+              <div>
+                <span className="text-yellow-400">{battle.defenderStats.critRate}%</span>
+                <p className="text-[9px] text-gray-500">치확</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* 사용 카드 표시 */}
+        {(battle.attackerCards.length > 0 || battle.defenderCards.length > 0) && (
+          <div className="mt-2 pt-2 border-t border-gray-600/50 flex justify-between text-[10px]">
+            <div className="text-blue-300">
+              카드: {battle.attackerCards.length > 0
+                ? battle.attackerCards.map(c => c.emoji).join(' ')
+                : '없음'}
+            </div>
+            <div className="text-red-300">
+              카드: {battle.defenderCards.length > 0
+                ? battle.defenderCards.map(c => c.emoji).join(' ')
+                : '없음'}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* 라운드 카운터 */}
       <div className="text-center">
         <span className="text-yellow-400 font-bold text-lg">
@@ -295,8 +362,8 @@ export function PvPBattleReplay({
         />
       </div>
 
-      {/* 로딩 애니메이션 */}
-      <div className="flex justify-center">
+      {/* 컨트롤 버튼 */}
+      <div className="flex justify-center gap-3">
         <div className="flex gap-1">
           {[0, 1, 2].map(i => (
             <div
@@ -306,6 +373,12 @@ export function PvPBattleReplay({
             />
           ))}
         </div>
+        <button
+          onClick={() => setShowResult(true)}
+          className="px-4 py-1 bg-gray-700 text-gray-300 text-sm rounded hover:bg-gray-600 transition-colors"
+        >
+          스킵 →
+        </button>
       </div>
     </div>
   )

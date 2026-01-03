@@ -87,21 +87,42 @@ export function PvPArena({
           </div>
         </div>
 
-        {/* 랭킹 정보 */}
-        {pvpRanking.myRanking && (
-          <div className="text-right">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">{pvpRanking.getMyTierInfo()?.emoji}</span>
-              <span className={`font-bold ${pvpRanking.getMyTierInfo()?.color}`}>
-                {pvpRanking.getMyTierInfo()?.name}
-              </span>
+        {/* 랭킹 및 티켓 정보 */}
+        <div className="flex items-center gap-4">
+          {/* 티켓 */}
+          <div className="text-center">
+            <div className="flex items-center gap-1">
+              <span className="text-lg">🎫</span>
+              <span className="text-cyan-400 font-bold">{pvpRanking.totalTickets}</span>
             </div>
-            <p className="text-yellow-400 text-sm font-medium">
-              {pvpRanking.myRanking.rating} RP
-            </p>
+            <p className="text-gray-500 text-xs">티켓</p>
           </div>
-        )}
+
+          {/* 랭킹 정보 */}
+          {pvpRanking.myRanking && (
+            <div className="text-right">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{pvpRanking.getMyTierInfo()?.emoji}</span>
+                <span className={`font-bold ${pvpRanking.getMyTierInfo()?.color}`}>
+                  {pvpRanking.getMyTierInfo()?.name}
+                </span>
+              </div>
+              <p className="text-yellow-400 text-sm font-medium">
+                {pvpRanking.myRanking.rating} RP
+              </p>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* 티켓 안내 (티켓이 있을 때만 표시) */}
+      {pvpRanking.totalTickets > 0 && (
+        <div className="mb-4 p-3 bg-cyan-900/20 border border-cyan-500/30 rounded-lg">
+          <p className="text-cyan-400 text-sm text-center">
+            🎫 티켓은 특별 가챠, 시즌 상점에서 사용할 수 있습니다. (준비 중)
+          </p>
+        </div>
+      )}
 
       {/* 읽지 않은 방어전 알림 */}
       {pvpBattle.unreadDefenseBattles > 0 && (

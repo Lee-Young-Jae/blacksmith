@@ -40,6 +40,7 @@ interface UsePvPRankingReturn {
   myRanking: PvPRanking | null
   leaderboard: LeaderboardEntry[]
   currentSeason: PvPSeason | null
+  totalTickets: number
   isLoading: boolean
   error: string | null
 
@@ -58,6 +59,7 @@ interface UsePvPRankingReturn {
   // 주간 보상
   canClaimWeekly: () => boolean
   claimWeeklyReward: () => Promise<WeeklyReward | null>
+  loadTotalTickets: () => Promise<void>
 
   // 시즌
   loadCurrentSeason: () => Promise<void>
@@ -77,6 +79,7 @@ export function usePvPRanking(): UsePvPRankingReturn {
   const [myRanking, setMyRanking] = useState<PvPRanking | null>(null)
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [currentSeason, setCurrentSeason] = useState<PvPSeason | null>(null)
+  const [totalTickets, setTotalTickets] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -293,21 +296,37 @@ export function usePvPRanking(): UsePvPRankingReturn {
   const claimWeeklyReward = useCallback(async (): Promise<WeeklyReward | null> => {
     if (!user || !myRanking) return null
 
-    if (!canClaimWeekly()) {
-      setError('이미 이번 주 보상을 수령했습니다.')
-      return null
-    }
-
     try {
       const tierInfo = getTierInfo(myRanking.tier)
       const weekStart = getWeekStart()
+      const weekStartStr = weekStart.toISOString().split('T')[0]
+
+      // 먼저 이번 주 보상을 이미 받았는지 확인
+      const { data: existingReward } = await supabase
+        .from('pvp_weekly_rewards')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('week_start', weekStartStr)
+        .single()
+
+      if (existingReward) {
+        // 이미 받은 경우, lastWeeklyClaim 동기화 후 에러 표시
+        await supabase
+          .from('pvp_rankings')
+          .update({ last_weekly_claim: new Date().toISOString() })
+          .eq('user_id', user.id)
+
+        setMyRanking(prev => prev ? { ...prev, lastWeeklyClaim: new Date() } : null)
+        setError('이미 이번 주 보상을 수령했습니다.')
+        return null
+      }
 
       // 주간 보상 기록
       const { data, error: insertError } = await supabase
         .from('pvp_weekly_rewards')
         .insert({
           user_id: user.id,
-          week_start: weekStart.toISOString().split('T')[0],
+          week_start: weekStartStr,
           tier_at_claim: myRanking.tier,
           gold_reward: tierInfo.weeklyReward.gold,
           ticket_reward: tierInfo.weeklyReward.tickets,
@@ -315,7 +334,14 @@ export function usePvPRanking(): UsePvPRankingReturn {
         .select()
         .single()
 
-      if (insertError) throw insertError
+      if (insertError) {
+        // 중복 키 에러 처리 (race condition)
+        if (insertError.code === '23505') {
+          setError('이미 이번 주 보상을 수령했습니다.')
+          return null
+        }
+        throw insertError
+      }
 
       // 골드 지급
       const { data: profileData } = await supabase
@@ -353,7 +379,29 @@ export function usePvPRanking(): UsePvPRankingReturn {
       setError('주간 보상 수령에 실패했습니다.')
       return null
     }
-  }, [user, myRanking, canClaimWeekly])
+  }, [user, myRanking])
+
+  // =============================================
+  // 티켓 총량 조회
+  // =============================================
+
+  const loadTotalTickets = useCallback(async () => {
+    if (!user) return
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('pvp_weekly_rewards')
+        .select('ticket_reward')
+        .eq('user_id', user.id)
+
+      if (fetchError) throw fetchError
+
+      const total = (data || []).reduce((sum, row) => sum + (row.ticket_reward || 0), 0)
+      setTotalTickets(total)
+    } catch (err) {
+      console.error('Failed to load total tickets:', err)
+    }
+  }, [user])
 
   // =============================================
   // 시즌 정보
@@ -406,8 +454,9 @@ export function usePvPRanking(): UsePvPRankingReturn {
       loadMyRanking(),
       loadLeaderboard(),
       loadCurrentSeason(),
+      loadTotalTickets(),
     ])
-  }, [loadMyRanking, loadLeaderboard, loadCurrentSeason])
+  }, [loadMyRanking, loadLeaderboard, loadCurrentSeason, loadTotalTickets])
 
   // =============================================
   // 초기 로드
@@ -417,13 +466,15 @@ export function usePvPRanking(): UsePvPRankingReturn {
     if (user) {
       loadMyRanking()
       loadCurrentSeason()
+      loadTotalTickets()
     }
-  }, [user, loadMyRanking, loadCurrentSeason])
+  }, [user, loadMyRanking, loadCurrentSeason, loadTotalTickets])
 
   return {
     myRanking,
     leaderboard,
     currentSeason,
+    totalTickets,
     isLoading,
     error,
     loadMyRanking,
@@ -436,6 +487,7 @@ export function usePvPRanking(): UsePvPRankingReturn {
     getMyRank,
     canClaimWeekly,
     claimWeeklyReward,
+    loadTotalTickets,
     loadCurrentSeason,
     getDaysUntilSeasonEnd,
     refreshAll,

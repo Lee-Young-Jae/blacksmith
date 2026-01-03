@@ -22,7 +22,7 @@ import type {
 } from '../types/pvpBattle'
 import type { OwnedCard, CardSlots } from '../types/cardDeck'
 import { ownedCardToBattleCard } from '../types/cardDeck'
-import { calculatePvPBattle } from '../utils/pvpBattle'
+import { calculatePvPBattle, calculateTotalGoldBonus } from '../utils/pvpBattle'
 import { calculateRatingChange, getTierFromRating, calculateBattleRewards } from '../types/league'
 
 // =============================================
@@ -45,6 +45,7 @@ interface UsePvPBattleReturn {
   selectAttackDeck: (cards: CardSlots) => void
   startBattle: (
     attackerSnapshot: BattleSnapshot,
+    attackerCards: BattleCard[],
     defenderCards: BattleCard[]
   ) => Promise<PvPBattle | null>
   cancelSearch: () => void
@@ -91,24 +92,61 @@ const AI_NAMES = [
 ]
 
 function generateAIOpponent(playerCombatPower: number): PvPOpponent {
-  // 전투력 기반 AI 생성 (±20% 범위)
-  const variance = 0.2
-  const minPower = Math.floor(playerCombatPower * (1 - variance))
+  // 전투력 기반 AI 생성 (95%~105% 범위 - 더 정밀하게)
+  const variance = 0.05
+  const minPower = Math.max(100, Math.floor(playerCombatPower * (1 - variance)))
   const maxPower = Math.floor(playerCombatPower * (1 + variance))
-  const aiCombatPower = Math.floor(Math.random() * (maxPower - minPower + 1)) + minPower
+  const targetCombatPower = Math.floor(Math.random() * (maxPower - minPower + 1)) + minPower
 
-  // 전투력 비율로 스탯 계산
-  const powerRatio = aiCombatPower / 100
+  // 전투력 공식: attack*1 + defense*0.8 + hp*0.1 + critRate*5 + critDamage*0.5 + penetration*3 + attackSpeed*2
+  // 기본 스탯 기여도 (DEFAULT_STATS): 10 + 4 + 10 + 25 + 75 + 0 + 200 = 324
+  const baseContribution = 324
+  const bonusPower = Math.max(0, targetCombatPower - baseContribution)
+
+  // 랜덤 비율 생성 후 정규화하여 합계가 1.0이 되도록 함
+  const rawShares = {
+    attack: 0.15 + Math.random() * 0.15,    // 공격력 비중
+    defense: 0.08 + Math.random() * 0.08,   // 방어력 비중
+    hp: 0.20 + Math.random() * 0.15,        // HP 비중 (높음)
+    critRate: 0.08 + Math.random() * 0.07,  // 치명타율 비중
+    critDamage: 0.15 + Math.random() * 0.10, // 치명타뎀 비중
+    penetration: 0.05 + Math.random() * 0.05, // 관통력 비중
+    speed: 0.05 + Math.random() * 0.05,     // 공속 비중
+  }
+
+  // 정규화
+  const totalRaw = Object.values(rawShares).reduce((a, b) => a + b, 0)
+  const shares = {
+    attack: rawShares.attack / totalRaw,
+    defense: rawShares.defense / totalRaw,
+    hp: rawShares.hp / totalRaw,
+    critRate: rawShares.critRate / totalRaw,
+    critDamage: rawShares.critDamage / totalRaw,
+    penetration: rawShares.penetration / totalRaw,
+    speed: rawShares.speed / totalRaw,
+  }
 
   const stats: CharacterStats = {
-    attack: Math.floor(10 + powerRatio * 50),
-    defense: Math.floor(5 + powerRatio * 25),
-    hp: Math.floor(100 + powerRatio * 200),
-    critRate: Math.min(0.3, 0.05 + powerRatio * 0.01),
-    critDamage: 1.5 + Math.random() * 0.5,
-    penetration: Math.floor(powerRatio * 10),
-    attackSpeed: Math.floor(80 + Math.random() * 40),
+    // 기본값 + 보너스 (가중치로 나눠서 실제 스탯 증가량 계산)
+    attack: Math.floor(10 + (bonusPower * shares.attack) / 1.0),
+    defense: Math.floor(5 + (bonusPower * shares.defense) / 0.8),
+    hp: Math.floor(100 + (bonusPower * shares.hp) / 0.1),
+    critRate: Math.min(80, Math.floor(5 + (bonusPower * shares.critRate) / 5.0)),
+    critDamage: Math.floor(150 + (bonusPower * shares.critDamage) / 0.5),
+    penetration: Math.min(50, Math.floor((bonusPower * shares.penetration) / 3.0)),
+    attackSpeed: Math.floor(100 + (bonusPower * shares.speed) / 2.0),
   }
+
+  // 실제 계산된 전투력 확인
+  const actualPower = Math.floor(
+    stats.attack * 1.0 +
+    stats.defense * 0.8 +
+    stats.hp * 0.1 +
+    stats.critRate * 5.0 +
+    stats.critDamage * 0.5 +
+    stats.penetration * 3.0 +
+    stats.attackSpeed * 2.0
+  )
 
   // 레이팅은 전투력 기반 추정
   const baseRating = 800 + Math.floor(playerCombatPower / 10)
@@ -119,7 +157,7 @@ function generateAIOpponent(playerCombatPower: number): PvPOpponent {
     username: AI_NAMES[Math.floor(Math.random() * AI_NAMES.length)],
     rating,
     tier: getTierFromRating(rating),
-    combatPower: aiCombatPower,
+    combatPower: actualPower, // 실제 계산된 전투력 사용
     stats,
     cardCount: Math.floor(Math.random() * 4), // 0~3장
     isAI: true,
@@ -223,6 +261,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
 
   const startBattle = useCallback(async (
     attackerSnapshot: BattleSnapshot,
+    attackerCards: BattleCard[],
     defenderCards: BattleCard[]
   ): Promise<PvPBattle | null> => {
     if (!user || !opponent) {
@@ -232,6 +271,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
 
     setStatus('fighting')
     setError(null)
+    setAttackDeck(attackerCards) // 상태도 업데이트
 
     try {
       // 배틀 시뮬레이션
@@ -242,7 +282,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
         defenderName: opponent.username,
         attackerStats: attackerSnapshot.stats,
         defenderStats: opponent.stats,
-        attackerCards: attackDeck,
+        attackerCards, // 직접 전달받은 카드 사용
         defenderCards,
         isRevenge: false,
       })
@@ -277,7 +317,10 @@ export function usePvPBattle(): UsePvPBattleReturn {
         false
       )
 
-      battle.attackerReward = rewards.gold
+      // 골드 보너스 카드 효과 적용
+      const goldBonusPercent = calculateTotalGoldBonus(attackerCards)
+      const baseGold = rewards.gold
+      battle.attackerReward = Math.floor(baseGold * (1 + goldBonusPercent / 100))
 
       // 방어자 보상
       const defenderTier = getTierFromRating(defenderRating)
@@ -341,7 +384,8 @@ export function usePvPBattle(): UsePvPBattleReturn {
       }
 
       setCurrentBattle(battle)
-      setStatus('finished')
+      // status는 'fighting'으로 유지 - PvPBattleReplay 컴포넌트가 애니메이션을 관리
+      // 애니메이션 완료 후 사용자가 보상 받기를 클릭하면 resetBattle()이 호출됨
       return battle
     } catch (err) {
       console.error('Failed to execute battle:', err)
@@ -349,7 +393,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
       setStatus('idle')
       return null
     }
-  }, [user, opponent, attackDeck])
+  }, [user, opponent])
 
   // =============================================
   // 취소/리셋
