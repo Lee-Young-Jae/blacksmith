@@ -81,6 +81,52 @@ interface DefenseDeckRow {
 }
 
 // =============================================
+// AI 상대 생성 (폴백용)
+// =============================================
+
+const AI_NAMES = [
+  '수련생 고블린', '뜨내기 모험가', '떠돌이 기사', '숲의 정령',
+  '광산 드워프', '달빛 요정', '철벽 골렘', '야생의 늑대',
+  '그림자 도적', '숙련된 사냥꾼', '마법 수습생', '검은 기사',
+]
+
+function generateAIOpponent(playerCombatPower: number): PvPOpponent {
+  // 전투력 기반 AI 생성 (±20% 범위)
+  const variance = 0.2
+  const minPower = Math.floor(playerCombatPower * (1 - variance))
+  const maxPower = Math.floor(playerCombatPower * (1 + variance))
+  const aiCombatPower = Math.floor(Math.random() * (maxPower - minPower + 1)) + minPower
+
+  // 전투력 비율로 스탯 계산
+  const powerRatio = aiCombatPower / 100
+
+  const stats: CharacterStats = {
+    attack: Math.floor(10 + powerRatio * 50),
+    defense: Math.floor(5 + powerRatio * 25),
+    hp: Math.floor(100 + powerRatio * 200),
+    critRate: Math.min(0.3, 0.05 + powerRatio * 0.01),
+    critDamage: 1.5 + Math.random() * 0.5,
+    penetration: Math.floor(powerRatio * 10),
+    attackSpeed: Math.floor(80 + Math.random() * 40),
+  }
+
+  // 레이팅은 전투력 기반 추정
+  const baseRating = 800 + Math.floor(playerCombatPower / 10)
+  const rating = Math.max(100, baseRating + Math.floor((Math.random() - 0.5) * 200))
+
+  return {
+    userId: `ai_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    username: AI_NAMES[Math.floor(Math.random() * AI_NAMES.length)],
+    rating,
+    tier: getTierFromRating(rating),
+    combatPower: aiCombatPower,
+    stats,
+    cardCount: Math.floor(Math.random() * 4), // 0~3장
+    isAI: true,
+  }
+}
+
+// =============================================
 // Hook 구현
 // =============================================
 
@@ -125,9 +171,11 @@ export function usePvPBattle(): UsePvPBattleReturn {
       const opponents = data as OpponentRow[]
 
       if (!opponents || opponents.length === 0) {
-        setError('매칭 가능한 상대가 없습니다. 전투력 범위를 조정해주세요.')
-        setStatus('idle')
-        return false
+        // AI 상대로 폴백
+        const aiOpponent = generateAIOpponent(combatPower)
+        setOpponent(aiOpponent)
+        setStatus('preparing')
+        return true
       }
 
       // 랜덤하게 한 명 선택
@@ -141,6 +189,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
         combatPower: selected.combat_power,
         stats: selected.total_stats as unknown as CharacterStats,
         cardCount: selected.card_count,
+        isAI: false,
       })
 
       setStatus('preparing')
@@ -242,34 +291,43 @@ export function usePvPBattle(): UsePvPBattleReturn {
       )
       battle.defenderReward = defenderRewards.gold
 
-      // DB에 기록 저장
-      const { error: recordError } = await supabase.rpc('record_pvp_battle', {
-        p_attacker_id: user.id,
-        p_defender_id: opponent.userId,
-        p_result: battle.result,
-        p_attacker_rating_change: battle.attackerRatingChange,
-        p_defender_rating_change: battle.defenderRatingChange,
-        p_attacker_reward: battle.attackerReward,
-        p_defender_reward: battle.defenderReward,
-        p_battle_log: battle.rounds,
-        p_total_rounds: battle.totalRounds,
-        p_attacker_cards: attackDeck,
-        p_defender_cards: defenderCards,
-        p_attacker_snapshot: attackerSnapshot,
-        p_defender_snapshot: {
-          oderId: opponent.userId,
-          username: opponent.username,
-          stats: opponent.stats,
-          combatPower: opponent.combatPower,
-          tier: opponent.tier,
-          rating: opponent.rating,
-        },
-        p_is_revenge: false,
-      })
+      // AI 상대일 경우 레이팅 변경 없음, 보상 감소
+      if (opponent.isAI) {
+        battle.attackerRatingChange = 0
+        battle.defenderRatingChange = 0
+        battle.attackerReward = Math.floor(battle.attackerReward * 0.5) // AI전 보상 50%
+      }
 
-      if (recordError) {
-        console.error('Failed to record battle:', recordError)
-        // 기록 실패해도 배틀 결과는 보여줌
+      // DB에 기록 저장 (AI 상대는 제외)
+      if (!opponent.isAI) {
+        const { error: recordError } = await supabase.rpc('record_pvp_battle', {
+          p_attacker_id: user.id,
+          p_defender_id: opponent.userId,
+          p_result: battle.result,
+          p_attacker_rating_change: battle.attackerRatingChange,
+          p_defender_rating_change: battle.defenderRatingChange,
+          p_attacker_reward: battle.attackerReward,
+          p_defender_reward: battle.defenderReward,
+          p_battle_log: battle.rounds,
+          p_total_rounds: battle.totalRounds,
+          p_attacker_cards: attackDeck,
+          p_defender_cards: defenderCards,
+          p_attacker_snapshot: attackerSnapshot,
+          p_defender_snapshot: {
+            oderId: opponent.userId,
+            username: opponent.username,
+            stats: opponent.stats,
+            combatPower: opponent.combatPower,
+            tier: opponent.tier,
+            rating: opponent.rating,
+          },
+          p_is_revenge: false,
+        })
+
+        if (recordError) {
+          console.error('Failed to record battle:', recordError)
+          // 기록 실패해도 배틀 결과는 보여줌
+        }
       }
 
       // 골드 지급

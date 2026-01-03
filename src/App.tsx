@@ -18,6 +18,7 @@ import { EquipmentSlots, EquipmentInventory, EquipmentImage, EquipmentEnhancePan
 import { StatsPanel } from './components/stats'
 import { PotentialPanel } from './components/potential'
 import { GachaPanel } from './components/gacha'
+import { PvPArena } from './components/pvp/PvPArena'
 import { usePotential } from './hooks/usePotential'
 import { useGacha } from './hooks/useGacha'
 import { useUserData } from './hooks/useUserData'
@@ -631,7 +632,7 @@ function GameContent() {
               </div>
             )}
 
-            {/* 대결 탭 (장비 시스템 무기 사용) */}
+            {/* 대결 탭 (AI 대결 - 장비 시스템 무기 사용) */}
             {activeTab === 'battle' && (
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* 좌측: 무기 + 실시간 피드 */}
@@ -685,6 +686,22 @@ function GameContent() {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* PvP 탭 (유저 대전) */}
+            {activeTab === 'pvp' && (
+              <div className="flex justify-center">
+                <PvPArena
+                  playerStats={equippedStats}
+                  playerName={userData.profile?.username || '모험가'}
+                  combatPower={totalCombatPower}
+                  equipment={equipmentSystem.equipped}
+                  gold={gold}
+                  onGoldUpdate={async (amount) => {
+                    await userData.updateGold(gold + amount)
+                  }}
+                />
               </div>
             )}
 

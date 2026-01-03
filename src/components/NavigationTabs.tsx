@@ -1,4 +1,4 @@
-export type TabType = 'equipment' | 'gacha' | 'potential' | 'enhance' | 'battle' | 'sell'
+export type TabType = 'equipment' | 'gacha' | 'potential' | 'enhance' | 'battle' | 'pvp' | 'sell'
 
 interface NavigationTabsProps {
   activeTab: TabType
@@ -12,7 +12,8 @@ const TABS: { id: TabType; label: string; emoji: string; requiresWeapon?: boolea
   { id: 'gacha', label: '뽑기', emoji: '🎰' },
   { id: 'potential', label: '잠재', emoji: '✨', requiresEquipment: true },
   { id: 'enhance', label: '강화', emoji: '⭐', requiresEquipment: true },
-  { id: 'battle', label: '대결', emoji: '⚔️', requiresWeapon: true },
+  { id: 'battle', label: 'AI대결', emoji: '🤖', requiresWeapon: true },
+  { id: 'pvp', label: 'PvP', emoji: '⚔️', requiresEquipment: true },
   { id: 'sell', label: '판매', emoji: '💰', requiresEquipment: true },
 ]
 

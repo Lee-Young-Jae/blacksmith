@@ -13,6 +13,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import type { CharacterStats } from '../types/stats'
 import type { BattleCard, BattleCardTier, BattleCardEffectType } from '../types/battleCard'
+import { generateRandomPvPCard } from '../types/battleCard'
 import type {
   OwnedCard,
   OwnedCardRow,
@@ -38,6 +39,10 @@ import type { EquippedItems } from '../types/equipment'
 // 타입 정의
 // =============================================
 
+// 카드 가챠 비용
+export const CARD_GACHA_SINGLE_COST = 500
+export const CARD_GACHA_MULTI_COST = 4500 // 10장 (10% 할인)
+
 interface UseCardDeckReturn {
   // 상태
   ownedCards: OwnedCard[]
@@ -45,6 +50,10 @@ interface UseCardDeckReturn {
   attackDeckSetup: DeckSetup
   isLoading: boolean
   error: string | null
+
+  // 카드 가챠
+  pullCard: () => Promise<OwnedCard | null>
+  pullMultiCards: (count: number) => Promise<OwnedCard[]>
 
   // 카드 인벤토리
   loadOwnedCards: () => Promise<void>
@@ -173,6 +182,52 @@ export function useCardDeck(): UseCardDeckReturn {
       return null
     }
   }, [user])
+
+  // =============================================
+  // 카드 가챠
+  // =============================================
+
+  const pullCard = useCallback(async (): Promise<OwnedCard | null> => {
+    if (!user) return null
+
+    try {
+      // 랜덤 PvP 카드 생성
+      const randomCard = generateRandomPvPCard()
+
+      // DB에 저장
+      const newCard = await addCard(
+        randomCard.effect.type,
+        randomCard.tier,
+        randomCard.effect.value,
+        randomCard.effect.isPercentage
+      )
+
+      return newCard
+    } catch (err) {
+      console.error('Failed to pull card:', err)
+      return null
+    }
+  }, [user, addCard])
+
+  const pullMultiCards = useCallback(async (count: number): Promise<OwnedCard[]> => {
+    if (!user) return []
+
+    const results: OwnedCard[] = []
+
+    try {
+      for (let i = 0; i < count; i++) {
+        const card = await pullCard()
+        if (card) {
+          results.push(card)
+        }
+      }
+
+      return results
+    } catch (err) {
+      console.error('Failed to pull multiple cards:', err)
+      return results
+    }
+  }, [user, pullCard])
 
   // =============================================
   // 카드 분해
@@ -479,6 +534,8 @@ export function useCardDeck(): UseCardDeckReturn {
     attackDeckSetup,
     isLoading,
     error,
+    pullCard,
+    pullMultiCards,
     loadOwnedCards,
     addCard,
     disenchantCard,

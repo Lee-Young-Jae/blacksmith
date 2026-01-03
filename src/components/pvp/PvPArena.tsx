@@ -10,12 +10,12 @@
 
 import { useState } from 'react'
 import type { CharacterStats } from '../../types/stats'
-import type { OwnedCard, CardSlots } from '../../types/cardDeck'
 import type { EquippedItems } from '../../types/equipment'
 import { PvPMatchmaking } from './PvPMatchmaking'
 import { DefenseDeckSetup } from './DefenseDeckSetup'
 import { PvPLeaderboard } from './PvPLeaderboard'
 import { PvPBattleHistory } from './PvPBattleHistory'
+import { CardGacha } from './CardGacha'
 import { usePvPBattle } from '../../hooks/usePvPBattle'
 import { useCardDeck } from '../../hooks/useCardDeck'
 import { usePvPRanking } from '../../hooks/usePvPRanking'
@@ -24,19 +24,21 @@ import { usePvPRanking } from '../../hooks/usePvPRanking'
 // 타입 정의
 // =============================================
 
-type PvPTab = 'matchmaking' | 'defense' | 'leaderboard' | 'history'
+type PvPTab = 'matchmaking' | 'defense' | 'cards' | 'leaderboard' | 'history'
 
 interface PvPArenaProps {
   playerStats: CharacterStats
   playerName: string
   combatPower: number
   equipment: EquippedItems
+  gold: number
   onGoldUpdate?: (amount: number) => void
 }
 
 const TABS: { id: PvPTab; label: string; emoji: string }[] = [
   { id: 'matchmaking', label: '대전', emoji: '⚔️' },
   { id: 'defense', label: '방어덱', emoji: '🛡️' },
+  { id: 'cards', label: '카드', emoji: '🎴' },
   { id: 'leaderboard', label: '랭킹', emoji: '🏆' },
   { id: 'history', label: '기록', emoji: '📜' },
 ]
@@ -50,6 +52,7 @@ export function PvPArena({
   playerName,
   combatPower,
   equipment,
+  gold,
   onGoldUpdate,
 }: PvPArenaProps) {
   const [activeTab, setActiveTab] = useState<PvPTab>('matchmaking')
@@ -175,6 +178,20 @@ export function PvPArena({
             onRefresh={() => pvpRanking.loadLeaderboard()}
             canClaimWeekly={pvpRanking.canClaimWeekly()}
             onClaimWeekly={pvpRanking.claimWeeklyReward}
+          />
+        )}
+
+        {activeTab === 'cards' && (
+          <CardGacha
+            gold={gold}
+            ownedCardCount={cardDeck.ownedCards.length}
+            onPullSingle={cardDeck.pullCard}
+            onPullMulti={cardDeck.pullMultiCards}
+            onUpdateGold={async (newGold: number) => {
+              if (onGoldUpdate) {
+                onGoldUpdate(newGold - gold)
+              }
+            }}
           />
         )}
 

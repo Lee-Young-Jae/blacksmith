@@ -4,7 +4,7 @@
  * 상대 검색, 공격덱 선택, 배틀 실행을 담당합니다.
  */
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { CharacterStats } from '../../types/stats'
 import type { OwnedCard, CardSlots } from '../../types/cardDeck'
 import type { EquippedItems } from '../../types/equipment'
@@ -171,14 +171,29 @@ function CardSelector({
 function OpponentInfo({ opponent }: { opponent: PvPOpponent }) {
   return (
     <div className="bg-gray-700/50 rounded-lg p-4">
+      {/* AI 상대 알림 */}
+      {opponent.isAI && (
+        <div className="mb-3 p-2 bg-yellow-900/30 border border-yellow-500/50 rounded-lg">
+          <p className="text-yellow-400 text-xs text-center">
+            🤖 AI 상대입니다 (보상 50%, 레이팅 변동 없음)
+          </p>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center">
-            <span className="text-2xl">👤</span>
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+            opponent.isAI
+              ? 'bg-gradient-to-br from-yellow-500 to-amber-600'
+              : 'bg-gradient-to-br from-red-500 to-orange-500'
+          }`}>
+            <span className="text-2xl">{opponent.isAI ? '🤖' : '👤'}</span>
           </div>
           <div>
             <p className="text-white font-bold">{opponent.username}</p>
-            <p className="text-gray-400 text-sm">{opponent.tier} | {opponent.rating} RP</p>
+            <p className="text-gray-400 text-sm">
+              {opponent.isAI ? 'AI' : opponent.tier} | {opponent.rating} RP
+            </p>
           </div>
         </div>
         <div className="text-right">
@@ -410,7 +425,8 @@ export function PvPMatchmaking({
       </button>
 
       <p className="text-gray-500 text-xs text-center">
-        전투력 ±300 범위에서 상대를 검색합니다
+        전투력 ±300 범위에서 상대를 검색합니다<br />
+        상대가 없으면 AI와 대전합니다
       </p>
 
       {/* 보유 카드 수 */}

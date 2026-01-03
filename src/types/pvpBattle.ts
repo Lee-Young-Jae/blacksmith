@@ -153,6 +153,7 @@ export interface PvPOpponent {
   combatPower: number
   stats: CharacterStats
   cardCount: number  // 방어덱 카드 수 (비공개이므로 개수만)
+  isAI?: boolean     // AI 상대 여부 (폴백용)
 }
 
 // =============================================
