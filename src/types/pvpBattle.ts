@@ -1,6 +1,6 @@
 import type { CharacterStats } from './stats'
 import type { BattleCard } from './battleCard'
-import type { UserEquipment, EquippedItems } from './equipment'
+import type { EquippedItems } from './equipment'
 
 // =============================================
 // 배틀 라운드

@@ -1,5 +1,6 @@
 import type { CharacterStats } from './stats'
-import type { BattleCard, BattleCardTier, BattleCardEffectType } from './battleCard'
+import type { BattleCard, BattleCardTier, BattleCardEffectType, BattleCardEffect } from './battleCard'
+import { EFFECT_TYPE_INFO, CARD_NAMES, formatCardDescription } from './battleCard'
 import type { EquippedItems } from './equipment'
 
 // =============================================
@@ -29,25 +30,21 @@ export interface OwnedCardRow {
 
 // OwnedCard를 BattleCard로 변환
 export function ownedCardToBattleCard(owned: OwnedCard): BattleCard {
-  const { EFFECT_TYPE_INFO, CARD_NAMES, formatCardDescription } = require('./battleCard')
-
   const info = EFFECT_TYPE_INFO[owned.cardType]
   const name = CARD_NAMES[owned.cardType]?.[owned.tier] || owned.cardType
+
+  const effect: BattleCardEffect = {
+    type: owned.cardType,
+    value: owned.value,
+    isPercentage: owned.isPercentage,
+  }
 
   return {
     id: owned.id,
     name,
-    description: formatCardDescription({
-      type: owned.cardType,
-      value: owned.value,
-      isPercentage: owned.isPercentage,
-    }),
+    description: formatCardDescription(effect),
     tier: owned.tier,
-    effect: {
-      type: owned.cardType,
-      value: owned.value,
-      isPercentage: owned.isPercentage,
-    },
+    effect,
     emoji: info?.emoji || '🃏',
   }
 }
