@@ -639,11 +639,13 @@ export function calculatePvPBattle(input: BattleSimulationInput): PvPBattle {
 
   const actions: RealtimeBattleAction[] = []
 
-  // 초기 HP
-  let attackerHp = attackerStats.hp
-  let defenderHp = defenderStats.hp
-  const attackerMaxHp = attackerStats.hp
-  const defenderMaxHp = defenderStats.hp
+  // 초기 HP (PvP 밸런스 적용)
+  const hpMultiplier = PVP_BATTLE_CONFIG.HP_MULTIPLIER
+  const damageReduction = PVP_BATTLE_CONFIG.DAMAGE_REDUCTION
+  let attackerHp = attackerStats.hp * hpMultiplier
+  let defenderHp = defenderStats.hp * hpMultiplier
+  const attackerMaxHp = attackerStats.hp * hpMultiplier
+  const defenderMaxHp = defenderStats.hp * hpMultiplier
 
   // 공격 간격 계산
   const attackerInterval = calculateAttackInterval(attackerStats.attackSpeed)
@@ -653,9 +655,13 @@ export function calculatePvPBattle(input: BattleSimulationInput): PvPBattle {
   let attackerNextAttack = attackerInterval / 2  // 공격자가 약간 먼저 시작
   let defenderNextAttack = defenderInterval / 2 + 100
 
-  // 다음 카드 발동 시간
-  let attackerNextCard = PVP_BATTLE_CONFIG.CARD_TRIGGER_INTERVAL
-  let defenderNextCard = PVP_BATTLE_CONFIG.CARD_TRIGGER_INTERVAL
+  // 다음 카드 발동 시간 (카드가 없으면 Infinity로 설정하여 이벤트에서 제외)
+  let attackerNextCard = attackerCards.length > 0
+    ? PVP_BATTLE_CONFIG.CARD_TRIGGER_INTERVAL
+    : Infinity
+  let defenderNextCard = defenderCards.length > 0
+    ? PVP_BATTLE_CONFIG.CARD_TRIGGER_INTERVAL
+    : Infinity
   let attackerCardIndex = 0
   let defenderCardIndex = 0
 
@@ -746,7 +752,7 @@ export function calculatePvPBattle(input: BattleSimulationInput): PvPBattle {
         guaranteedCrit: attackerCardEffects.guaranteedCrit,
       })
 
-      let damage = damageResult.finalDamage
+      let damage = Math.floor(damageResult.finalDamage * damageReduction)
 
       // 면역 체크
       if (defenderCardEffects.immunity) {
@@ -794,7 +800,7 @@ export function calculatePvPBattle(input: BattleSimulationInput): PvPBattle {
         guaranteedCrit: defenderCardEffects.guaranteedCrit,
       })
 
-      let damage = damageResult.finalDamage
+      let damage = Math.floor(damageResult.finalDamage * damageReduction)
 
       // 면역 체크
       if (attackerCardEffects.immunity) {

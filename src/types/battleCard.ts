@@ -1,6 +1,9 @@
 // 배틀 카드 등급
 export type BattleCardTier = 'common' | 'rare' | 'epic' | 'legendary'
 
+// 카드 발동 타입
+export type CardActivationType = 'passive' | 'active'
+
 export const BATTLE_CARD_TIERS: BattleCardTier[] = ['common', 'rare', 'epic', 'legendary']
 
 export const BATTLE_CARD_TIER_NAMES: Record<BattleCardTier, string> = {
@@ -59,6 +62,10 @@ export interface BattleCard {
   tier: BattleCardTier
   effect: BattleCardEffect
   emoji: string
+  // 발동 타입 관련
+  activationType: CardActivationType  // 'passive' = 자동, 'active' = 수동
+  cooldown: number                    // 쿨다운 (초) - active만 해당
+  duration: number                    // 효과 지속시간 (초) - 0이면 즉시 효과
 }
 
 // 카드 슬롯 (리롤 상태 포함)
@@ -72,24 +79,29 @@ export const EFFECT_TYPE_INFO: Record<BattleCardEffectType, {
   name: string
   emoji: string
   minTier: BattleCardTier
-  isPvPOnly: boolean  // PvP 전용 여부
+  isPvPOnly: boolean
+  activationType: CardActivationType
+  cooldown: number      // 쿨다운 (초)
+  duration: number      // 지속시간 (초), 0 = 즉시 효과
 }> = {
-  attack_boost: { name: '공격력 증가', emoji: '⚔️', minTier: 'common', isPvPOnly: false },
-  defense_boost: { name: '방어력 증가', emoji: '🛡️', minTier: 'common', isPvPOnly: false },
-  crit_rate_boost: { name: '치명타 확률', emoji: '🎯', minTier: 'common', isPvPOnly: false },
-  crit_damage_boost: { name: '치명타 데미지', emoji: '💥', minTier: 'common', isPvPOnly: false },
-  penetration_boost: { name: '관통력 증가', emoji: '🗡️', minTier: 'common', isPvPOnly: false },
-  guaranteed_crit: { name: '확정 치명타', emoji: '⚡', minTier: 'epic', isPvPOnly: false },
-  damage_reflect: { name: '데미지 반사', emoji: '🪞', minTier: 'rare', isPvPOnly: false },
-  first_strike: { name: '선제 공격', emoji: '💨', minTier: 'common', isPvPOnly: false },
-  gold_bonus: { name: '골드 보너스', emoji: '💰', minTier: 'common', isPvPOnly: false },
-  // PvP 전용 효과
-  hp_recovery: { name: 'HP 회복', emoji: '💚', minTier: 'rare', isPvPOnly: true },
-  speed_boost: { name: '공격속도 증가', emoji: '⚡', minTier: 'rare', isPvPOnly: true },
-  immunity: { name: '피해 면역', emoji: '🛡️', minTier: 'epic', isPvPOnly: true },
-  lifesteal: { name: '흡혈', emoji: '🧛', minTier: 'rare', isPvPOnly: true },
-  double_attack: { name: '연속 공격', emoji: '⚔️', minTier: 'legendary', isPvPOnly: true },
-  stun: { name: '스턴', emoji: '💫', minTier: 'legendary', isPvPOnly: true },
+  // 패시브 효과들 (배틀 내내 적용)
+  attack_boost: { name: '공격력 증가', emoji: '⚔️', minTier: 'common', isPvPOnly: false, activationType: 'passive', cooldown: 0, duration: 0 },
+  defense_boost: { name: '방어력 증가', emoji: '🛡️', minTier: 'common', isPvPOnly: false, activationType: 'passive', cooldown: 0, duration: 0 },
+  crit_rate_boost: { name: '치명타 확률', emoji: '🎯', minTier: 'common', isPvPOnly: false, activationType: 'passive', cooldown: 0, duration: 0 },
+  crit_damage_boost: { name: '치명타 데미지', emoji: '💥', minTier: 'common', isPvPOnly: false, activationType: 'passive', cooldown: 0, duration: 0 },
+  penetration_boost: { name: '관통력 증가', emoji: '🗡️', minTier: 'common', isPvPOnly: false, activationType: 'passive', cooldown: 0, duration: 0 },
+  damage_reflect: { name: '데미지 반사', emoji: '🪞', minTier: 'rare', isPvPOnly: false, activationType: 'passive', cooldown: 0, duration: 0 },
+  gold_bonus: { name: '골드 보너스', emoji: '💰', minTier: 'common', isPvPOnly: false, activationType: 'passive', cooldown: 0, duration: 0 },
+  lifesteal: { name: '흡혈', emoji: '🧛', minTier: 'rare', isPvPOnly: true, activationType: 'passive', cooldown: 0, duration: 0 },
+
+  // 액티브 효과들 (버튼으로 발동)
+  guaranteed_crit: { name: '확정 치명타', emoji: '⚡', minTier: 'epic', isPvPOnly: false, activationType: 'active', cooldown: 8, duration: 3 },
+  first_strike: { name: '강타', emoji: '💨', minTier: 'common', isPvPOnly: false, activationType: 'active', cooldown: 5, duration: 0 },
+  hp_recovery: { name: 'HP 회복', emoji: '💚', minTier: 'rare', isPvPOnly: true, activationType: 'active', cooldown: 10, duration: 0 },
+  speed_boost: { name: '광폭화', emoji: '🔥', minTier: 'rare', isPvPOnly: true, activationType: 'active', cooldown: 8, duration: 4 },
+  immunity: { name: '무적', emoji: '✨', minTier: 'epic', isPvPOnly: true, activationType: 'active', cooldown: 12, duration: 2 },
+  double_attack: { name: '연속 공격', emoji: '⚔️', minTier: 'legendary', isPvPOnly: true, activationType: 'active', cooldown: 10, duration: 3 },
+  stun: { name: '기절', emoji: '💫', minTier: 'legendary', isPvPOnly: true, activationType: 'active', cooldown: 15, duration: 2 },
 }
 
 // 등급별 효과 수치
@@ -316,6 +328,9 @@ export function generateRandomCard(): BattleCard {
     tier,
     effect,
     emoji: info.emoji,
+    activationType: info.activationType,
+    cooldown: info.cooldown,
+    duration: info.duration,
   }
 }
 
@@ -409,6 +424,9 @@ export function generateRandomPvPCard(): BattleCard {
     tier,
     effect,
     emoji: info.emoji,
+    activationType: info.activationType,
+    cooldown: info.cooldown,
+    duration: info.duration,
   }
 }
 
@@ -434,6 +452,9 @@ export function generatePvPCardByTier(tier: BattleCardTier): BattleCard {
     tier,
     effect,
     emoji: info.emoji,
+    activationType: info.activationType,
+    cooldown: info.cooldown,
+    duration: info.duration,
   }
 }
 
@@ -455,6 +476,9 @@ export function generateCardByEffect(effectType: BattleCardEffectType, tier: Bat
       tier: minTier,
       effect: { type: effectType, value: minValue, isPercentage },
       emoji: info.emoji,
+      activationType: info.activationType,
+      cooldown: info.cooldown,
+      duration: info.duration,
     }
   }
 
@@ -467,5 +491,8 @@ export function generateCardByEffect(effectType: BattleCardEffectType, tier: Bat
     tier,
     effect: { type: effectType, value, isPercentage },
     emoji: info.emoji,
+    activationType: info.activationType,
+    cooldown: info.cooldown,
+    duration: info.duration,
   }
 }

@@ -46,6 +46,9 @@ export function ownedCardToBattleCard(owned: OwnedCard): BattleCard {
     tier: owned.tier,
     effect,
     emoji: info?.emoji || '🃏',
+    activationType: info?.activationType || 'passive',
+    cooldown: info?.cooldown || 0,
+    duration: info?.duration || 0,
   }
 }
 

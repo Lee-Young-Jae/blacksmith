@@ -12,7 +12,14 @@ import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import type { CharacterStats } from '../types/stats'
-import type { BattleCard } from '../types/battleCard'
+import type { BattleCard, BattleCardTier } from '../types/battleCard'
+import {
+  TIER_AVAILABLE_EFFECTS_PVP,
+  TIER_EFFECT_VALUES,
+  EFFECT_TYPE_INFO,
+  CARD_NAMES,
+  formatCardDescription,
+} from '../types/battleCard'
 import type {
   PvPBattleStatus,
   PvPOpponent,
@@ -91,50 +98,85 @@ const AI_NAMES = [
   '그림자 도적', '숙련된 사냥꾼', '마법 수습생', '검은 기사',
 ]
 
+// AI 카드 생성
+function generateAICard(tier: BattleCardTier): BattleCard {
+  const availableEffects = TIER_AVAILABLE_EFFECTS_PVP[tier]
+  const effectType = availableEffects[Math.floor(Math.random() * availableEffects.length)]
+  const info = EFFECT_TYPE_INFO[effectType]
+  const value = TIER_EFFECT_VALUES[tier][effectType]
+
+  // value가 0이면 다른 효과 선택
+  if (value === 0) {
+    return generateAICard(tier)
+  }
+
+  const effect = {
+    type: effectType,
+    value,
+    isPercentage: !['first_strike', 'gold_bonus'].includes(effectType),
+  }
+
+  const name = CARD_NAMES[effectType]?.[tier] || info.name
+
+  return {
+    id: `ai_card_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    name,
+    description: formatCardDescription(effect),
+    tier,
+    effect,
+    emoji: info.emoji,
+    activationType: info.activationType,
+    cooldown: info.cooldown,
+    duration: info.duration,
+  }
+}
+
+// AI 카드 덱 생성 (0~3장)
+function generateAICards(cardCount: number): BattleCard[] {
+  const cards: BattleCard[] = []
+
+  for (let i = 0; i < cardCount; i++) {
+    // 티어 랜덤 결정 (common 50%, rare 30%, epic 15%, legendary 5%)
+    const roll = Math.random()
+    let tier: BattleCardTier
+    if (roll < 0.5) tier = 'common'
+    else if (roll < 0.8) tier = 'rare'
+    else if (roll < 0.95) tier = 'epic'
+    else tier = 'legendary'
+
+    cards.push(generateAICard(tier))
+  }
+
+  return cards
+}
+
 function generateAIOpponent(playerCombatPower: number): PvPOpponent {
-  // 전투력 기반 AI 생성 (95%~105% 범위 - 더 정밀하게)
-  const variance = 0.05
-  const minPower = Math.max(100, Math.floor(playerCombatPower * (1 - variance)))
+  // 전투력 기반 AI 생성 (90%~110% 범위)
+  const variance = 0.10
+  const minPower = Math.max(500, Math.floor(playerCombatPower * (1 - variance)))
   const maxPower = Math.floor(playerCombatPower * (1 + variance))
   const targetCombatPower = Math.floor(Math.random() * (maxPower - minPower + 1)) + minPower
 
-  // 전투력 공식: attack*1 + defense*0.8 + hp*0.1 + critRate*5 + critDamage*0.5 + penetration*3 + attackSpeed*2
-  // 기본 스탯 기여도 (DEFAULT_STATS): 10 + 4 + 10 + 25 + 75 + 0 + 200 = 324
-  const baseContribution = 324
-  const bonusPower = Math.max(0, targetCombatPower - baseContribution)
+  // 플레이어 스탯 기반으로 비슷한 수준의 AI 생성
+  // 전투력이 높을수록 스탯도 비례해서 증가
+  const powerRatio = targetCombatPower / Math.max(500, playerCombatPower)
 
-  // 랜덤 비율 생성 후 정규화하여 합계가 1.0이 되도록 함
-  const rawShares = {
-    attack: 0.15 + Math.random() * 0.15,    // 공격력 비중
-    defense: 0.08 + Math.random() * 0.08,   // 방어력 비중
-    hp: 0.20 + Math.random() * 0.15,        // HP 비중 (높음)
-    critRate: 0.08 + Math.random() * 0.07,  // 치명타율 비중
-    critDamage: 0.15 + Math.random() * 0.10, // 치명타뎀 비중
-    penetration: 0.05 + Math.random() * 0.05, // 관통력 비중
-    speed: 0.05 + Math.random() * 0.05,     // 공속 비중
-  }
+  // 기본 스탯 (플레이어 평균 수준)
+  const baseAttack = 50 + Math.floor(targetCombatPower * 0.05)
+  const baseDefense = 30 + Math.floor(targetCombatPower * 0.03)
+  const baseHp = 500 + Math.floor(targetCombatPower * 0.5)
 
-  // 정규화
-  const totalRaw = Object.values(rawShares).reduce((a, b) => a + b, 0)
-  const shares = {
-    attack: rawShares.attack / totalRaw,
-    defense: rawShares.defense / totalRaw,
-    hp: rawShares.hp / totalRaw,
-    critRate: rawShares.critRate / totalRaw,
-    critDamage: rawShares.critDamage / totalRaw,
-    penetration: rawShares.penetration / totalRaw,
-    speed: rawShares.speed / totalRaw,
-  }
+  // 랜덤 변동 (-20% ~ +20%)
+  const randomFactor = () => 0.8 + Math.random() * 0.4
 
   const stats: CharacterStats = {
-    // 기본값 + 보너스 (가중치로 나눠서 실제 스탯 증가량 계산)
-    attack: Math.floor(10 + (bonusPower * shares.attack) / 1.0),
-    defense: Math.floor(5 + (bonusPower * shares.defense) / 0.8),
-    hp: Math.floor(100 + (bonusPower * shares.hp) / 0.1),
-    critRate: Math.min(80, Math.floor(5 + (bonusPower * shares.critRate) / 5.0)),
-    critDamage: Math.floor(150 + (bonusPower * shares.critDamage) / 0.5),
-    penetration: Math.min(50, Math.floor((bonusPower * shares.penetration) / 3.0)),
-    attackSpeed: Math.floor(100 + (bonusPower * shares.speed) / 2.0),
+    attack: Math.floor(baseAttack * randomFactor()),
+    defense: Math.floor(baseDefense * randomFactor()),
+    hp: Math.floor(baseHp * randomFactor()),
+    critRate: Math.min(80, Math.floor((15 + Math.random() * 20) * powerRatio)),
+    critDamage: Math.floor(150 + Math.random() * 50 * powerRatio),
+    penetration: Math.min(50, Math.floor(Math.random() * 20 * powerRatio)),
+    attackSpeed: Math.floor(100 + Math.random() * 30 * powerRatio),
   }
 
   // 실제 계산된 전투력 확인
@@ -152,15 +194,20 @@ function generateAIOpponent(playerCombatPower: number): PvPOpponent {
   const baseRating = 800 + Math.floor(playerCombatPower / 10)
   const rating = Math.max(100, baseRating + Math.floor((Math.random() - 0.5) * 200))
 
+  // AI 카드 생성 (1~3장)
+  const cardCount = 1 + Math.floor(Math.random() * 3)
+  const aiCards = generateAICards(cardCount)
+
   return {
     userId: `ai_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     username: AI_NAMES[Math.floor(Math.random() * AI_NAMES.length)],
     rating,
     tier: getTierFromRating(rating),
-    combatPower: actualPower, // 실제 계산된 전투력 사용
+    combatPower: actualPower,
     stats,
-    cardCount: Math.floor(Math.random() * 4), // 0~3장
+    cardCount,
     isAI: true,
+    aiCards,
   }
 }
 

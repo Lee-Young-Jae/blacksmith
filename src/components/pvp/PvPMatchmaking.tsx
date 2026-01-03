@@ -12,7 +12,7 @@ import type { BattleCard } from '../../types/battleCard'
 import type { PvPOpponent, BattleSnapshot } from '../../types/pvpBattle'
 import { ownedCardToBattleCard, TIER_ORDER } from '../../types/cardDeck'
 import { BATTLE_CARD_TIER_COLORS } from '../../types/battleCard'
-import { PvPBattleReplay } from './PvPBattleReplay'
+import { PvPRealtimeBattle } from './PvPRealtimeBattle'
 
 // =============================================
 // 타입 정의
@@ -247,7 +247,6 @@ export function PvPMatchmaking({
   const {
     status,
     opponent,
-    currentBattle,
     error,
     isLoading,
     searchOpponent,
@@ -263,7 +262,7 @@ export function PvPMatchmaking({
     setSelectedCards(newSlots)
   }
 
-  // 대전 시작
+  // 대전 시작 - 실시간 배틀로 전환
   const handleStartBattle = async () => {
     // 공격 카드 변환
     const attackCards = selectedCards
@@ -271,22 +270,19 @@ export function PvPMatchmaking({
       .map(ownedCardToBattleCard)
 
     const snapshot: BattleSnapshot = {
-      oderId: '', // 서버에서 채워짐
+      oderId: '',
       username: playerName,
       stats: playerStats,
       combatPower,
       equipment,
       cards: attackCards,
-      tier: 'bronze', // TODO: 실제 티어
+      tier: 'bronze',
       rating: myRating,
     }
 
-    // 공격 카드를 직접 전달 (상대 방어덱은 빈 배열 - AI는 카드 없음)
-    const result = await startBattle(snapshot, attackCards, [])
-
-    if (result && onGoldUpdate) {
-      onGoldUpdate(result.attackerReward)
-    }
+    // startBattle 호출하면 status가 'fighting'으로 변경됨
+    // 실제 배틀은 PvPRealtimeBattle 컴포넌트에서 처리
+    await startBattle(snapshot, attackCards, [])
   }
 
   // 검색 중
@@ -306,15 +302,28 @@ export function PvPMatchmaking({
     )
   }
 
-  // 배틀 진행/완료
-  if (status === 'fighting' || status === 'finished') {
+  // 배틀 진행 중 - 실시간 배틀
+  if (status === 'fighting' && opponent) {
+    const playerCards = selectedCards
+      .filter((c): c is OwnedCard => c !== null)
+      .map(ownedCardToBattleCard)
+
     return (
-      <PvPBattleReplay
-        battle={currentBattle}
-        isPlaying={status === 'fighting'}
-        onClose={resetBattle}
-        onClaimReward={(amount) => {
-          if (onGoldUpdate) onGoldUpdate(amount)
+      <PvPRealtimeBattle
+        playerName={playerName}
+        playerStats={playerStats}
+        playerCards={playerCards}
+        opponentName={opponent.username}
+        opponentStats={opponent.stats}
+        opponentCards={opponent.aiCards || []}
+        opponentIsAI={opponent.isAI}
+        onBattleEnd={(result) => {
+          // 보상 처리
+          const isWin = result.winner === 'player'
+          const reward = isWin
+            ? 500 * (opponent.isAI ? 0.5 : 1)
+            : 100
+          if (onGoldUpdate) onGoldUpdate(reward)
           resetBattle()
         }}
       />

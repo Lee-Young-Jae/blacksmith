@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import type { PvPBattle } from '../../types/pvpBattle'
+import { PVP_BATTLE_CONFIG } from '../../types/pvpBattle'
 
 // =============================================
 // 타입 정의
@@ -236,16 +237,17 @@ export function PvPBattleReplay({
       lastProcessedIndexRef.current = -1
       startTimeRef.current = null
 
+      const hpMultiplier = PVP_BATTLE_CONFIG.HP_MULTIPLIER
       setAttackerState({
-        hp: battle.attackerStats.hp,
-        maxHp: battle.attackerStats.hp,
+        hp: battle.attackerStats.hp * hpMultiplier,
+        maxHp: battle.attackerStats.hp * hpMultiplier,
         isHit: false,
         isAttacking: false,
         lastDamage: 0,
       })
       setDefenderState({
-        hp: battle.defenderStats.hp,
-        maxHp: battle.defenderStats.hp,
+        hp: battle.defenderStats.hp * hpMultiplier,
+        maxHp: battle.defenderStats.hp * hpMultiplier,
         isHit: false,
         isAttacking: false,
         lastDamage: 0,
@@ -261,7 +263,7 @@ export function PvPBattleReplay({
       return
     }
 
-    const speedMultiplier = 10 // 배틀 속도 (높을수록 빠름)
+    const speedMultiplier = 1 // 배틀 속도 (1배속 = 실시간)
     let isCancelled = false
 
     const animate = (timestamp: number) => {
@@ -275,9 +277,24 @@ export function PvPBattleReplay({
       setElapsedTime(elapsed)
 
       // 현재 시간까지의 액션 처리
-      let currentAttackerHp = battle.attackerStats.hp
-      let currentDefenderHp = battle.defenderStats.hp
+      // 이미 처리된 액션까지의 HP를 추적
+      const hpMult = PVP_BATTLE_CONFIG.HP_MULTIPLIER
+      let currentAttackerHp = battle.attackerStats.hp * hpMult
+      let currentDefenderHp = battle.defenderStats.hp * hpMult
 
+      // 이전에 처리된 액션들의 HP 반영
+      for (let i = 0; i <= lastProcessedIndexRef.current && i < battle.actions.length; i++) {
+        const action = battle.actions[i]
+        if (action.type === 'attack') {
+          if (action.actor === 'attacker') {
+            currentDefenderHp = action.targetHpAfter
+          } else {
+            currentAttackerHp = action.targetHpAfter
+          }
+        }
+      }
+
+      // 새로운 액션 처리
       for (let i = lastProcessedIndexRef.current + 1; i < battle.actions.length; i++) {
         const action = battle.actions[i]
         if (action.timestamp <= elapsed) {
@@ -340,16 +357,19 @@ export function PvPBattleReplay({
         }
       }
 
-      // 배틀 종료 체크 (로컬 변수 사용)
+      // 배틀 종료 체크 - HP가 0이 되거나 15초가 지나면 종료
+      const maxDuration = PVP_BATTLE_CONFIG.BATTLE_DURATION
       const battleEnded =
         currentAttackerHp <= 0 ||
         currentDefenderHp <= 0 ||
-        elapsed >= battle.battleDuration ||
-        lastProcessedIndexRef.current >= battle.actions.length - 1
+        elapsed >= maxDuration
 
       if (battleEnded) {
-        setAttackerState(prev => ({ ...prev, hp: battle.attackerFinalHp }))
-        setDefenderState(prev => ({ ...prev, hp: battle.defenderFinalHp }))
+        // 최종 HP 설정 (배율 적용된 값)
+        const finalAttackerHp = Math.max(0, currentAttackerHp)
+        const finalDefenderHp = Math.max(0, currentDefenderHp)
+        setAttackerState(prev => ({ ...prev, hp: finalAttackerHp }))
+        setDefenderState(prev => ({ ...prev, hp: finalDefenderHp }))
 
         setTimeout(() => {
           setShowResult(true)
@@ -455,8 +475,9 @@ export function PvPBattleReplay({
   }
 
   // 진행 중 화면
-  const progress = (elapsedTime / battle.battleDuration) * 100
-  const timeRemaining = Math.max(0, (battle.battleDuration - elapsedTime) / 1000)
+  const maxDuration = PVP_BATTLE_CONFIG.BATTLE_DURATION
+  const progress = (elapsedTime / maxDuration) * 100
+  const timeRemaining = Math.max(0, (maxDuration - elapsedTime) / 1000)
 
   return (
     <div className="space-y-4">

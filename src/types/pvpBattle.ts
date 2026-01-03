@@ -162,6 +162,7 @@ export interface PvPOpponent {
   stats: CharacterStats
   cardCount: number  // 방어덱 카드 수 (비공개이므로 개수만)
   isAI?: boolean     // AI 상대 여부 (폴백용)
+  aiCards?: BattleCard[]  // AI 상대의 카드 (실시간 배틀용)
 }
 
 // =============================================
@@ -215,6 +216,10 @@ export const PVP_BATTLE_CONFIG = {
   BATTLE_DURATION: 15000,      // 배틀 총 시간 (15초)
   BASE_ATTACK_INTERVAL: 2000,  // 기본 공격 간격 (2초) - 공속 100 기준
   MIN_ATTACK_INTERVAL: 500,    // 최소 공격 간격 (0.5초)
+
+  // PvP 밸런스 조정
+  HP_MULTIPLIER: 2,            // HP 배율 (2배)
+  DAMAGE_REDUCTION: 0.7,       // 데미지 감소 (30%) - 적당한 길이
 
   // 카드 발동 주기 (5초마다)
   CARD_TRIGGER_INTERVAL: 5000,
