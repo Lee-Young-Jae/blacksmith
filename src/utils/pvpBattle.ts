@@ -16,7 +16,9 @@ import type {
   PvPBattleResult,
   DamageResult,
   TurnOrderResult,
+  RealtimeBattleAction,
 } from '../types/pvpBattle'
+import { PVP_BATTLE_CONFIG } from '../types/pvpBattle'
 import type { BattleCard } from '../types/battleCard'
 
 // =============================================
@@ -27,8 +29,24 @@ const BATTLE_CONFIG = {
   MAX_ROUNDS: 20,
   CARD_CYCLE_ROUNDS: 2,
   SPEED_VARIANCE: 0.05,
-  DAMAGE_VARIANCE: 0.15,
+  DAMAGE_VARIANCE: 0.10,
 } as const
+
+// =============================================
+// 공격 간격 계산 (공격속도 기반)
+// =============================================
+
+/**
+ * 공격속도를 공격 간격(ms)으로 변환합니다.
+ * 공속 100 = 2000ms, 공속 200 = 1000ms, 공속 400 = 500ms
+ */
+export function calculateAttackInterval(attackSpeed: number): number {
+  // 안전 처리: 0, undefined, NaN 방지
+  const safeSpeed = Math.max(1, attackSpeed || 100)
+  // 공식: interval = BASE / (attackSpeed / 100)
+  const interval = PVP_BATTLE_CONFIG.BASE_ATTACK_INTERVAL / (safeSpeed / 100)
+  return Math.max(PVP_BATTLE_CONFIG.MIN_ATTACK_INTERVAL, Math.floor(interval))
+}
 
 // =============================================
 // 선공 결정
@@ -603,7 +621,8 @@ export interface BattleSimulationInput {
 }
 
 /**
- * 전체 PvP 배틀을 시뮬레이션합니다.
+ * 실시간 스타일 PvP 배틀을 시뮬레이션합니다.
+ * 공격속도에 따라 공격 빈도가 달라집니다.
  */
 export function calculatePvPBattle(input: BattleSimulationInput): PvPBattle {
   const {
@@ -618,7 +637,7 @@ export function calculatePvPBattle(input: BattleSimulationInput): PvPBattle {
     isRevenge = false,
   } = input
 
-  const rounds: BattleRound[] = []
+  const actions: RealtimeBattleAction[] = []
 
   // 초기 HP
   let attackerHp = attackerStats.hp
@@ -626,40 +645,196 @@ export function calculatePvPBattle(input: BattleSimulationInput): PvPBattle {
   const attackerMaxHp = attackerStats.hp
   const defenderMaxHp = defenderStats.hp
 
-  // 스턴 상태
-  let attackerStunned = false
-  let defenderStunned = false
+  // 공격 간격 계산
+  const attackerInterval = calculateAttackInterval(attackerStats.attackSpeed)
+  const defenderInterval = calculateAttackInterval(defenderStats.attackSpeed)
 
-  // 초기 선공 결정 (전체 배틀)
-  const initialTurnOrder = determineTurnOrder(attackerStats.attackSpeed, defenderStats.attackSpeed)
+  // 다음 공격 시간
+  let attackerNextAttack = attackerInterval / 2  // 공격자가 약간 먼저 시작
+  let defenderNextAttack = defenderInterval / 2 + 100
 
-  // 라운드 진행
-  for (let round = 1; round <= BATTLE_CONFIG.MAX_ROUNDS; round++) {
-    const roundResult = calculateRound({
-      round,
-      attackerStats,
-      defenderStats,
-      attackerHp,
-      defenderHp,
-      attackerMaxHp,
-      defenderMaxHp,
-      attackerCards,
-      defenderCards,
-      attackerStunned,
-      defenderStunned,
-    })
+  // 다음 카드 발동 시간
+  let attackerNextCard = PVP_BATTLE_CONFIG.CARD_TRIGGER_INTERVAL
+  let defenderNextCard = PVP_BATTLE_CONFIG.CARD_TRIGGER_INTERVAL
+  let attackerCardIndex = 0
+  let defenderCardIndex = 0
 
-    rounds.push(roundResult.round)
-    attackerHp = roundResult.attackerHpAfter
-    defenderHp = roundResult.defenderHpAfter
-    attackerStunned = roundResult.attackerStunnedNext
-    defenderStunned = roundResult.defenderStunnedNext
+  // 카드 효과 상태
+  let attackerCardEffects = parseCardEffects(null)
+  let defenderCardEffects = parseCardEffects(null)
 
-    // 승패 결정
-    if (attackerHp <= 0 || defenderHp <= 0) {
+  // 공격 횟수
+  let attackerAttackCount = 0
+  let defenderAttackCount = 0
+
+  // 시간 진행
+  let currentTime = 0
+  const battleDuration = PVP_BATTLE_CONFIG.BATTLE_DURATION
+  let loopCount = 0
+  const MAX_LOOP = 1000 // 안전 제한
+
+  while (currentTime < battleDuration && attackerHp > 0 && defenderHp > 0 && loopCount < MAX_LOOP) {
+    loopCount++
+
+    // 다음 이벤트 시간 찾기
+    const nextEvent = Math.min(
+      attackerNextAttack,
+      defenderNextAttack,
+      attackerNextCard,
+      defenderNextCard,
+      battleDuration
+    )
+
+    // 진행이 없으면 종료 (무한 루프 방지)
+    if (nextEvent <= currentTime) {
+      console.warn('Battle loop stuck, breaking', { currentTime, nextEvent })
       break
     }
+
+    currentTime = nextEvent
+
+    // 배틀 종료
+    if (currentTime >= battleDuration) break
+
+    // 카드 발동 체크 (공격자)
+    if (currentTime >= attackerNextCard && attackerCards.length > 0) {
+      const card = attackerCards[attackerCardIndex % attackerCards.length]
+      attackerCardEffects = parseCardEffects(card)
+      attackerCardIndex++
+      attackerNextCard = currentTime + PVP_BATTLE_CONFIG.CARD_TRIGGER_INTERVAL
+
+      actions.push({
+        timestamp: currentTime,
+        actor: 'attacker',
+        type: 'effect',
+        damage: 0,
+        isCrit: false,
+        cardUsed: card,
+        actorHpAfter: attackerHp,
+        targetHpAfter: defenderHp,
+        description: `${card.name} 발동!`,
+      })
+    }
+
+    // 카드 발동 체크 (방어자)
+    if (currentTime >= defenderNextCard && defenderCards.length > 0) {
+      const card = defenderCards[defenderCardIndex % defenderCards.length]
+      defenderCardEffects = parseCardEffects(card)
+      defenderCardIndex++
+      defenderNextCard = currentTime + PVP_BATTLE_CONFIG.CARD_TRIGGER_INTERVAL
+
+      actions.push({
+        timestamp: currentTime,
+        actor: 'defender',
+        type: 'effect',
+        damage: 0,
+        isCrit: false,
+        cardUsed: card,
+        actorHpAfter: defenderHp,
+        targetHpAfter: attackerHp,
+        description: `${card.name} 발동!`,
+      })
+    }
+
+    // 공격자 공격
+    if (currentTime >= attackerNextAttack && attackerHp > 0 && defenderHp > 0) {
+      const damageResult = calculateDamage(attackerStats, defenderStats, {
+        attackBoost: attackerCardEffects.attackBoost,
+        critRateBoost: attackerCardEffects.critRateBoost,
+        critDamageBoost: attackerCardEffects.critDamageBoost,
+        penetrationBoost: attackerCardEffects.penetrationBoost,
+        guaranteedCrit: attackerCardEffects.guaranteedCrit,
+      })
+
+      let damage = damageResult.finalDamage
+
+      // 면역 체크
+      if (defenderCardEffects.immunity) {
+        damage = 0
+      }
+
+      defenderHp = Math.max(0, defenderHp - damage)
+
+      // 반사 데미지
+      if (defenderCardEffects.damageReflect > 0 && damage > 0) {
+        const reflectDamage = Math.floor(damage * defenderCardEffects.damageReflect / 100)
+        attackerHp = Math.max(0, attackerHp - reflectDamage)
+      }
+
+      // 흡혈
+      if (attackerCardEffects.lifesteal > 0 && damage > 0) {
+        const healAmount = Math.floor(damage * attackerCardEffects.lifesteal / 100)
+        attackerHp = Math.min(attackerMaxHp, attackerHp + healAmount)
+      }
+
+      attackerAttackCount++
+      attackerNextAttack = currentTime + attackerInterval * (1 + attackerCardEffects.speedBoost / 100)
+
+      const critText = damageResult.isCrit ? ' (치명타!)' : ''
+      actions.push({
+        timestamp: currentTime,
+        actor: 'attacker',
+        type: 'attack',
+        damage,
+        isCrit: damageResult.isCrit,
+        cardUsed: null,
+        actorHpAfter: attackerHp,
+        targetHpAfter: defenderHp,
+        description: `${attackerName}의 공격! ${damage} 데미지${critText}`,
+      })
+    }
+
+    // 방어자 공격
+    if (currentTime >= defenderNextAttack && defenderHp > 0 && attackerHp > 0) {
+      const damageResult = calculateDamage(defenderStats, attackerStats, {
+        attackBoost: defenderCardEffects.attackBoost,
+        critRateBoost: defenderCardEffects.critRateBoost,
+        critDamageBoost: defenderCardEffects.critDamageBoost,
+        penetrationBoost: defenderCardEffects.penetrationBoost,
+        guaranteedCrit: defenderCardEffects.guaranteedCrit,
+      })
+
+      let damage = damageResult.finalDamage
+
+      // 면역 체크
+      if (attackerCardEffects.immunity) {
+        damage = 0
+      }
+
+      attackerHp = Math.max(0, attackerHp - damage)
+
+      // 반사 데미지
+      if (attackerCardEffects.damageReflect > 0 && damage > 0) {
+        const reflectDamage = Math.floor(damage * attackerCardEffects.damageReflect / 100)
+        defenderHp = Math.max(0, defenderHp - reflectDamage)
+      }
+
+      // 흡혈
+      if (defenderCardEffects.lifesteal > 0 && damage > 0) {
+        const healAmount = Math.floor(damage * defenderCardEffects.lifesteal / 100)
+        defenderHp = Math.min(defenderMaxHp, defenderHp + healAmount)
+      }
+
+      defenderAttackCount++
+      defenderNextAttack = currentTime + defenderInterval * (1 + defenderCardEffects.speedBoost / 100)
+
+      const critText = damageResult.isCrit ? ' (치명타!)' : ''
+      actions.push({
+        timestamp: currentTime,
+        actor: 'defender',
+        type: 'attack',
+        damage,
+        isCrit: damageResult.isCrit,
+        cardUsed: null,
+        actorHpAfter: defenderHp,
+        targetHpAfter: attackerHp,
+        description: `${defenderName}의 공격! ${damage} 데미지${critText}`,
+      })
+    }
   }
+
+  // 시간순 정렬
+  actions.sort((a, b) => a.timestamp - b.timestamp)
 
   // 결과 판정
   let result: PvPBattleResult
@@ -674,7 +849,7 @@ export function calculatePvPBattle(input: BattleSimulationInput): PvPBattle {
     result = 'defender_win'
     winnerId = defenderId
   } else {
-    // 최대 라운드 도달 - HP 비율로 판정
+    // 시간 종료 - HP 비율로 판정
     const attackerHpRatio = attackerHp / attackerMaxHp
     const defenderHpRatio = defenderHp / defenderMaxHp
 
@@ -689,8 +864,6 @@ export function calculatePvPBattle(input: BattleSimulationInput): PvPBattle {
     }
   }
 
-  // 레이팅 변경 계산은 호출자가 별도로 처리
-
   return {
     id: `battle-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     attackerId,
@@ -701,19 +874,23 @@ export function calculatePvPBattle(input: BattleSimulationInput): PvPBattle {
     defenderStats,
     attackerCards,
     defenderCards,
-    rounds,
-    totalRounds: rounds.length,
-    firstAttacker: initialTurnOrder.firstAttacker,
-    attackerSpeed: initialTurnOrder.attackerSpeed,
-    defenderSpeed: initialTurnOrder.defenderSpeed,
+    actions,
+    battleDuration: currentTime,
+    rounds: [],  // 레거시 호환
+    totalRounds: 0,
+    firstAttacker: 'attacker',
+    attackerSpeed: attackerStats.attackSpeed,
+    defenderSpeed: defenderStats.attackSpeed,
+    attackerAttackCount,
+    defenderAttackCount,
     result,
     winnerId,
     attackerFinalHp: Math.max(0, attackerHp),
     defenderFinalHp: Math.max(0, defenderHp),
-    attackerReward: 0,  // 호출자가 설정
-    defenderReward: 0,  // 호출자가 설정
-    attackerRatingChange: 0,  // 호출자가 설정
-    defenderRatingChange: 0,  // 호출자가 설정
+    attackerReward: 0,
+    defenderReward: 0,
+    attackerRatingChange: 0,
+    defenderRatingChange: 0,
     isRevenge,
     createdAt: new Date(),
   }

@@ -77,14 +77,22 @@ export interface PvPBattle {
   attackerCards: BattleCard[]
   defenderCards: BattleCard[]
 
-  // 배틀 진행
+  // 실시간 배틀 액션 (새 시스템)
+  actions: RealtimeBattleAction[]
+  battleDuration: number  // 실제 배틀 소요 시간 (ms)
+
+  // 레거시: 라운드 기반 (호환성)
   rounds: BattleRound[]
   totalRounds: number
 
-  // 선공 정보
+  // 선공 정보 (레거시)
   firstAttacker: 'attacker' | 'defender'
   attackerSpeed: number
   defenderSpeed: number
+
+  // 공격 횟수 통계
+  attackerAttackCount: number
+  defenderAttackCount: number
 
   // 최종 결과
   result: PvPBattleResult
@@ -183,21 +191,36 @@ export interface PvPBattleLog {
 }
 
 // =============================================
+// 실시간 배틀 액션 (새 시스템)
+// =============================================
+
+export interface RealtimeBattleAction {
+  timestamp: number          // ms 단위 시간
+  actor: 'attacker' | 'defender'
+  type: 'attack' | 'heal' | 'effect'
+  damage: number
+  isCrit: boolean
+  cardUsed: BattleCard | null
+  actorHpAfter: number       // 공격자의 HP (힐/반사 후)
+  targetHpAfter: number      // 피격자의 HP
+  description: string
+}
+
+// =============================================
 // 배틀 설정
 // =============================================
 
 export const PVP_BATTLE_CONFIG = {
-  // 최대 라운드 (무승부 방지)
-  MAX_ROUNDS: 20,
+  // 실시간 배틀 설정
+  BATTLE_DURATION: 15000,      // 배틀 총 시간 (15초)
+  BASE_ATTACK_INTERVAL: 2000,  // 기본 공격 간격 (2초) - 공속 100 기준
+  MIN_ATTACK_INTERVAL: 500,    // 최소 공격 간격 (0.5초)
 
-  // 라운드당 카드 발동 주기 (2라운드마다 다음 카드)
-  CARD_CYCLE_ROUNDS: 2,
+  // 카드 발동 주기 (5초마다)
+  CARD_TRIGGER_INTERVAL: 5000,
 
-  // 선공 결정 시 랜덤 범위 (±5%)
-  SPEED_VARIANCE: 0.05,
-
-  // 데미지 랜덤 범위 (±15%)
-  DAMAGE_VARIANCE: 0.15,
+  // 데미지 랜덤 범위 (±10%)
+  DAMAGE_VARIANCE: 0.10,
 
   // 일일 대전 제한
   DAILY_BATTLE_LIMIT: 10,
@@ -209,6 +232,9 @@ export const PVP_BATTLE_CONFIG = {
   BASE_WIN_REWARD: 500,
   BASE_LOSE_REWARD: 100,
   BASE_DRAW_REWARD: 250,
+
+  // 애니메이션 속도 (1000ms 배틀 시간 = 100ms 애니메이션)
+  ANIMATION_SPEED_RATIO: 0.1,
 } as const
 
 // =============================================

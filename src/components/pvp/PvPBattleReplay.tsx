@@ -1,11 +1,11 @@
 /**
  * PvP Battle Replay Component
  *
- * 다회전 배틀의 진행 과정을 애니메이션으로 보여줍니다.
+ * 실시간 액션 배틀 - 데미지가 캐릭터 위에 표시되고 HP가 실시간으로 변화
  */
 
-import { useState, useEffect } from 'react'
-import type { PvPBattle, BattleRound } from '../../types/pvpBattle'
+import { useState, useEffect, useRef } from 'react'
+import type { PvPBattle } from '../../types/pvpBattle'
 
 // =============================================
 // 타입 정의
@@ -18,97 +18,141 @@ interface PvPBattleReplayProps {
   onClaimReward: (amount: number) => void
 }
 
+interface FloatingDamage {
+  id: number
+  damage: number
+  isCrit: boolean
+  isHeal: boolean
+  x: number
+  y: number
+  opacity: number
+}
+
+interface CharacterState {
+  hp: number
+  maxHp: number
+  isHit: boolean
+  isAttacking: boolean
+  lastDamage: number
+}
+
 // =============================================
-// HP 바 컴포넌트
+// 플로팅 데미지 컴포넌트
 // =============================================
 
-function HpBar({
-  current,
-  max,
-}: {
-  current: number
-  max: number
+function FloatingDamageNumber({ damage, isCrit, isHeal, style }: {
+  damage: number
+  isCrit: boolean
+  isHeal: boolean
+  style: React.CSSProperties
 }) {
-  const percent = Math.max(0, (current / max) * 100)
-  const color = percent > 50 ? 'bg-green-500' : percent > 25 ? 'bg-yellow-500' : 'bg-red-500'
-
   return (
-    <div className="w-full">
-      <div className="flex justify-between text-xs mb-1">
-        <span className="text-gray-400">HP</span>
-        <span className={`font-medium ${percent > 25 ? 'text-white' : 'text-red-400'}`}>
-          {current} / {max}
-        </span>
-      </div>
-      <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
-        <div
-          className={`h-full transition-all duration-500 ${color}`}
-          style={{ width: `${percent}%` }}
-        />
-      </div>
+    <div
+      className={`absolute pointer-events-none font-bold text-lg animate-float-up ${
+        isHeal
+          ? 'text-green-400'
+          : isCrit
+            ? 'text-orange-400 text-xl'
+            : 'text-white'
+      }`}
+      style={style}
+    >
+      {isHeal ? '+' : '-'}{damage}
+      {isCrit && <span className="text-xs ml-1">!</span>}
     </div>
   )
 }
 
 // =============================================
-// 라운드 로그 컴포넌트
+// 캐릭터 컴포넌트
 // =============================================
 
-function RoundLog({ round, attackerName, defenderName }: {
-  round: BattleRound
-  attackerName: string
-  defenderName: string
+function BattleCharacter({
+  name,
+  state,
+  isLeft,
+  floatingDamages,
+  attackSpeed,
+  emoji,
+  gradientFrom,
+  gradientTo,
+}: {
+  name: string
+  state: CharacterState
+  isLeft: boolean
+  floatingDamages: FloatingDamage[]
+  attackSpeed: number
+  emoji: string
+  gradientFrom: string
+  gradientTo: string
 }) {
+  const hpPercent = Math.max(0, (state.hp / state.maxHp) * 100)
+  const hpColor = hpPercent > 50 ? 'bg-green-500' : hpPercent > 25 ? 'bg-yellow-500' : 'bg-red-500'
+
   return (
-    <div className="bg-gray-700/30 rounded-lg p-3 text-sm">
-      <div className="flex items-center justify-between mb-2">
-        <span className="font-bold text-yellow-400">라운드 {round.round}</span>
-        <span className="text-gray-500 text-xs">
-          선공: {round.firstAttacker === 'attacker' ? attackerName : defenderName}
-        </span>
+    <div className={`flex-1 flex flex-col ${isLeft ? 'items-start' : 'items-end'}`}>
+      {/* 캐릭터 아바타 영역 */}
+      <div className="relative mb-2">
+        {/* 플로팅 데미지 */}
+        {floatingDamages.map(fd => (
+          <FloatingDamageNumber
+            key={fd.id}
+            damage={fd.damage}
+            isCrit={fd.isCrit}
+            isHeal={fd.isHeal}
+            style={{
+              left: `${fd.x}px`,
+              top: `${fd.y}px`,
+              opacity: fd.opacity,
+              transform: `translateY(${(1 - fd.opacity) * -30}px)`,
+              transition: 'all 0.1s ease-out',
+            }}
+          />
+        ))}
+
+        {/* 캐릭터 */}
+        <div
+          className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl
+            bg-gradient-to-br ${gradientFrom} ${gradientTo}
+            ${state.isHit ? 'animate-shake scale-95' : ''}
+            ${state.isAttacking ? 'scale-110' : ''}
+            transition-transform duration-100
+            shadow-lg
+          `}
+        >
+          {emoji}
+        </div>
+
+        {/* 공격 이펙트 */}
+        {state.isAttacking && (
+          <div className={`absolute inset-0 rounded-full animate-ping opacity-50
+            bg-gradient-to-br ${gradientFrom} ${gradientTo}`}
+          />
+        )}
       </div>
 
-      <div className="space-y-1">
-        {/* 공격자 행동 */}
-        <div className="flex items-center gap-2">
-          <span className="text-blue-400">{attackerName}</span>
-          <span className="text-gray-400">→</span>
-          <span className={round.attackerAction.isCrit ? 'text-orange-400 font-bold' : 'text-red-400'}>
-            {round.attackerAction.damage} 데미지
-            {round.attackerAction.isCrit && ' (치명타!)'}
-          </span>
-          {round.attackerAction.cardUsed && (
-            <span className="text-purple-400 text-xs">
-              [{round.attackerAction.cardUsed.name}]
-            </span>
-          )}
-        </div>
+      {/* 이름 및 공속 */}
+      <div className={`mb-1 ${isLeft ? 'text-left' : 'text-right'} w-full`}>
+        <p className={`font-bold text-sm ${isLeft ? 'text-blue-400' : 'text-red-400'}`}>
+          {name}
+        </p>
+        <p className="text-gray-500 text-xs">공속 {attackSpeed}</p>
+      </div>
 
-        {/* 방어자 행동 */}
-        <div className="flex items-center gap-2">
-          <span className="text-red-400">{defenderName}</span>
-          <span className="text-gray-400">→</span>
-          <span className={round.defenderAction.isCrit ? 'text-orange-400 font-bold' : 'text-red-400'}>
-            {round.defenderAction.damage} 데미지
-            {round.defenderAction.isCrit && ' (치명타!)'}
+      {/* HP 바 */}
+      <div className="w-full">
+        <div className="flex justify-between text-xs mb-1">
+          <span className={hpPercent > 25 ? 'text-white' : 'text-red-400'}>
+            {Math.floor(state.hp)}
           </span>
-          {round.defenderAction.cardUsed && (
-            <span className="text-purple-400 text-xs">
-              [{round.defenderAction.cardUsed.name}]
-            </span>
-          )}
+          <span className="text-gray-500">/ {state.maxHp}</span>
         </div>
-
-        {/* 특수 이벤트 */}
-        {round.events.length > 0 && (
-          <div className="mt-1 space-y-0.5">
-            {round.events.map((event, i) => (
-              <div key={i} className="text-xs text-yellow-300">
-                {event.source === 'attacker' ? attackerName : defenderName}: {event.description}
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
+          <div
+            className={`h-full ${hpColor} transition-all duration-150 ease-out`}
+            style={{ width: `${hpPercent}%` }}
+          />
+        </div>
       </div>
     </div>
   )
@@ -124,39 +168,208 @@ export function PvPBattleReplay({
   onClose,
   onClaimReward,
 }: PvPBattleReplayProps) {
-  const [currentRoundIndex, setCurrentRoundIndex] = useState(0)
   const [showResult, setShowResult] = useState(false)
   const [rewardClaimed, setRewardClaimed] = useState(false)
+  const [elapsedTime, setElapsedTime] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
 
-  // 새로운 배틀이 시작되면 상태 초기화
+  const [attackerState, setAttackerState] = useState<CharacterState>({
+    hp: 0, maxHp: 0, isHit: false, isAttacking: false, lastDamage: 0
+  })
+  const [defenderState, setDefenderState] = useState<CharacterState>({
+    hp: 0, maxHp: 0, isHit: false, isAttacking: false, lastDamage: 0
+  })
+
+  const [attackerFloatingDamages, setAttackerFloatingDamages] = useState<FloatingDamage[]>([])
+  const [defenderFloatingDamages, setDefenderFloatingDamages] = useState<FloatingDamage[]>([])
+
+  const [recentLogs, setRecentLogs] = useState<string[]>([])
+
+  const animationRef = useRef<number | null>(null)
+  const startTimeRef = useRef<number | null>(null)
+  const lastProcessedIndexRef = useRef(-1)
+  const damageIdRef = useRef(0)
+
+  // 플로팅 데미지 추가 (ref로 안정적인 참조)
+  const addFloatingDamageRef = useRef((
+    target: 'attacker' | 'defender',
+    damage: number,
+    isCrit: boolean,
+    isHeal: boolean = false
+  ) => {
+    const newDamage: FloatingDamage = {
+      id: damageIdRef.current++,
+      damage,
+      isCrit,
+      isHeal,
+      x: 20 + Math.random() * 20,
+      y: -10 - Math.random() * 20,
+      opacity: 1,
+    }
+
+    if (target === 'attacker') {
+      setAttackerFloatingDamages(prev => [...prev, newDamage])
+    } else {
+      setDefenderFloatingDamages(prev => [...prev, newDamage])
+    }
+
+    // 페이드 아웃
+    setTimeout(() => {
+      if (target === 'attacker') {
+        setAttackerFloatingDamages(prev => prev.filter(d => d.id !== newDamage.id))
+      } else {
+        setDefenderFloatingDamages(prev => prev.filter(d => d.id !== newDamage.id))
+      }
+    }, 800)
+  })
+
+  // 배틀 초기화
   useEffect(() => {
     if (battle && isPlaying) {
-      // 새 배틀 시작 시 상태 완전 초기화
-      setCurrentRoundIndex(0)
       setShowResult(false)
       setRewardClaimed(false)
+      setElapsedTime(0)
+      setIsPaused(false)
+      setRecentLogs([])
+      setAttackerFloatingDamages([])
+      setDefenderFloatingDamages([])
+      lastProcessedIndexRef.current = -1
+      startTimeRef.current = null
+
+      setAttackerState({
+        hp: battle.attackerStats.hp,
+        maxHp: battle.attackerStats.hp,
+        isHit: false,
+        isAttacking: false,
+        lastDamage: 0,
+      })
+      setDefenderState({
+        hp: battle.defenderStats.hp,
+        maxHp: battle.defenderStats.hp,
+        isHit: false,
+        isAttacking: false,
+        lastDamage: 0,
+      })
     }
   }, [battle?.id, isPlaying])
 
-  // 자동 재생
+  // 메인 애니메이션 루프
   useEffect(() => {
-    if (!battle || !isPlaying) return
-
-    if (currentRoundIndex < battle.rounds.length) {
-      const timer = setTimeout(() => {
-        setCurrentRoundIndex(prev => prev + 1)
-      }, 2500) // 2.5초마다 다음 라운드
-
-      return () => clearTimeout(timer)
-    } else {
-      // 모든 라운드 완료
-      const timer = setTimeout(() => {
-        setShowResult(true)
-      }, 1500)
-
-      return () => clearTimeout(timer)
+    if (!battle || !isPlaying || showResult || isPaused) return
+    if (battle.actions.length === 0) {
+      setShowResult(true)
+      return
     }
-  }, [battle, isPlaying, currentRoundIndex])
+
+    const speedMultiplier = 10 // 배틀 속도 (높을수록 빠름)
+    let isCancelled = false
+
+    const animate = (timestamp: number) => {
+      if (isCancelled) return
+
+      if (!startTimeRef.current) {
+        startTimeRef.current = timestamp
+      }
+
+      const elapsed = (timestamp - startTimeRef.current) * speedMultiplier
+      setElapsedTime(elapsed)
+
+      // 현재 시간까지의 액션 처리
+      let currentAttackerHp = battle.attackerStats.hp
+      let currentDefenderHp = battle.defenderStats.hp
+
+      for (let i = lastProcessedIndexRef.current + 1; i < battle.actions.length; i++) {
+        const action = battle.actions[i]
+        if (action.timestamp <= elapsed) {
+          lastProcessedIndexRef.current = i
+
+          if (action.type === 'attack') {
+            if (action.actor === 'attacker') {
+              currentDefenderHp = action.targetHpAfter
+              // 공격자가 공격
+              setAttackerState(prev => ({ ...prev, isAttacking: true }))
+              setDefenderState(prev => ({
+                ...prev,
+                hp: action.targetHpAfter,
+                isHit: true,
+                lastDamage: action.damage
+              }))
+              addFloatingDamageRef.current('defender', action.damage, action.isCrit)
+
+              // 로그 추가
+              setRecentLogs(prev => [
+                `${battle.attackerName}: ${action.damage}${action.isCrit ? ' 치명타!' : ''}`,
+                ...prev.slice(0, 4)
+              ])
+
+              // 애니메이션 리셋
+              setTimeout(() => {
+                setAttackerState(prev => ({ ...prev, isAttacking: false }))
+                setDefenderState(prev => ({ ...prev, isHit: false }))
+              }, 150)
+            } else {
+              currentAttackerHp = action.targetHpAfter
+              // 방어자가 공격
+              setDefenderState(prev => ({ ...prev, isAttacking: true }))
+              setAttackerState(prev => ({
+                ...prev,
+                hp: action.targetHpAfter,
+                isHit: true,
+                lastDamage: action.damage
+              }))
+              addFloatingDamageRef.current('attacker', action.damage, action.isCrit)
+
+              setRecentLogs(prev => [
+                `${battle.defenderName}: ${action.damage}${action.isCrit ? ' 치명타!' : ''}`,
+                ...prev.slice(0, 4)
+              ])
+
+              setTimeout(() => {
+                setDefenderState(prev => ({ ...prev, isAttacking: false }))
+                setAttackerState(prev => ({ ...prev, isHit: false }))
+              }, 150)
+            }
+          } else if (action.type === 'effect' && action.cardUsed) {
+            setRecentLogs(prev => [
+              `${action.cardUsed!.emoji} ${action.description}`,
+              ...prev.slice(0, 4)
+            ])
+          }
+        } else {
+          break
+        }
+      }
+
+      // 배틀 종료 체크 (로컬 변수 사용)
+      const battleEnded =
+        currentAttackerHp <= 0 ||
+        currentDefenderHp <= 0 ||
+        elapsed >= battle.battleDuration ||
+        lastProcessedIndexRef.current >= battle.actions.length - 1
+
+      if (battleEnded) {
+        setAttackerState(prev => ({ ...prev, hp: battle.attackerFinalHp }))
+        setDefenderState(prev => ({ ...prev, hp: battle.defenderFinalHp }))
+
+        setTimeout(() => {
+          setShowResult(true)
+        }, 500)
+        return
+      }
+
+      animationRef.current = requestAnimationFrame(animate)
+    }
+
+    animationRef.current = requestAnimationFrame(animate)
+
+    return () => {
+      isCancelled = true
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [battle?.id, isPlaying, showResult, isPaused])
 
   if (!battle) {
     return (
@@ -166,10 +379,6 @@ export function PvPBattleReplay({
     )
   }
 
-  const currentRound = battle.rounds[currentRoundIndex - 1]
-  const attackerHp = currentRound?.attackerHpAfter ?? battle.attackerStats.hp
-  const defenderHp = currentRound?.defenderHpAfter ?? battle.defenderStats.hp
-
   const handleClaimReward = () => {
     if (!rewardClaimed) {
       onClaimReward(battle.attackerReward)
@@ -178,27 +387,40 @@ export function PvPBattleReplay({
     onClose()
   }
 
-  // 결과 화면 (showResult가 true일 때만 표시)
+  const handleSkip = () => {
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current)
+    }
+    setShowResult(true)
+  }
+
+  // 결과 화면
   if (showResult) {
     const isWin = battle.result === 'attacker_win'
     const isLose = battle.result === 'defender_win'
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 animate-fade-in">
         {/* 결과 헤더 */}
-        <div className={`text-center py-6 rounded-lg ${
-          isWin ? 'bg-green-900/30' : isLose ? 'bg-red-900/30' : 'bg-gray-700/30'
+        <div className={`text-center py-8 rounded-xl ${
+          isWin ? 'bg-gradient-to-b from-green-900/50 to-green-900/20'
+          : isLose ? 'bg-gradient-to-b from-red-900/50 to-red-900/20'
+          : 'bg-gradient-to-b from-gray-700/50 to-gray-700/20'
         }`}>
-          <div className={`text-4xl font-bold mb-2 ${
+          <div className={`text-5xl font-bold mb-3 ${
             isWin ? 'text-green-400' : isLose ? 'text-red-400' : 'text-gray-400'
           }`}>
             {isWin && '승리!'}
             {isLose && '패배...'}
             {battle.result === 'draw' && '무승부'}
           </div>
-          <p className="text-gray-400">
-            {battle.totalRounds}라운드 | HP {battle.attackerFinalHp} vs {battle.defenderFinalHp}
+          <p className="text-gray-300 text-lg">
+            HP {battle.attackerFinalHp} vs {battle.defenderFinalHp}
           </p>
+          <div className="flex justify-center gap-6 mt-3 text-sm text-gray-400">
+            <span>내 공격: {battle.attackerAttackCount}회</span>
+            <span>상대 공격: {battle.defenderAttackCount}회</span>
+          </div>
         </div>
 
         {/* 보상 */}
@@ -206,13 +428,13 @@ export function PvPBattleReplay({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-400 text-sm">획득 골드</p>
-              <p className="text-yellow-400 font-bold text-xl">
+              <p className="text-yellow-400 font-bold text-2xl">
                 +{battle.attackerReward.toLocaleString()}
               </p>
             </div>
             <div className="text-right">
               <p className="text-gray-400 text-sm">레이팅 변동</p>
-              <p className={`font-bold text-xl ${
+              <p className={`font-bold text-2xl ${
                 battle.attackerRatingChange >= 0 ? 'text-green-400' : 'text-red-400'
               }`}>
                 {battle.attackerRatingChange >= 0 ? '+' : ''}{battle.attackerRatingChange}
@@ -221,22 +443,10 @@ export function PvPBattleReplay({
           </div>
         </div>
 
-        {/* 라운드 로그 */}
-        <div className="max-h-48 overflow-y-auto space-y-2">
-          {battle.rounds.map((round, i) => (
-            <RoundLog
-              key={i}
-              round={round}
-              attackerName={battle.attackerName}
-              defenderName={battle.defenderName}
-            />
-          ))}
-        </div>
-
         {/* 확인 버튼 */}
         <button
           onClick={handleClaimReward}
-          className="w-full py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold rounded-lg hover:scale-105 transition-transform"
+          className="w-full py-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold text-lg rounded-xl hover:scale-[1.02] transition-transform shadow-lg"
         >
           {rewardClaimed ? '확인' : '보상 받기'}
         </button>
@@ -245,137 +455,89 @@ export function PvPBattleReplay({
   }
 
   // 진행 중 화면
+  const progress = (elapsedTime / battle.battleDuration) * 100
+  const timeRemaining = Math.max(0, (battle.battleDuration - elapsedTime) / 1000)
+
   return (
     <div className="space-y-4">
-      {/* VS 헤더 */}
-      <div className="flex items-center justify-between">
-        {/* 공격자 */}
-        <div className="flex-1 text-center">
-          <div className="w-16 h-16 mx-auto bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center mb-2">
-            <span className="text-2xl">⚔️</span>
-          </div>
-          <p className="text-white font-bold text-sm">{battle.attackerName}</p>
-          <HpBar
-            current={attackerHp}
-            max={battle.attackerStats.hp}
-          />
-        </div>
-
-        {/* VS */}
-        <div className="px-4">
-          <div className="text-2xl font-bold text-yellow-400 animate-pulse">VS</div>
-        </div>
-
-        {/* 방어자 */}
-        <div className="flex-1 text-center">
-          <div className="w-16 h-16 mx-auto bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center mb-2">
-            <span className="text-2xl">🛡️</span>
-          </div>
-          <p className="text-white font-bold text-sm">{battle.defenderName}</p>
-          <HpBar
-            current={defenderHp}
-            max={battle.defenderStats.hp}
-          />
-        </div>
-      </div>
-
-      {/* 스탯 비교 */}
-      <div className="bg-gray-700/30 rounded-lg p-2">
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          {/* 나 */}
-          <div className="bg-blue-900/30 rounded p-2">
-            <p className="text-blue-400 font-bold text-center mb-1">나</p>
-            <div className="grid grid-cols-3 gap-1 text-center">
-              <div>
-                <span className="text-red-400">{battle.attackerStats.attack}</span>
-                <p className="text-[9px] text-gray-500">공격</p>
-              </div>
-              <div>
-                <span className="text-blue-400">{battle.attackerStats.defense}</span>
-                <p className="text-[9px] text-gray-500">방어</p>
-              </div>
-              <div>
-                <span className="text-yellow-400">{battle.attackerStats.critRate}%</span>
-                <p className="text-[9px] text-gray-500">치확</p>
-              </div>
-            </div>
-          </div>
-          {/* 적 */}
-          <div className="bg-red-900/30 rounded p-2">
-            <p className="text-red-400 font-bold text-center mb-1">적</p>
-            <div className="grid grid-cols-3 gap-1 text-center">
-              <div>
-                <span className="text-red-400">{battle.defenderStats.attack}</span>
-                <p className="text-[9px] text-gray-500">공격</p>
-              </div>
-              <div>
-                <span className="text-blue-400">{battle.defenderStats.defense}</span>
-                <p className="text-[9px] text-gray-500">방어</p>
-              </div>
-              <div>
-                <span className="text-yellow-400">{battle.defenderStats.critRate}%</span>
-                <p className="text-[9px] text-gray-500">치확</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* 사용 카드 표시 */}
-        {(battle.attackerCards.length > 0 || battle.defenderCards.length > 0) && (
-          <div className="mt-2 pt-2 border-t border-gray-600/50 flex justify-between text-[10px]">
-            <div className="text-blue-300">
-              카드: {battle.attackerCards.length > 0
-                ? battle.attackerCards.map(c => c.emoji).join(' ')
-                : '없음'}
-            </div>
-            <div className="text-red-300">
-              카드: {battle.defenderCards.length > 0
-                ? battle.defenderCards.map(c => c.emoji).join(' ')
-                : '없음'}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 라운드 카운터 */}
+      {/* 타이머 */}
       <div className="text-center">
-        <span className="text-yellow-400 font-bold text-lg">
-          라운드 {currentRoundIndex} / {battle.totalRounds}
+        <span className="text-2xl font-bold text-yellow-400">
+          {timeRemaining.toFixed(1)}s
         </span>
       </div>
 
-      {/* 현재 라운드 */}
-      {currentRound && (
-        <div className="animate-fade-in">
-          <RoundLog
-            round={currentRound}
-            attackerName={battle.attackerName}
-            defenderName={battle.defenderName}
+      {/* 배틀 아레나 */}
+      <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-xl p-4 relative overflow-hidden">
+        {/* 배경 이펙트 */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-purple-500 rounded-full blur-3xl" />
+        </div>
+
+        {/* 캐릭터들 */}
+        <div className="relative flex items-start justify-between gap-8">
+          <BattleCharacter
+            name={battle.attackerName}
+            state={attackerState}
+            isLeft={true}
+            floatingDamages={attackerFloatingDamages}
+            attackSpeed={battle.attackerStats.attackSpeed}
+            emoji="⚔️"
+            gradientFrom="from-blue-500"
+            gradientTo="to-purple-600"
+          />
+
+          {/* VS */}
+          <div className="flex flex-col items-center justify-center pt-6">
+            <div className="text-3xl font-bold text-yellow-400 animate-pulse">VS</div>
+          </div>
+
+          <BattleCharacter
+            name={battle.defenderName}
+            state={defenderState}
+            isLeft={false}
+            floatingDamages={defenderFloatingDamages}
+            attackSpeed={battle.defenderStats.attackSpeed}
+            emoji="🛡️"
+            gradientFrom="from-red-500"
+            gradientTo="to-orange-600"
           />
         </div>
-      )}
+      </div>
+
+      {/* 실시간 로그 */}
+      <div className="bg-gray-900/80 rounded-lg p-3 h-24 overflow-hidden">
+        <div className="space-y-1">
+          {recentLogs.map((log, i) => (
+            <div
+              key={i}
+              className="text-sm transition-opacity duration-300"
+              style={{ opacity: 1 - i * 0.2 }}
+            >
+              <span className="text-gray-300">{log}</span>
+            </div>
+          ))}
+          {recentLogs.length === 0 && (
+            <div className="text-gray-500 text-sm text-center py-4">
+              전투 시작...
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* 진행 바 */}
       <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500"
-          style={{ width: `${(currentRoundIndex / battle.totalRounds) * 100}%` }}
+          className="h-full bg-gradient-to-r from-yellow-500 to-red-500 transition-all duration-100"
+          style={{ width: `${Math.min(100, progress)}%` }}
         />
       </div>
 
-      {/* 컨트롤 버튼 */}
-      <div className="flex justify-center gap-3">
-        <div className="flex gap-1">
-          {[0, 1, 2].map(i => (
-            <div
-              key={i}
-              className="w-3 h-3 bg-yellow-400 rounded-full animate-bounce"
-              style={{ animationDelay: `${i * 0.15}s` }}
-            />
-          ))}
-        </div>
+      {/* 컨트롤 */}
+      <div className="flex justify-center">
         <button
-          onClick={() => setShowResult(true)}
-          className="px-4 py-1 bg-gray-700 text-gray-300 text-sm rounded hover:bg-gray-600 transition-colors"
+          onClick={handleSkip}
+          className="px-6 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors"
         >
           스킵 →
         </button>
