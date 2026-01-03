@@ -36,6 +36,13 @@ export type BattleCardEffectType =
   | 'damage_reflect'     // 데미지 반사
   | 'first_strike'       // 선제 공격
   | 'gold_bonus'         // 골드 보너스
+  // PvP 전용 효과
+  | 'hp_recovery'        // HP 회복
+  | 'speed_boost'        // 공격속도 증가 (선공권)
+  | 'immunity'           // 이번 턴 피해 무효
+  | 'lifesteal'          // 흡혈 (데미지의 일부 HP 회복)
+  | 'double_attack'      // 연속 공격 (2회 공격)
+  | 'stun'               // 스턴 (상대 다음 턴 스킵)
 
 // 카드 효과 데이터
 export interface BattleCardEffect {
@@ -65,16 +72,24 @@ export const EFFECT_TYPE_INFO: Record<BattleCardEffectType, {
   name: string
   emoji: string
   minTier: BattleCardTier
+  isPvPOnly: boolean  // PvP 전용 여부
 }> = {
-  attack_boost: { name: '공격력 증가', emoji: '⚔️', minTier: 'common' },
-  defense_boost: { name: '방어력 증가', emoji: '🛡️', minTier: 'common' },
-  crit_rate_boost: { name: '치명타 확률', emoji: '🎯', minTier: 'common' },
-  crit_damage_boost: { name: '치명타 데미지', emoji: '💥', minTier: 'common' },
-  penetration_boost: { name: '관통력 증가', emoji: '🗡️', minTier: 'common' },
-  guaranteed_crit: { name: '확정 치명타', emoji: '⚡', minTier: 'epic' },
-  damage_reflect: { name: '데미지 반사', emoji: '🪞', minTier: 'rare' },
-  first_strike: { name: '선제 공격', emoji: '💨', minTier: 'common' },
-  gold_bonus: { name: '골드 보너스', emoji: '💰', minTier: 'common' },
+  attack_boost: { name: '공격력 증가', emoji: '⚔️', minTier: 'common', isPvPOnly: false },
+  defense_boost: { name: '방어력 증가', emoji: '🛡️', minTier: 'common', isPvPOnly: false },
+  crit_rate_boost: { name: '치명타 확률', emoji: '🎯', minTier: 'common', isPvPOnly: false },
+  crit_damage_boost: { name: '치명타 데미지', emoji: '💥', minTier: 'common', isPvPOnly: false },
+  penetration_boost: { name: '관통력 증가', emoji: '🗡️', minTier: 'common', isPvPOnly: false },
+  guaranteed_crit: { name: '확정 치명타', emoji: '⚡', minTier: 'epic', isPvPOnly: false },
+  damage_reflect: { name: '데미지 반사', emoji: '🪞', minTier: 'rare', isPvPOnly: false },
+  first_strike: { name: '선제 공격', emoji: '💨', minTier: 'common', isPvPOnly: false },
+  gold_bonus: { name: '골드 보너스', emoji: '💰', minTier: 'common', isPvPOnly: false },
+  // PvP 전용 효과
+  hp_recovery: { name: 'HP 회복', emoji: '💚', minTier: 'rare', isPvPOnly: true },
+  speed_boost: { name: '공격속도 증가', emoji: '⚡', minTier: 'rare', isPvPOnly: true },
+  immunity: { name: '피해 면역', emoji: '🛡️', minTier: 'epic', isPvPOnly: true },
+  lifesteal: { name: '흡혈', emoji: '🧛', minTier: 'rare', isPvPOnly: true },
+  double_attack: { name: '연속 공격', emoji: '⚔️', minTier: 'legendary', isPvPOnly: true },
+  stun: { name: '스턴', emoji: '💫', minTier: 'legendary', isPvPOnly: true },
 }
 
 // 등급별 효과 수치
@@ -89,6 +104,13 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     damage_reflect: 0,       // common에서는 나오지 않음
     first_strike: 20,        // 고정 데미지
     gold_bonus: 20,
+    // PvP 전용 (common에서는 나오지 않음)
+    hp_recovery: 0,
+    speed_boost: 0,
+    immunity: 0,
+    lifesteal: 0,
+    double_attack: 0,
+    stun: 0,
   },
   rare: {
     attack_boost: 10,
@@ -100,6 +122,13 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     damage_reflect: 10,
     first_strike: 40,
     gold_bonus: 40,
+    // PvP 전용
+    hp_recovery: 20,         // HP 20% 회복
+    speed_boost: 10,         // 공격속도 +10%
+    immunity: 0,             // rare에서는 나오지 않음
+    lifesteal: 15,           // 데미지의 15% 흡혈
+    double_attack: 0,        // rare에서는 나오지 않음
+    stun: 0,                 // rare에서는 나오지 않음
   },
   epic: {
     attack_boost: 15,
@@ -111,6 +140,13 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     damage_reflect: 20,
     first_strike: 70,
     gold_bonus: 60,
+    // PvP 전용
+    hp_recovery: 35,         // HP 35% 회복
+    speed_boost: 20,         // 공격속도 +20%
+    immunity: 100,           // 이번 턴 피해 완전 무효
+    lifesteal: 25,           // 데미지의 25% 흡혈
+    double_attack: 0,        // epic에서는 나오지 않음
+    stun: 0,                 // epic에서는 나오지 않음
   },
   legendary: {
     attack_boost: 25,
@@ -122,15 +158,30 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     damage_reflect: 30,
     first_strike: 100,
     gold_bonus: 100,
+    // PvP 전용
+    hp_recovery: 50,         // HP 50% 회복
+    speed_boost: 30,         // 공격속도 +30%
+    immunity: 100,           // 이번 턴 피해 완전 무효
+    lifesteal: 40,           // 데미지의 40% 흡혈
+    double_attack: 100,      // 2회 공격 (100% 확률)
+    stun: 100,               // 스턴 (100% 확률)
   },
 }
 
-// 등급별로 나올 수 있는 효과 타입
+// 등급별로 나올 수 있는 효과 타입 (AI 대전용)
 export const TIER_AVAILABLE_EFFECTS: Record<BattleCardTier, BattleCardEffectType[]> = {
   common: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'first_strike', 'gold_bonus'],
   rare: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'damage_reflect', 'first_strike', 'gold_bonus'],
   epic: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'gold_bonus'],
   legendary: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'gold_bonus'],
+}
+
+// 등급별로 나올 수 있는 효과 타입 (PvP용 - 모든 효과 포함)
+export const TIER_AVAILABLE_EFFECTS_PVP: Record<BattleCardTier, BattleCardEffectType[]> = {
+  common: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'first_strike', 'gold_bonus'],
+  rare: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'lifesteal'],
+  epic: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal'],
+  legendary: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'double_attack', 'stun'],
 }
 
 // 카드 이름 생성
@@ -189,6 +240,43 @@ export const CARD_NAMES: Record<BattleCardEffectType, Record<BattleCardTier, str
     epic: '보물 상자',
     legendary: '미다스의 손',
   },
+  // PvP 전용 카드 이름
+  hp_recovery: {
+    common: '',
+    rare: '치유의 빛',
+    epic: '생명의 축복',
+    legendary: '불사의 영약',
+  },
+  speed_boost: {
+    common: '',
+    rare: '신속의 문장',
+    epic: '질풍의 문장',
+    legendary: '섬광',
+  },
+  immunity: {
+    common: '',
+    rare: '',
+    epic: '보호막',
+    legendary: '절대 방어',
+  },
+  lifesteal: {
+    common: '',
+    rare: '흡혈의 송곳니',
+    epic: '생명 착취',
+    legendary: '영혼 흡수',
+  },
+  double_attack: {
+    common: '',
+    rare: '',
+    epic: '',
+    legendary: '쌍검술',
+  },
+  stun: {
+    common: '',
+    rare: '',
+    epic: '',
+    legendary: '기절의 일격',
+  },
 }
 
 // 랜덤 등급 롤
@@ -212,8 +300,8 @@ export function generateRandomCard(): BattleCard {
   const value = TIER_EFFECT_VALUES[tier][effectType]
   const info = EFFECT_TYPE_INFO[effectType]
 
-  // 효과가 % 기반인지 결정
-  const isPercentage = !['first_strike', 'guaranteed_crit'].includes(effectType)
+  // 효과가 % 기반인지 결정 (first_strike, guaranteed_crit, double_attack, stun, immunity는 고정값)
+  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity'].includes(effectType)
 
   const effect: BattleCardEffect = {
     type: effectType,
@@ -254,6 +342,19 @@ export function formatCardDescription(effect: BattleCardEffect): string {
       return `선제 공격 +${effect.value} 데미지`
     case 'gold_bonus':
       return `획득 골드 +${effect.value}%`
+    // PvP 전용 효과
+    case 'hp_recovery':
+      return `HP ${effect.value}% 회복`
+    case 'speed_boost':
+      return `공격속도 +${effect.value}%`
+    case 'immunity':
+      return '이번 턴 피해 무효'
+    case 'lifesteal':
+      return `데미지의 ${effect.value}% HP 회복`
+    case 'double_attack':
+      return '이번 턴 2회 공격'
+    case 'stun':
+      return '상대 다음 턴 스킵'
     default:
       return info.name
   }
@@ -279,4 +380,92 @@ export function rerollCardSlot(slots: BattleCardSlot[], index: number): BattleCa
     hasRerolled: true,
   }
   return newSlots
+}
+
+// =============================================
+// PvP 전용 카드 생성 함수
+// =============================================
+
+// PvP용 랜덤 카드 생성 (PvP 전용 효과 포함)
+export function generateRandomPvPCard(): BattleCard {
+  const tier = rollRandomTier()
+  const availableEffects = TIER_AVAILABLE_EFFECTS_PVP[tier]
+  const effectType = availableEffects[Math.floor(Math.random() * availableEffects.length)]
+  const value = TIER_EFFECT_VALUES[tier][effectType]
+  const info = EFFECT_TYPE_INFO[effectType]
+
+  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity'].includes(effectType)
+
+  const effect: BattleCardEffect = {
+    type: effectType,
+    value,
+    isPercentage,
+  }
+
+  return {
+    id: `pvp-card-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    name: CARD_NAMES[effectType][tier] || info.name,
+    description: formatCardDescription(effect),
+    tier,
+    effect,
+    emoji: info.emoji,
+  }
+}
+
+// 특정 티어의 PvP 카드 생성
+export function generatePvPCardByTier(tier: BattleCardTier): BattleCard {
+  const availableEffects = TIER_AVAILABLE_EFFECTS_PVP[tier]
+  const effectType = availableEffects[Math.floor(Math.random() * availableEffects.length)]
+  const value = TIER_EFFECT_VALUES[tier][effectType]
+  const info = EFFECT_TYPE_INFO[effectType]
+
+  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity'].includes(effectType)
+
+  const effect: BattleCardEffect = {
+    type: effectType,
+    value,
+    isPercentage,
+  }
+
+  return {
+    id: `pvp-card-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    name: CARD_NAMES[effectType][tier] || info.name,
+    description: formatCardDescription(effect),
+    tier,
+    effect,
+    emoji: info.emoji,
+  }
+}
+
+// 특정 효과의 카드 생성
+export function generateCardByEffect(effectType: BattleCardEffectType, tier: BattleCardTier): BattleCard {
+  const value = TIER_EFFECT_VALUES[tier][effectType]
+  const info = EFFECT_TYPE_INFO[effectType]
+
+  // 해당 티어에서 이 효과를 사용할 수 없으면 가장 낮은 가능 티어로 변경
+  if (value === 0) {
+    const minTier = info.minTier
+    const minValue = TIER_EFFECT_VALUES[minTier][effectType]
+    const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity'].includes(effectType)
+
+    return {
+      id: `card-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: CARD_NAMES[effectType][minTier] || info.name,
+      description: formatCardDescription({ type: effectType, value: minValue, isPercentage }),
+      tier: minTier,
+      effect: { type: effectType, value: minValue, isPercentage },
+      emoji: info.emoji,
+    }
+  }
+
+  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity'].includes(effectType)
+
+  return {
+    id: `card-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    name: CARD_NAMES[effectType][tier] || info.name,
+    description: formatCardDescription({ type: effectType, value, isPercentage }),
+    tier,
+    effect: { type: effectType, value, isPercentage },
+    emoji: info.emoji,
+  }
 }
