@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { UserEquipment } from '../../types/equipment'
 import { getEquipmentDisplayName, getEquipmentComment } from '../../types/equipment'
 import type { EnhanceResult } from '../../types/starforce'
@@ -53,6 +54,8 @@ export default function EquipmentEnhancePanel({
   onEnhance,
   onResetAfterDestroy,
 }: EquipmentEnhancePanelProps) {
+  const [showDetails, setShowDetails] = useState(false)
+
   if (!equipment) {
     return (
       <div className="card">
@@ -167,70 +170,100 @@ export default function EquipmentEnhancePanel({
           </div>
         </div>
 
-        {/* 확률 섹션 */}
+        {/* 확률 섹션 - 간소화 */}
         <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-xs text-[var(--color-text-secondary)]">강화 확률</span>
-            {chanceTimeActive && (
-              <span className="text-xs font-bold text-[var(--color-accent)] bg-[var(--color-accent)]/20 px-2 py-1 rounded animate-pulse">
-                찬스타임!
+          {/* 메인 확률 표시 */}
+          <div className="flex items-center justify-between p-3 rounded-lg bg-[var(--color-bg-elevated-2)]">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-[var(--color-text-secondary)]">성공 확률</span>
+              {chanceTimeActive && (
+                <span className="text-[10px] font-bold text-[var(--color-accent)] bg-[var(--color-accent)]/20 px-1.5 py-0.5 rounded animate-pulse">
+                  찬스타임!
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`text-xl font-bold ${
+                successRate >= 100 ? 'text-[var(--color-success)]' :
+                successRate >= 50 ? 'text-[var(--color-accent)]' :
+                'text-[var(--color-danger)]'
+              }`}>
+                {successRate}%
               </span>
-            )}
+              {destroyRate > 0 && (
+                <span className="text-xs text-[var(--color-danger)] bg-[var(--color-danger)]/10 px-2 py-1 rounded">
+                  파괴 {destroyRate}%
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* 확률 바 - 모바일 최적화 */}
-          <div className="h-8 sm:h-9 rounded-xl overflow-hidden flex bg-[var(--color-bg-elevated-1)] border border-[var(--color-border)]">
-            {/* 성공 */}
-            <div
-              className="flex items-center justify-center text-xs font-bold text-white transition-all"
-              style={{
-                width: `${successRate}%`,
-                background: 'linear-gradient(135deg, #22c55e, #16a34a)'
-              }}
-            >
-              {successRate > 12 && <span>{successRate}%</span>}
-            </div>
-            {/* 유지 */}
-            <div
-              className="flex items-center justify-center text-xs font-bold text-black transition-all"
-              style={{
-                width: `${maintainRate}%`,
-                background: 'linear-gradient(135deg, #fbbf24, #f59e0b)'
-              }}
-            >
-              {maintainRate > 12 && <span>{maintainRate}%</span>}
-            </div>
-            {/* 파괴 */}
-            {destroyRate > 0 && (
-              <div
-                className="flex items-center justify-center text-xs font-bold text-white transition-all"
-                style={{
-                  width: `${destroyRate}%`,
-                  background: 'linear-gradient(135deg, #ef4444, #dc2626)'
-                }}
-              >
-                {destroyRate > 8 && <span>{destroyRate}%</span>}
-              </div>
-            )}
-          </div>
+          {/* 상세 확률 토글 */}
+          <button
+            onClick={() => setShowDetails(!showDetails)}
+            className="w-full text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] py-1 flex items-center justify-center gap-1 transition-colors"
+          >
+            <span>{showDetails ? '상세 숨기기' : '상세 보기'}</span>
+            <span className={`transition-transform ${showDetails ? 'rotate-180' : ''}`}>▼</span>
+          </button>
 
-          {/* 범례 - 모바일 최적화 */}
-          <div className="flex justify-center gap-3 sm:gap-4 text-[10px] sm:text-xs">
-            <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-[var(--color-success)]"></span>
-              <span className="text-[var(--color-text-secondary)]">성공 <span className="font-bold text-[var(--color-success)]">{successRate}%</span></span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-[var(--color-accent)]"></span>
-              <span className="text-[var(--color-text-secondary)]">유지 <span className="font-bold text-[var(--color-accent)]">{maintainRate}%</span></span>
-            </div>
-            {destroyRate > 0 && (
-              <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-[var(--color-danger)]"></span>
-                <span className="text-[var(--color-text-secondary)]">파괴 <span className="font-bold text-[var(--color-danger)]">{destroyRate}%</span></span>
+          {/* 상세 확률 바 (토글) */}
+          {showDetails && (
+            <div className="space-y-2 animate-in fade-in duration-200">
+              <div className="h-6 rounded-lg overflow-hidden flex bg-[var(--color-bg-elevated-1)] border border-[var(--color-border)]">
+                {/* 성공 */}
+                <div
+                  className="flex items-center justify-center text-[10px] font-bold text-white transition-all"
+                  style={{
+                    width: `${successRate}%`,
+                    background: 'linear-gradient(135deg, #22c55e, #16a34a)'
+                  }}
+                >
+                  {successRate > 15 && <span>{successRate}%</span>}
+                </div>
+                {/* 유지 */}
+                <div
+                  className="flex items-center justify-center text-[10px] font-bold text-black transition-all"
+                  style={{
+                    width: `${maintainRate}%`,
+                    background: 'linear-gradient(135deg, #fbbf24, #f59e0b)'
+                  }}
+                >
+                  {maintainRate > 15 && <span>{maintainRate}%</span>}
+                </div>
+                {/* 파괴 */}
+                {destroyRate > 0 && (
+                  <div
+                    className="flex items-center justify-center text-[10px] font-bold text-white transition-all"
+                    style={{
+                      width: `${destroyRate}%`,
+                      background: 'linear-gradient(135deg, #ef4444, #dc2626)'
+                    }}
+                  >
+                    {destroyRate > 10 && <span>{destroyRate}%</span>}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+
+              {/* 범례 */}
+              <div className="flex justify-center gap-3 text-[10px]">
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-[var(--color-success)]"></span>
+                  <span className="text-[var(--color-text-muted)]">성공</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-[var(--color-accent)]"></span>
+                  <span className="text-[var(--color-text-muted)]">유지 {maintainRate}%</span>
+                </div>
+                {destroyRate > 0 && (
+                  <div className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-[var(--color-danger)]"></span>
+                    <span className="text-[var(--color-text-muted)]">파괴</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 알림 영역 - 더 컴팩트하게 */}

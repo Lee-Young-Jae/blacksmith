@@ -1,5 +1,36 @@
 import { useEffect, useState } from 'react'
 import type { BattleMatch } from '../types/battle'
+import type { CharacterStats } from '../types/stats'
+
+// 스탯 표시용 헬퍼
+function StatLine({ label, value, icon, isPercent = false }: {
+  label: string
+  value: number
+  icon: string
+  isPercent?: boolean
+}) {
+  return (
+    <div className="flex items-center justify-between text-xs">
+      <span className="text-gray-400">{icon} {label}</span>
+      <span className="text-white font-medium">
+        {isPercent ? `${value}%` : value.toLocaleString()}
+      </span>
+    </div>
+  )
+}
+
+// 플레이어/상대 스탯 패널
+function StatsDisplay({ stats }: { stats: CharacterStats }) {
+  return (
+    <div className="space-y-1 mt-2 text-left">
+      <StatLine label="공격력" value={stats.attack} icon="⚔️" />
+      <StatLine label="방어력" value={stats.defense} icon="🛡️" />
+      <StatLine label="치명타" value={stats.critRate} icon="🎯" isPercent />
+      <StatLine label="치명뎀" value={stats.critDamage} icon="💥" isPercent />
+      <StatLine label="관통력" value={stats.penetration} icon="🔪" isPercent />
+    </div>
+  )
+}
 
 interface BattleArenaProps {
   battle: BattleMatch
@@ -60,19 +91,23 @@ export function BattleArena({
       {/* VS 화면 */}
       <div className="flex items-center justify-between mb-6">
         {/* 플레이어 */}
-        <div className={`flex-1 text-center p-4 rounded-lg ${
+        <div className={`flex-1 p-3 rounded-lg ${
           isFinished && result === 'win' ? 'bg-green-900/30 ring-2 ring-green-500' : 'bg-gray-700/50'
         }`}>
-          <span className="text-4xl">{player.weapon.weaponType.emoji}</span>
-          <p className="text-white font-bold mt-2">{player.name}</p>
-          <p className="text-gray-400 text-sm">+{player.weapon.starLevel}성</p>
-          <p className="text-yellow-400 font-bold mt-1">{player.baseAttack}</p>
+          <p className="text-white font-bold text-center">{player.name}</p>
+          <StatsDisplay stats={player.stats} />
           {showDamage && (
-            <p className={`text-lg font-bold mt-2 animate-bounce ${
-              result === 'win' ? 'text-green-400' : result === 'lose' ? 'text-red-400' : 'text-gray-400'
-            }`}>
-              ⚡ {player.finalDamage}
-            </p>
+            <div className="mt-3 text-center">
+              <p className={`text-lg font-bold animate-bounce ${
+                result === 'win' ? 'text-green-400' : result === 'lose' ? 'text-red-400' : 'text-gray-400'
+              }`}>
+                {player.isCrit && <span className="text-orange-400">💥 </span>}
+                ⚡ {player.finalDamage}
+              </p>
+              {player.isCrit && (
+                <p className="text-orange-400 text-xs font-bold">치명타!</p>
+              )}
+            </div>
           )}
         </div>
 
@@ -82,19 +117,23 @@ export function BattleArena({
         </div>
 
         {/* 상대 */}
-        <div className={`flex-1 text-center p-4 rounded-lg ${
+        <div className={`flex-1 p-3 rounded-lg ${
           isFinished && result === 'lose' ? 'bg-red-900/30 ring-2 ring-red-500' : 'bg-gray-700/50'
         }`}>
-          <span className="text-4xl">{opponent.weapon.weaponType.emoji}</span>
-          <p className="text-white font-bold mt-2">{opponent.name}</p>
-          <p className="text-gray-400 text-sm">+{opponent.weapon.starLevel}성</p>
-          <p className="text-yellow-400 font-bold mt-1">{opponent.baseAttack}</p>
+          <p className="text-white font-bold text-center">{opponent.name}</p>
+          <StatsDisplay stats={opponent.stats} />
           {showDamage && (
-            <p className={`text-lg font-bold mt-2 animate-bounce ${
-              result === 'lose' ? 'text-green-400' : result === 'win' ? 'text-red-400' : 'text-gray-400'
-            }`}>
-              ⚡ {opponent.finalDamage}
-            </p>
+            <div className="mt-3 text-center">
+              <p className={`text-lg font-bold animate-bounce ${
+                result === 'lose' ? 'text-green-400' : result === 'win' ? 'text-red-400' : 'text-gray-400'
+              }`}>
+                {opponent.isCrit && <span className="text-orange-400">💥 </span>}
+                ⚡ {opponent.finalDamage}
+              </p>
+              {opponent.isCrit && (
+                <p className="text-orange-400 text-xs font-bold">치명타!</p>
+              )}
+            </div>
           )}
         </div>
       </div>

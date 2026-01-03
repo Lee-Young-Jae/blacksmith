@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { WeaponType } from '../types/weapon'
 import { getWeaponAtLevel, getLevelTier, LEVEL_GLOW } from '../types/weapon'
 
@@ -31,20 +31,53 @@ export function WeaponImage({
   className = '',
   showGlow = true,
 }: WeaponImageProps) {
-  const [imageError, setImageError] = useState(false)
+  // Track which level indices have failed to load
+  const [failedIndices, setFailedIndices] = useState<Set<number>>(new Set())
 
   const levelTier = getLevelTier(level)
   const glowClass = showGlow ? LEVEL_GLOW[levelTier] : ''
-  const weaponLevel = getWeaponAtLevel(weapon, level)
 
-  // 이미지가 있고 에러가 없으면 이미지 표시
-  if (weaponLevel.image && !imageError) {
+  // Reset failed indices when weapon changes
+  useEffect(() => {
+    setFailedIndices(new Set())
+  }, [weapon.id])
+
+  // Find the best available image (current level, or fallback backwards)
+  const { imagePath, currentIndex, weaponLevel } = useMemo(() => {
+    const maxLevel = weapon.levels.length - 1
+    const effectiveLevel = Math.min(level, maxLevel)
+
+    // Start from current level and go backwards to find a working image
+    for (let i = effectiveLevel; i >= 0; i--) {
+      const levelData = getWeaponAtLevel(weapon, i)
+      if (levelData.image && !failedIndices.has(i)) {
+        return { imagePath: levelData.image, currentIndex: i, weaponLevel: levelData }
+      }
+    }
+
+    // No image found, return current level data for name
+    return {
+      imagePath: undefined,
+      currentIndex: -1,
+      weaponLevel: getWeaponAtLevel(weapon, effectiveLevel)
+    }
+  }, [weapon, level, failedIndices])
+
+  // Handle image load error - mark this index as failed and try next
+  const handleImageError = () => {
+    if (currentIndex >= 0) {
+      setFailedIndices(prev => new Set([...prev, currentIndex]))
+    }
+  }
+
+  // 이미지가 있으면 이미지 표시
+  if (imagePath) {
     return (
       <img
-        src={weaponLevel.image}
+        src={imagePath}
         alt={weaponLevel.name}
         className={`${IMAGE_SIZE_CLASSES[size]} object-contain ${glowClass} ${className}`}
-        onError={() => setImageError(true)}
+        onError={handleImageError}
       />
     )
   }

@@ -20,9 +20,10 @@ export interface BattleParticipant {
   id: string
   name: string
   weapon: UserWeapon
-  baseAttack: number
+  stats: CharacterStats  // 전체 스탯
   rollValue: number
   finalDamage: number
+  isCrit?: boolean       // 치명타 발생 여부
 }
 
 // 대결 매치

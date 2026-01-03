@@ -184,14 +184,15 @@ function GameContent() {
     onChanceTimeActivated: () => {},
   })
 
-  // 배틀용 무기: 모든 장착 장비의 총 스탯 기반
+  // 배틀용 무기 및 스탯: 모든 장착 장비의 총 스탯 기반
   const equippedStats = equipmentSystem.getEquippedStats()
   const battleWeapon: UserWeapon | null = createBattleWeaponFromEquipment(
     equipmentSystem.equipped,
     equippedStats
   ) || localWeapon // 장비가 없으면 레거시 무기 폴백
 
-  const battleSystem = useBattle(battleWeapon)
+  // 배틀용 전체 스탯 (장비 스탯 포함)
+  const battleSystem = useBattle(battleWeapon, equippedStats)
   const battleCards = useBattleCards()
 
   // 대기 중인 난이도 (카드 선택 대기)
@@ -713,7 +714,6 @@ function GameContent() {
                                   ? 'ring-2 ring-[var(--color-accent)] bg-[var(--color-accent)]/10'
                                   : ''
                                 }
-                                ${equip.starLevel === 0 ? 'opacity-50' : ''}
                               `}
                             >
                               <EquipmentImage equipment={equip} size="lg" />
@@ -725,9 +725,6 @@ function GameContent() {
                                   ★ {equip.starLevel}
                                 </span>
                               </div>
-                              {equip.starLevel === 0 && (
-                                <span className="badge badge-muted">판매불가</span>
-                              )}
                             </button>
                           ))}
                         {equipmentSystem.inventory.filter(e => !e.isEquipped).length === 0 && (

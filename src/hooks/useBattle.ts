@@ -10,12 +10,19 @@ import type {
 } from '../types/battle'
 import { BATTLE_CONFIG, AI_DIFFICULTY_CONFIG, calculateBattleReward } from '../types/battle'
 import type { UserWeapon } from '../types/weapon'
+import type { CharacterStats } from '../types/stats'
+import { DEFAULT_CHARACTER_STATS } from '../types/stats'
 import type { BattleCard } from '../types/battleCard'
 
-// AI 무기 생성
-function generateAIWeapon(difficulty: AIDifficulty, playerAttack: number): UserWeapon {
+// AI 무기 및 스탯 생성
+interface AIData {
+  weapon: UserWeapon
+  stats: CharacterStats
+}
+
+function generateAIData(difficulty: AIDifficulty, playerStats: CharacterStats): AIData {
   const config = AI_DIFFICULTY_CONFIG[difficulty]
-  const targetAttack = playerAttack * config.multiplier
+  const targetAttack = playerStats.attack * config.multiplier
 
   // 랜덤 무기 선택
   const weaponType = getRandomWeapon()
@@ -33,7 +40,7 @@ function generateAIWeapon(difficulty: AIDifficulty, playerAttack: number): UserW
   level = Math.max(0, level + variation)
   const totalAttack = getTotalAttack(weaponType.baseAttack, level)
 
-  return {
+  const weapon: UserWeapon = {
     id: 'ai-weapon',
     weaponTypeId: weaponType.id,
     weaponType,
@@ -43,12 +50,47 @@ function generateAIWeapon(difficulty: AIDifficulty, playerAttack: number): UserW
     createdAt: new Date(),
     totalAttack,
   }
+
+  // AI 스탯 생성 (플레이어 스탯 기반 + 난이도 배율)
+  const stats: CharacterStats = {
+    attack: totalAttack,
+    defense: Math.floor((DEFAULT_CHARACTER_STATS.defense + playerStats.defense * 0.5) * config.multiplier),
+    hp: Math.floor((DEFAULT_CHARACTER_STATS.hp + playerStats.hp * 0.3) * config.multiplier),
+    critRate: DEFAULT_CHARACTER_STATS.critRate + Math.floor(level * 0.3),
+    critDamage: DEFAULT_CHARACTER_STATS.critDamage + Math.floor(level * 1),
+    penetration: Math.floor(level * 0.2),
+    attackSpeed: DEFAULT_CHARACTER_STATS.attackSpeed,
+  }
+
+  return { weapon, stats }
 }
 
-// 대미지 계산 (공격력 + 랜덤 요소)
-function calculateDamage(attack: number): number {
+// 대미지 계산 (공격력, 방어력, 관통력 적용)
+function calculateDamage(
+  attackerStats: CharacterStats,
+  defenderStats: CharacterStats
+): { damage: number; isCrit: boolean } {
+  const { attack, critRate, critDamage, penetration } = attackerStats
+  const { defense } = defenderStats
+
+  // 기본 대미지 (랜덤 요소 포함)
   const randomBonus = attack * BATTLE_CONFIG.randomFactor * (Math.random() * 2 - 1)
-  return Math.max(1, Math.floor(attack + randomBonus))
+  let damage = Math.max(1, attack + randomBonus)
+
+  // 치명타 판정
+  const isCrit = Math.random() * 100 < critRate
+  if (isCrit) {
+    damage *= critDamage / 100
+  }
+
+  // 유효 방어력 계산 (관통력 적용)
+  const effectiveDefense = defense * (1 - Math.min(penetration, 100) / 100)
+
+  // 방어 감소 공식: 방어력 / (방어력 + 100)
+  const damageReduction = effectiveDefense / (effectiveDefense + 100)
+  damage *= (1 - damageReduction)
+
+  return { damage: Math.max(1, Math.floor(damage)), isCrit }
 }
 
 // 카드 효과 적용된 스탯 계산
@@ -125,10 +167,31 @@ function getRandomAIName(): string {
   return AI_NAMES[Math.floor(Math.random() * AI_NAMES.length)]
 }
 
-export function useBattle(playerWeapon: UserWeapon | null) {
+// 카드 보너스를 스탯에 적용
+function applyCardBonusesToStats(
+  stats: CharacterStats,
+  bonuses: CardBonuses
+): CharacterStats {
+  return {
+    ...stats,
+    attack: Math.floor(stats.attack * bonuses.attackMultiplier),
+    defense: Math.floor(stats.defense * bonuses.defenseMultiplier),
+    critRate: stats.critRate + bonuses.critRateBonus,
+    critDamage: stats.critDamage + bonuses.critDamageBonus,
+    penetration: stats.penetration + bonuses.penetrationBonus,
+  }
+}
+
+export function useBattle(playerWeapon: UserWeapon | null, playerStats?: CharacterStats) {
   const [status, setStatus] = useState<BattleStatus>('idle')
   const [currentBattle, setCurrentBattle] = useState<BattleMatch | null>(null)
   const [selectedDifficulty, setSelectedDifficulty] = useState<AIDifficulty | null>(null)
+
+  // 기본 스탯 (playerStats가 없으면 무기 기반으로 생성)
+  const effectiveStats: CharacterStats = playerStats ?? {
+    ...DEFAULT_CHARACTER_STATS,
+    attack: playerWeapon?.totalAttack ?? 0,
+  }
 
   // 예상 보상 계산 (승리 시 보상 범위)
   const getExpectedReward = useCallback((difficulty: AIDifficulty): {
@@ -139,7 +202,7 @@ export function useBattle(playerWeapon: UserWeapon | null) {
     if (!playerWeapon) return { win: 0, lose: 0, draw: 0 }
 
     const config = AI_DIFFICULTY_CONFIG[difficulty]
-    const playerAttack = playerWeapon.totalAttack
+    const playerAttack = effectiveStats.attack
     const playerLevel = playerWeapon.starLevel
 
     return {
@@ -147,7 +210,7 @@ export function useBattle(playerWeapon: UserWeapon | null) {
       lose: calculateBattleReward('lose', playerAttack, playerLevel, config.rewardMultiplier),
       draw: calculateBattleReward('draw', playerAttack, playerLevel, config.rewardMultiplier),
     }
-  }, [playerWeapon])
+  }, [playerWeapon, effectiveStats.attack])
 
   // AI 대전 시작 (카드 효과 적용)
   const startBattle = useCallback(async (
@@ -169,18 +232,23 @@ export function useBattle(playerWeapon: UserWeapon | null) {
     // 매칭 연출
     await new Promise(r => setTimeout(r, BATTLE_CONFIG.matchmakingDelay))
 
-    // AI 무기 생성
-    const aiWeapon = generateAIWeapon(difficulty, playerWeapon.totalAttack)
+    // AI 생성 (무기 + 스탯)
+    const aiData = generateAIData(difficulty, effectiveStats)
     const aiName = getRandomAIName()
 
-    // 카드 효과가 적용된 공격력
-    const boostedPlayerAttack = Math.floor(playerWeapon.totalAttack * cardBonuses.attackMultiplier)
+    // 카드 효과가 적용된 플레이어 스탯
+    let boostedPlayerStats = applyCardBonusesToStats(effectiveStats, cardBonuses)
+
+    // 확정 치명타 처리
+    if (cardBonuses.guaranteedCrit) {
+      boostedPlayerStats = { ...boostedPlayerStats, critRate: 100 }
+    }
 
     const player: BattleParticipant = {
       id: 'player',
       name: '나',
       weapon: playerWeapon,
-      baseAttack: boostedPlayerAttack,
+      stats: boostedPlayerStats,
       rollValue: 0,
       finalDamage: 0,
     }
@@ -188,8 +256,8 @@ export function useBattle(playerWeapon: UserWeapon | null) {
     const opponent: BattleParticipant = {
       id: 'ai',
       name: aiName,
-      weapon: aiWeapon,
-      baseAttack: aiWeapon.totalAttack,
+      weapon: aiData.weapon,
+      stats: aiData.stats,
       rollValue: 0,
       finalDamage: 0,
     }
@@ -211,30 +279,30 @@ export function useBattle(playerWeapon: UserWeapon | null) {
     // 대결 애니메이션
     await new Promise(r => setTimeout(r, BATTLE_CONFIG.animationDuration))
 
-    // 대미지 계산 (카드 효과 적용)
-    let playerDamage = calculateDamage(player.baseAttack)
+    // 대미지 계산 (전체 스탯 적용)
+    const playerDamageResult = calculateDamage(player.stats, opponent.stats)
+    let playerDamage = playerDamageResult.damage
+    const playerCrit = playerDamageResult.isCrit
 
     // 선제 공격 보너스
     if (cardBonuses.firstStrikeDamage > 0) {
       playerDamage += cardBonuses.firstStrikeDamage
     }
 
-    // 치명타 처리 (확정 치명타 또는 치명타 확률 보너스)
-    const baseCritRate = 5 + cardBonuses.critRateBonus  // 기본 5% + 보너스
-    const isCrit = cardBonuses.guaranteedCrit || Math.random() * 100 < baseCritRate
-    if (isCrit) {
-      const critMultiplier = (150 + cardBonuses.critDamageBonus) / 100  // 기본 150% + 보너스
-      playerDamage = Math.floor(playerDamage * critMultiplier)
-    }
-
-    player.finalDamage = playerDamage
-    opponent.finalDamage = calculateDamage(opponent.baseAttack)
+    const opponentDamageResult = calculateDamage(opponent.stats, player.stats)
+    let opponentDamage = opponentDamageResult.damage
+    const opponentCrit = opponentDamageResult.isCrit
 
     // 데미지 반사 처리
     if (cardBonuses.damageReflect > 0) {
-      const reflectedDamage = Math.floor(opponent.finalDamage * cardBonuses.damageReflect)
-      player.finalDamage += reflectedDamage
+      const reflectedDamage = Math.floor(opponentDamage * cardBonuses.damageReflect)
+      playerDamage += reflectedDamage
     }
+
+    player.finalDamage = playerDamage
+    player.isCrit = playerCrit
+    opponent.finalDamage = opponentDamage
+    opponent.isCrit = opponentCrit
 
     // 승패 결정
     let result: BattleResult
@@ -251,7 +319,7 @@ export function useBattle(playerWeapon: UserWeapon | null) {
     // 보상 계산 (카드 골드 보너스 적용)
     let goldReward = calculateBattleReward(
       result,
-      playerWeapon.totalAttack,  // 원본 공격력 기준
+      effectiveStats.attack,  // 원본 공격력 기준
       playerWeapon.starLevel,
       config.rewardMultiplier
     )
@@ -272,7 +340,7 @@ export function useBattle(playerWeapon: UserWeapon | null) {
     setStatus('finished')
 
     return { result, goldReward, cardUsed: selectedCard }
-  }, [playerWeapon, status])
+  }, [playerWeapon, effectiveStats, status])
 
   // 대결 리셋
   const resetBattle = useCallback(() => {

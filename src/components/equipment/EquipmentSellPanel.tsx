@@ -33,8 +33,8 @@ export default function EquipmentSellPanel({
   const combatPower = calculateCombatPower(stats)
   const slotName = EQUIPMENT_SLOT_NAMES[equipment.equipmentBase.slot]
 
-  // 0성은 판매 불가
-  const canSell = equipment.starLevel > 0 && !equipment.isEquipped
+  // 장착 중이 아니면 판매 가능
+  const canSell = !equipment.isEquipped
 
   // 스타 레벨 보너스 계산
   const levelBonus = 1 + equipment.starLevel * 5 + Math.pow(equipment.starLevel, 2)
@@ -121,11 +121,19 @@ export default function EquipmentSellPanel({
           </div>
         )}
 
-        {!equipment.isEquipped && equipment.starLevel === 0 && (
-          <div className="info-box">
-            <div className="flex items-center justify-center gap-2 text-sm">
-              <span>⚠️</span>
-              <p className="text-[var(--color-text-secondary)]">0성 장비는 판매할 수 없습니다</p>
+        {/* 강화/잠재능력 경고 */}
+        {canSell && (equipment.starLevel > 0 || unlockedSlots > 0) && (
+          <div className="info-box warning space-y-1">
+            <p className="text-[var(--color-accent)] text-sm font-medium text-center">
+              ⚠️ 가치 있는 장비입니다!
+            </p>
+            <div className="text-xs text-[var(--color-text-secondary)] text-center space-y-0.5">
+              {equipment.starLevel > 0 && (
+                <p>• 강화 레벨: +{equipment.starLevel}성</p>
+              )}
+              {unlockedSlots > 0 && (
+                <p>• 잠재능력 {unlockedSlots}개 해제됨</p>
+              )}
             </div>
           </div>
         )}
