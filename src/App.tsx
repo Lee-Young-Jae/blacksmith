@@ -660,7 +660,7 @@ function GameContent() {
                   {battleWeapon && (
                     battleSystem.status === 'idle' ? (
                       <BattleMatchmaking
-                        weapon={battleWeapon}
+                        playerStats={equippedStats}
                         onSelectDifficulty={handleStartBattle}
                         getExpectedReward={battleSystem.getExpectedReward}
                         battlesRemaining={dailyBattle.battlesRemaining}

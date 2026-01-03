@@ -151,7 +151,12 @@ export function getStarForceBonus(
   return bonus
 }
 
-// 장비의 총 스탯 계산 (기본 + 스타포스 + 잠재옵션)
+// % 공격력/방어력/HP 잠재능력을 제외한 스탯 (총 스탯 기준 계산용)
+const TOTAL_BASED_PERCENT_STATS: (keyof CharacterStats)[] = ['attack', 'defense', 'hp']
+// 값 자체가 %인 스탯 (직접 더함)
+const ADDITIVE_PERCENT_STATS: (keyof CharacterStats)[] = ['critRate', 'critDamage', 'penetration', 'attackSpeed']
+
+// 장비의 기본 스탯 계산 (% 공격력/방어력/HP 제외 - 총 스탯 기준으로 별도 계산됨)
 export function calculateEquipmentStats(equipment: UserEquipment): CharacterStats {
   const { equipmentBase, starLevel, potentials } = equipment
   const starMultiplier = 1 + (starLevel * 0.05) + (starLevel * starLevel * 0.002)
@@ -172,9 +177,11 @@ export function calculateEquipmentStats(equipment: UserEquipment): CharacterStat
     if (!line.isUnlocked) continue  // 해제되지 않은 슬롯은 스탯 미적용
 
     if (line.isPercentage) {
-      // 퍼센트 보너스: 기본 스탯 기준
-      const baseValue = baseWithMultipliers[line.stat] || 0
-      baseWithMultipliers[line.stat] = baseValue + Math.floor(baseValue * line.value / 100)
+      if (ADDITIVE_PERCENT_STATS.includes(line.stat)) {
+        // 퍼센트 스탯(critRate 등)은 값을 직접 더함 (+5%면 5를 더함)
+        baseWithMultipliers[line.stat] = (baseWithMultipliers[line.stat] || 0) + line.value
+      }
+      // % 공격력/방어력/HP는 여기서 적용하지 않음 (총 스탯 기준으로 별도 계산)
     } else {
       // 고정 보너스
       baseWithMultipliers[line.stat] = (baseWithMultipliers[line.stat] || 0) + line.value
@@ -182,6 +189,27 @@ export function calculateEquipmentStats(equipment: UserEquipment): CharacterStat
   }
 
   return baseWithMultipliers
+}
+
+// % 공격력/방어력/HP 잠재능력에서 추가되는 스탯 계산 (총 스탯 기준)
+export function calculatePercentPotentialBonus(
+  equipment: UserEquipment,
+  totalBaseStats: CharacterStats
+): Partial<CharacterStats> {
+  const bonus: Partial<CharacterStats> = {}
+
+  for (const line of equipment.potentials) {
+    if (!line.isUnlocked) continue
+    if (!line.isPercentage) continue
+    if (!TOTAL_BASED_PERCENT_STATS.includes(line.stat)) continue
+
+    // 총 기본 스탯 기준으로 % 계산
+    const baseValue = totalBaseStats[line.stat] || 0
+    const addedValue = Math.floor(baseValue * line.value / 100)
+    bonus[line.stat] = (bonus[line.stat] || 0) + addedValue
+  }
+
+  return bonus
 }
 
 // 장비 이름 생성 (레벨 기반 이름 + 스타)

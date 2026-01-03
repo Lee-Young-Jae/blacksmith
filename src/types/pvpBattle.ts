@@ -1,0 +1,246 @@
+import type { CharacterStats } from './stats'
+import type { BattleCard } from './battleCard'
+import type { UserEquipment, EquippedItems } from './equipment'
+
+// =============================================
+// 배틀 라운드
+// =============================================
+
+export interface BattleRound {
+  round: number
+
+  // 이번 라운드 선공자
+  firstAttacker: 'attacker' | 'defender'
+
+  // 공격자 행동
+  attackerAction: {
+    damage: number
+    isCrit: boolean
+    cardUsed: BattleCard | null
+    cardEffect: string | null  // 카드 효과 설명
+  }
+
+  // 방어자 행동
+  defenderAction: {
+    damage: number
+    isCrit: boolean
+    cardUsed: BattleCard | null
+    cardEffect: string | null
+  }
+
+  // 라운드 후 HP 상태
+  attackerHpBefore: number
+  attackerHpAfter: number
+  defenderHpBefore: number
+  defenderHpAfter: number
+
+  // 특수 이벤트
+  events: RoundEvent[]
+}
+
+export type RoundEventType =
+  | 'critical_hit'
+  | 'damage_reflect'
+  | 'heal'
+  | 'immunity'
+  | 'stun'
+  | 'double_attack'
+  | 'first_strike'
+
+export interface RoundEvent {
+  type: RoundEventType
+  source: 'attacker' | 'defender'
+  value: number
+  description: string
+}
+
+// =============================================
+// 배틀 결과
+// =============================================
+
+export type PvPBattleResult = 'attacker_win' | 'defender_win' | 'draw'
+
+export interface PvPBattle {
+  id: string
+  attackerId: string
+  defenderId: string
+
+  // 참가자 정보
+  attackerName: string
+  defenderName: string
+
+  // 초기 스탯
+  attackerStats: CharacterStats
+  defenderStats: CharacterStats
+
+  // 사용 카드
+  attackerCards: BattleCard[]
+  defenderCards: BattleCard[]
+
+  // 배틀 진행
+  rounds: BattleRound[]
+  totalRounds: number
+
+  // 선공 정보
+  firstAttacker: 'attacker' | 'defender'
+  attackerSpeed: number
+  defenderSpeed: number
+
+  // 최종 결과
+  result: PvPBattleResult
+  winnerId: string | null
+
+  // 최종 HP
+  attackerFinalHp: number
+  defenderFinalHp: number
+
+  // 보상 및 레이팅
+  attackerReward: number
+  defenderReward: number
+  attackerRatingChange: number
+  defenderRatingChange: number
+
+  // 메타데이터
+  isRevenge: boolean
+  createdAt: Date
+}
+
+// =============================================
+// 배틀 스냅샷 (저장용)
+// =============================================
+
+export interface BattleSnapshot {
+  oderId: string
+  username: string
+  stats: CharacterStats
+  combatPower: number
+  equipment: EquippedItems
+  cards: BattleCard[]
+  tier: string
+  rating: number
+}
+
+// =============================================
+// 배틀 상태 (진행 중)
+// =============================================
+
+export type PvPBattleStatus =
+  | 'idle'           // 대기
+  | 'searching'      // 상대 검색 중
+  | 'preparing'      // 덱 선택 중
+  | 'ready'          // 준비 완료
+  | 'fighting'       // 전투 중 (애니메이션)
+  | 'finished'       // 완료
+
+export interface PvPBattleState {
+  status: PvPBattleStatus
+  opponent: PvPOpponent | null
+  attackDeck: BattleCard[]
+  currentRound: number
+  battle: PvPBattle | null
+  error: string | null
+}
+
+// =============================================
+// 상대 정보
+// =============================================
+
+export interface PvPOpponent {
+  userId: string
+  username: string
+  rating: number
+  tier: string
+  combatPower: number
+  stats: CharacterStats
+  cardCount: number  // 방어덱 카드 수 (비공개이므로 개수만)
+}
+
+// =============================================
+// 배틀 로그 (기록 조회용)
+// =============================================
+
+export interface PvPBattleLog {
+  id: string
+  opponentId: string
+  opponentName: string
+  opponentTier: string
+
+  // 내가 공격자인지 방어자인지
+  isAttacker: boolean
+
+  result: PvPBattleResult
+  myResult: 'win' | 'lose' | 'draw'
+
+  ratingChange: number
+  goldReward: number
+  totalRounds: number
+
+  isRevenge: boolean
+  canRevenge: boolean  // 방어전이고 아직 복수 안했으면 true
+
+  createdAt: Date
+}
+
+// =============================================
+// 배틀 설정
+// =============================================
+
+export const PVP_BATTLE_CONFIG = {
+  // 최대 라운드 (무승부 방지)
+  MAX_ROUNDS: 20,
+
+  // 라운드당 카드 발동 주기 (2라운드마다 다음 카드)
+  CARD_CYCLE_ROUNDS: 2,
+
+  // 선공 결정 시 랜덤 범위 (±5%)
+  SPEED_VARIANCE: 0.05,
+
+  // 데미지 랜덤 범위 (±15%)
+  DAMAGE_VARIANCE: 0.15,
+
+  // 일일 대전 제한
+  DAILY_BATTLE_LIMIT: 10,
+
+  // 복수전 보너스 배율
+  REVENGE_BONUS_MULTIPLIER: 1.5,
+
+  // 기본 보상
+  BASE_WIN_REWARD: 500,
+  BASE_LOSE_REWARD: 100,
+  BASE_DRAW_REWARD: 250,
+} as const
+
+// =============================================
+// 데미지 계산 결과
+// =============================================
+
+export interface DamageResult {
+  baseDamage: number
+  finalDamage: number
+  isCrit: boolean
+  critMultiplier: number
+  defenseReduction: number
+  penetrationBonus: number
+  cardBonus: number
+  reflectedDamage: number
+}
+
+// =============================================
+// 유틸리티 타입
+// =============================================
+
+// 선공 결정 결과
+export interface TurnOrderResult {
+  firstAttacker: 'attacker' | 'defender'
+  attackerSpeed: number
+  defenderSpeed: number
+  attackerRoll: number
+  defenderRoll: number
+}
+
+// ELO 레이팅 변경 결과
+export interface RatingChangeResult {
+  winnerChange: number
+  loserChange: number
+  drawChange: { attacker: number, defender: number }
+}

@@ -1,10 +1,10 @@
-import type { UserWeapon } from '../types/weapon'
-import { getWeaponName } from '../types/weapon'
 import type { AIDifficulty } from '../types/battle'
 import { AI_DIFFICULTY_CONFIG } from '../types/battle'
+import type { CharacterStats } from '../types/stats'
+import { calculateCombatPower } from '../types/stats'
 
 interface BattleMatchmakingProps {
-  weapon: UserWeapon
+  playerStats: CharacterStats
   onSelectDifficulty: (difficulty: AIDifficulty) => void
   getExpectedReward: (difficulty: AIDifficulty) => { win: number; lose: number; draw: number }
   battlesRemaining: number
@@ -14,13 +14,14 @@ interface BattleMatchmakingProps {
 const DIFFICULTIES: AIDifficulty[] = ['easy', 'normal', 'hard', 'extreme']
 
 export function BattleMatchmaking({
-  weapon,
+  playerStats,
   onSelectDifficulty,
   getExpectedReward,
   battlesRemaining,
   maxBattles,
 }: BattleMatchmakingProps) {
   const canBattle = battlesRemaining > 0
+  const combatPower = calculateCombatPower(playerStats)
 
   return (
     <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
@@ -55,19 +56,36 @@ export function BattleMatchmaking({
         난이도를 선택하고 대결을 시작하세요
       </p>
 
-      {/* 내 무기 정보 */}
+      {/* 내 스탯 정보 */}
       <div className="mb-6 p-4 bg-gray-700/50 rounded-lg">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{weapon.weaponType.emoji}</span>
-            <div>
-              <p className="text-white font-bold">{getWeaponName(weapon.weaponType, weapon.starLevel)}</p>
-              <p className="text-gray-400 text-sm">+{weapon.starLevel}성</p>
-            </div>
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-gray-400 text-sm">내 전투력</span>
+          <span className="text-yellow-400 font-bold text-lg">{combatPower.toLocaleString()}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-gray-400">⚔️ 공격력</span>
+            <span className="text-red-400 font-medium">{playerStats.attack.toLocaleString()}</span>
           </div>
-          <div className="text-right">
-            <p className="text-yellow-400 font-bold">{weapon.totalAttack}</p>
-            <p className="text-gray-500 text-xs">공격력</p>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-400">🛡️ 방어력</span>
+            <span className="text-blue-400 font-medium">{playerStats.defense.toLocaleString()}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-400">🎯 치명타</span>
+            <span className="text-yellow-400 font-medium">{playerStats.critRate}%</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-400">💥 치명뎀</span>
+            <span className="text-orange-400 font-medium">{playerStats.critDamage}%</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-400">🔪 관통력</span>
+            <span className="text-purple-400 font-medium">{playerStats.penetration}%</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-400">❤️ HP</span>
+            <span className="text-green-400 font-medium">{playerStats.hp.toLocaleString()}</span>
           </div>
         </div>
       </div>

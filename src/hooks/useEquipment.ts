@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { getEquipmentById, getRandomEquipmentBySlot, getRandomEquipment } from '../data/equipment'
 import { generateInitialPotentials } from '../types/potential'
 import type { PotentialTier, PotentialLine } from '../types/potential'
-import { calculateEquipmentStats, getEquipmentSellPrice } from '../types/equipment'
+import { calculateEquipmentStats, calculatePercentPotentialBonus, getEquipmentSellPrice } from '../types/equipment'
 import type {
   UserEquipment,
   EquipmentBase,
@@ -476,17 +476,24 @@ export function useEquipment() {
     }
   }, [user])
 
-  // 장착 장비 총 스탯 계산
+  // 장착 장비 총 스탯 계산 (2단계: 기본 스탯 합산 → % 공격력/방어력/HP 적용)
   const getEquippedStats = useCallback((): CharacterStats => {
-    const statsList: CharacterStats[] = []
+    const equippedList = Object.values(state.equipped).filter((e): e is UserEquipment => !!e)
 
-    for (const equipment of Object.values(state.equipped)) {
-      if (equipment) {
-        statsList.push(calculateEquipmentStats(equipment))
-      }
+    // 1단계: 기본 스탯 + 스타포스 + 고정 잠재능력 + % critRate 등 합산
+    const baseStatsList: CharacterStats[] = equippedList.map(e => calculateEquipmentStats(e))
+    const totalBaseStats = mergeStats(...baseStatsList)
+
+    // 2단계: % 공격력/방어력/HP 잠재능력을 총 기본 스탯 기준으로 적용
+    let finalStats = { ...totalBaseStats }
+    for (const equipment of equippedList) {
+      const percentBonus = calculatePercentPotentialBonus(equipment, totalBaseStats)
+      finalStats.attack += percentBonus.attack || 0
+      finalStats.defense += percentBonus.defense || 0
+      finalStats.hp += percentBonus.hp || 0
     }
 
-    return mergeStats(...statsList)
+    return finalStats
   }, [state.equipped])
 
   // 총 전투력 계산
