@@ -178,6 +178,7 @@ export function usePvPRanking(): UsePvPRankingReturn {
     setIsLoading(true)
 
     try {
+      // LEFT JOIN으로 변경하여 user_profiles가 없어도 표시
       const { data, error: fetchError } = await supabase
         .from('pvp_rankings')
         .select(`
@@ -188,7 +189,7 @@ export function usePvPRanking(): UsePvPRankingReturn {
           losses,
           win_streak,
           combat_power,
-          user_profiles!inner(username)
+          user_profiles(username)
         `)
         .order('rating', { ascending: false })
         .limit(limit)
@@ -196,12 +197,12 @@ export function usePvPRanking(): UsePvPRankingReturn {
       if (fetchError) throw fetchError
 
       const entries: LeaderboardEntry[] = (data || []).map((row, index) => {
-        const profileData = row.user_profiles as unknown as { username: string } | { username: string }[]
+        const profileData = row.user_profiles as unknown as { username: string } | { username: string }[] | null
         const username = Array.isArray(profileData) ? profileData[0]?.username : profileData?.username
         return {
           rank: index + 1,
           userId: row.user_id,
-          username: username || '알 수 없음',
+          username: username || '플레이어',
           rating: row.rating,
           tier: row.tier as LeagueTier,
           wins: row.wins,
@@ -224,6 +225,7 @@ export function usePvPRanking(): UsePvPRankingReturn {
     setIsLoading(true)
 
     try {
+      // LEFT JOIN으로 변경
       const { data, error: fetchError } = await supabase
         .from('pvp_rankings')
         .select(`
@@ -234,7 +236,7 @@ export function usePvPRanking(): UsePvPRankingReturn {
           losses,
           win_streak,
           combat_power,
-          user_profiles!inner(username)
+          user_profiles(username)
         `)
         .eq('tier', tier)
         .order('rating', { ascending: false })
@@ -243,12 +245,12 @@ export function usePvPRanking(): UsePvPRankingReturn {
       if (fetchError) throw fetchError
 
       const entries: LeaderboardEntry[] = (data || []).map((row, index) => {
-        const profileData = row.user_profiles as unknown as { username: string } | { username: string }[]
+        const profileData = row.user_profiles as unknown as { username: string } | { username: string }[] | null
         const username = Array.isArray(profileData) ? profileData[0]?.username : profileData?.username
         return {
           rank: index + 1,
           userId: row.user_id,
-          username: username || '알 수 없음',
+          username: username || '플레이어',
           rating: row.rating,
           tier: row.tier as LeagueTier,
           wins: row.wins,

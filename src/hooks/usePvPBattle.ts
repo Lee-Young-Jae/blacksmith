@@ -309,47 +309,28 @@ export function usePvPBattle(): UsePvPBattleReturn {
       // 랜덤하게 한 명 선택
       const selected = opponents[Math.floor(Math.random() * opponents.length)]
 
-      // 상대의 방어덱 카드 가져오기
+      // 상대의 방어덱 카드 가져오기 (RPC 함수 사용 - RLS 우회)
       let defenseCards: BattleCard[] = []
       try {
-        const { data: defenseData } = await supabase
-          .from('user_defense_deck')
-          .select('card_slot_1, card_slot_2, card_slot_3')
-          .eq('user_id', selected.user_id)
-          .maybeSingle()
+        const { data: cardsData, error: cardsError } = await supabase
+          .rpc('get_opponent_defense_cards', { p_user_id: selected.user_id })
 
-        if (defenseData) {
-          const cardIds = [
-            defenseData.card_slot_1,
-            defenseData.card_slot_2,
-            defenseData.card_slot_3,
-          ].filter((id): id is string => id !== null)
-
-          if (cardIds.length > 0) {
-            const { data: cardsData } = await supabase
-              .from('user_cards')
-              .select('id, card_type, tier, value, is_percentage')
-              .in('id', cardIds)
-
-            if (cardsData) {
-              defenseCards = cardsData.map(card => {
-                const ownedCard: OwnedCard = {
-                  id: card.id,
-                  oderId: selected.user_id,
-                  cardType: card.card_type as BattleCardEffectType,
-                  tier: card.tier as BattleCardTier,
-                  value: card.value,
-                  isPercentage: card.is_percentage,
-                  createdAt: new Date(),
-                }
-                return ownedCardToBattleCard(ownedCard)
-              })
+        if (!cardsError && cardsData && cardsData.length > 0) {
+          defenseCards = cardsData.map((card: { id: string; card_type: string; tier: string; value: number; is_percentage: boolean }) => {
+            const ownedCard: OwnedCard = {
+              id: card.id,
+              oderId: selected.user_id,
+              cardType: card.card_type as BattleCardEffectType,
+              tier: card.tier as BattleCardTier,
+              value: card.value,
+              isPercentage: card.is_percentage,
+              createdAt: new Date(),
             }
-          }
+            return ownedCardToBattleCard(ownedCard)
+          })
         }
       } catch (err) {
         console.error('Failed to fetch defense cards:', err)
-        // 카드 조회 실패해도 배틀은 진행
       }
 
       setOpponent({
@@ -744,34 +725,28 @@ export function usePvPBattle(): UsePvPBattleReturn {
         .eq('user_id', opponentId)
         .maybeSingle()
 
-      // 방어덱 카드 가져오기
+      // 방어덱 카드 가져오기 (RPC 함수 사용 - RLS 우회)
       let defenseCards: BattleCard[] = []
-      if (defenseData) {
-        const defense = defenseData as DefenseDeckRow
-        const cardIds = [defense.card_slot_1, defense.card_slot_2, defense.card_slot_3]
-          .filter((id): id is string => id !== null)
+      try {
+        const { data: cardsData, error: cardsError } = await supabase
+          .rpc('get_opponent_defense_cards', { p_user_id: opponentId })
 
-        if (cardIds.length > 0) {
-          const { data: cardsData } = await supabase
-            .from('user_cards')
-            .select('id, card_type, tier, value, is_percentage')
-            .in('id', cardIds)
-
-          if (cardsData) {
-            defenseCards = cardsData.map(card => {
-              const ownedCard: OwnedCard = {
-                id: card.id,
-                oderId: opponentId,
-                cardType: card.card_type as BattleCardEffectType,
-                tier: card.tier as BattleCardTier,
-                value: card.value,
-                isPercentage: card.is_percentage,
-                createdAt: new Date(),
-              }
-              return ownedCardToBattleCard(ownedCard)
-            })
-          }
+        if (!cardsError && cardsData && cardsData.length > 0) {
+          defenseCards = cardsData.map((card: { id: string; card_type: string; tier: string; value: number; is_percentage: boolean }) => {
+            const ownedCard: OwnedCard = {
+              id: card.id,
+              oderId: opponentId,
+              cardType: card.card_type as BattleCardEffectType,
+              tier: card.tier as BattleCardTier,
+              value: card.value,
+              isPercentage: card.is_percentage,
+              createdAt: new Date(),
+            }
+            return ownedCardToBattleCard(ownedCard)
+          })
         }
+      } catch (err) {
+        console.error('Failed to fetch revenge defense cards:', err)
       }
 
       // 방어덱이 없으면 기본 스탯으로 AI 상대 생성

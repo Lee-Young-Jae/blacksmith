@@ -229,7 +229,14 @@ export function PvPArena({
             battleLogs={pvpBattle.battleLogs}
             isLoading={pvpBattle.isLoading}
             onRefresh={() => pvpBattle.loadBattleLogs()}
-            onRevenge={pvpBattle.startRevengeBattle}
+            onRevenge={async (opponentId: string) => {
+              const success = await pvpBattle.startRevengeBattle(opponentId)
+              if (success) {
+                // 복수전 시작 성공 시 대전 탭으로 전환
+                setActiveTab('matchmaking')
+              }
+              return success
+            }}
           />
         )}
       </div>
