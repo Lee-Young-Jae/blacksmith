@@ -198,16 +198,6 @@ function GameContent() {
     attackSpeed: DEFAULT_CHARACTER_STATS.attackSpeed + equipmentOnlyStats.attackSpeed,
   }
 
-  // DEBUG: 스탯 확인
-  console.log('📊 App.tsx Equipped Stats:', {
-    equipmentOnlyStats,
-    equippedStats,
-    attackSpeedBreakdown: {
-      base: DEFAULT_CHARACTER_STATS.attackSpeed,
-      equipment: equipmentOnlyStats.attackSpeed,
-      total: equippedStats.attackSpeed,
-    }
-  })
   const battleWeapon: UserWeapon | null = createBattleWeaponFromEquipment(
     equipmentSystem.equipped,
     equippedStats
