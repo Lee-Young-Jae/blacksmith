@@ -539,6 +539,28 @@ export function useCardDeck(): UseCardDeckReturn {
 
       if (success) {
         console.log('🛡️ 자동 방어덱 등록 완료 - 전투력:', combatPower)
+
+        // 초기 랭킹 레코드도 생성 (없으면)
+        const { data: existingRanking } = await supabase
+          .from('pvp_rankings')
+          .select('user_id')
+          .eq('user_id', user.id)
+          .maybeSingle()
+
+        if (!existingRanking) {
+          await supabase
+            .from('pvp_rankings')
+            .insert({
+              user_id: user.id,
+              rating: 1000,
+              tier: 'bronze',
+              wins: 0,
+              losses: 0,
+              draws: 0,
+              weekly_battles: 0,
+            })
+          console.log('📊 초기 랭킹 레코드 생성 완료')
+        }
       }
 
       return success

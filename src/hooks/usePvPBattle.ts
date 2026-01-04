@@ -429,9 +429,28 @@ export function usePvPBattle(): UsePvPBattleReturn {
         battle.attackerRatingChange = 0
         battle.defenderRatingChange = 0
         battle.attackerReward = Math.floor(battle.attackerReward * 0.5) // AI전 보상 50%
+
+        // AI 전투도 승/패 횟수만 업데이트 (레이팅 변동 없음)
+        const { data: rankingData } = await supabase
+          .from('pvp_rankings')
+          .select('wins, losses, draws, weekly_battles')
+          .eq('user_id', user.id)
+          .maybeSingle()
+
+        if (rankingData) {
+          await supabase
+            .from('pvp_rankings')
+            .update({
+              wins: rankingData.wins + (battle.result === 'attacker_win' ? 1 : 0),
+              losses: rankingData.losses + (battle.result === 'defender_win' ? 1 : 0),
+              draws: rankingData.draws + (battle.result === 'draw' ? 1 : 0),
+              weekly_battles: rankingData.weekly_battles + 1,
+            })
+            .eq('user_id', user.id)
+        }
       }
 
-      // DB에 기록 저장 (AI 상대는 제외)
+      // DB에 기록 저장 (AI 상대는 제외 - 배틀 기록만)
       if (!opponent.isAI) {
         const { error: recordError } = await supabase.rpc('record_pvp_battle', {
           p_attacker_id: user.id,
@@ -668,17 +687,6 @@ export function usePvPBattle(): UsePvPBattleReturn {
     setError(null)
 
     try {
-      // 상대 방어덱 정보 조회
-      const { data: defenseData, error: defenseError } = await supabase
-        .from('user_defense_deck')
-        .select('*')
-        .eq('user_id', opponentId)
-        .single()
-
-      if (defenseError) throw defenseError
-
-      const defense = defenseData as DefenseDeckRow
-
       // 상대 프로필 조회
       const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
@@ -688,23 +696,44 @@ export function usePvPBattle(): UsePvPBattleReturn {
 
       if (profileError) throw profileError
 
+      // 상대 방어덱 정보 조회 (없을 수 있음)
+      const { data: defenseData } = await supabase
+        .from('user_defense_deck')
+        .select('*')
+        .eq('user_id', opponentId)
+        .maybeSingle()
+
       // 상대 랭킹 조회
       const { data: rankingData } = await supabase
         .from('pvp_rankings')
         .select('rating, tier')
         .eq('user_id', opponentId)
-        .single()
+        .maybeSingle()
 
-      setOpponent({
-        userId: opponentId,
-        username: profileData.username,
-        rating: rankingData?.rating || 1000,
-        tier: rankingData?.tier || 'bronze',
-        combatPower: defense.combat_power,
-        stats: defense.total_stats as unknown as CharacterStats,
-        cardCount: [defense.card_slot_1, defense.card_slot_2, defense.card_slot_3]
-          .filter(Boolean).length,
-      })
+      // 방어덱이 없으면 기본 스탯으로 AI 상대 생성
+      if (!defenseData) {
+        const aiOpponent = generateAIOpponent(1000) // 기본 전투력
+        setOpponent({
+          ...aiOpponent,
+          userId: opponentId,
+          username: profileData.username,
+          rating: rankingData?.rating || 1000,
+          tier: rankingData?.tier || 'bronze',
+          isAI: false, // 실제 유저이므로 false
+        })
+      } else {
+        const defense = defenseData as DefenseDeckRow
+        setOpponent({
+          userId: opponentId,
+          username: profileData.username,
+          rating: rankingData?.rating || 1000,
+          tier: rankingData?.tier || 'bronze',
+          combatPower: defense.combat_power,
+          stats: defense.total_stats as unknown as CharacterStats,
+          cardCount: [defense.card_slot_1, defense.card_slot_2, defense.card_slot_3]
+            .filter(Boolean).length,
+        })
+      }
 
       setStatus('preparing')
       return true
