@@ -62,7 +62,7 @@ export function useUserData() {
           .eq('id', user.id)
           .single()
 
-        // 프로필이 없으면 생성
+        // 프로필이 없으면 생성 (최초 로그인)
         if (profileError && profileError.code === 'PGRST116') {
           // 게임 스타일의 랜덤 닉네임 생성
           const username = generateNickname()
@@ -82,6 +82,26 @@ export function useUserData() {
           }
 
           profileData = newProfile
+
+          // 최초 로그인 시 랜덤 무기 지급
+          const starterWeaponType = getRandomWeapon()
+          const starterTotalAttack = starterWeaponType.baseAttack
+          const starterWeaponName = starterWeaponType.levels[0].name
+
+          await supabase
+            .from('user_weapons')
+            .insert({
+              user_id: user.id,
+              weapon_type_id: starterWeaponType.id,
+              weapon_name: starterWeaponName,
+              base_attack: starterWeaponType.baseAttack,
+              star_level: 0,
+              total_attack: starterTotalAttack,
+              consecutive_fails: 0,
+              is_destroyed: false,
+            })
+
+          console.log('🎁 최초 로그인 보상: 랜덤 무기 지급됨 -', starterWeaponName)
         } else if (profileError) {
           throw new Error('프로필을 불러올 수 없습니다.')
         }
