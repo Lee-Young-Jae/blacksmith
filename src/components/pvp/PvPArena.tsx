@@ -181,6 +181,7 @@ export function PvPArena({
             pvpBattle={pvpBattle}
             myRating={pvpRanking.myRanking?.rating || 1000}
             onGoldUpdate={onGoldUpdate}
+            ensureDefenseDeck={cardDeck.ensureDefenseDeck}
           />
         )}
 

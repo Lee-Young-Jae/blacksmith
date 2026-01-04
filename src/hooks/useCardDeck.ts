@@ -75,6 +75,11 @@ interface UseCardDeckReturn {
     aiStrategy?: AIStrategy
   ) => Promise<boolean>
   updateAIStrategy: (strategy: AIStrategy) => Promise<boolean>
+  ensureDefenseDeck: (
+    stats: CharacterStats,
+    equipment: EquippedItems,
+    combatPower: number
+  ) => Promise<boolean>
 
   // 공격덱 선택 (임시)
   setAttackDeckSlot: (slotIndex: number, card: OwnedCard | null) => void
@@ -480,6 +485,70 @@ export function useCardDeck(): UseCardDeckReturn {
   }, [user, defenseDeck])
 
   // =============================================
+  // 자동 방어덱 등록 (없으면 생성)
+  // =============================================
+
+  const ensureDefenseDeck = useCallback(async (
+    stats: CharacterStats,
+    equipment: EquippedItems,
+    combatPower: number
+  ): Promise<boolean> => {
+    if (!user) return false
+
+    try {
+      // 이미 방어덱이 있는지 확인
+      const { data: existingDeck, error: checkError } = await supabase
+        .from('user_defense_deck')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .single()
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError
+      }
+
+      // 이미 있으면 스탯만 업데이트
+      if (existingDeck) {
+        const { error: updateError } = await supabase
+          .from('user_defense_deck')
+          .update({
+            total_stats: stats,
+            equipment_snapshot: equipment,
+            combat_power: combatPower,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', user.id)
+
+        if (updateError) throw updateError
+
+        // 로컬 상태 업데이트
+        setDefenseDeck(prev => prev ? {
+          ...prev,
+          totalStats: stats,
+          equipmentSnapshot: equipment,
+          combatPower,
+          updatedAt: new Date(),
+        } : null)
+
+        return true
+      }
+
+      // 없으면 새로 생성 (카드 없이)
+      const emptyCards: CardSlots = [null, null, null]
+      const success = await saveDefenseDeck(emptyCards, stats, equipment, combatPower, 'balanced')
+
+      if (success) {
+        console.log('🛡️ 자동 방어덱 등록 완료 - 전투력:', combatPower)
+      }
+
+      return success
+    } catch (err) {
+      console.error('Failed to ensure defense deck:', err)
+      return false
+    }
+  }, [user, saveDefenseDeck])
+
+  // =============================================
   // 공격덱 선택 (임시)
   // =============================================
 
@@ -545,6 +614,7 @@ export function useCardDeck(): UseCardDeckReturn {
     loadDefenseDeck,
     saveDefenseDeck,
     updateAIStrategy,
+    ensureDefenseDeck,
     setAttackDeckSlot,
     clearAttackDeck,
     getAttackDeckCards,

@@ -80,9 +80,41 @@ export function PvPRealtimeBattle({
   const hpMultiplier = PVP_BATTLE_CONFIG.HP_MULTIPLIER
   const damageReduction = PVP_BATTLE_CONFIG.DAMAGE_REDUCTION
 
+  // 기본 스탯 (장비 미착용 시 사용)
+  const DEFAULT_STATS: CharacterStats = {
+    hp: 100,
+    attack: 10,
+    defense: 5,
+    critRate: 5,
+    critDamage: 150,
+    attackSpeed: 100,
+    penetration: 0,
+  }
+
+  // 안전한 스탯 (undefined/0 방지)
+  const safePlayerStats: CharacterStats = {
+    hp: playerStats.hp || DEFAULT_STATS.hp,
+    attack: playerStats.attack || DEFAULT_STATS.attack,
+    defense: playerStats.defense || DEFAULT_STATS.defense,
+    critRate: playerStats.critRate ?? DEFAULT_STATS.critRate,
+    critDamage: playerStats.critDamage || DEFAULT_STATS.critDamage,
+    attackSpeed: playerStats.attackSpeed || DEFAULT_STATS.attackSpeed,
+    penetration: playerStats.penetration ?? DEFAULT_STATS.penetration,
+  }
+
+  const safeOpponentStats: CharacterStats = {
+    hp: opponentStats.hp || DEFAULT_STATS.hp,
+    attack: opponentStats.attack || DEFAULT_STATS.attack,
+    defense: opponentStats.defense || DEFAULT_STATS.defense,
+    critRate: opponentStats.critRate ?? DEFAULT_STATS.critRate,
+    critDamage: opponentStats.critDamage || DEFAULT_STATS.critDamage,
+    attackSpeed: opponentStats.attackSpeed || DEFAULT_STATS.attackSpeed,
+    penetration: opponentStats.penetration ?? DEFAULT_STATS.penetration,
+  }
+
   // 상태
-  const [playerHp, setPlayerHp] = useState(playerStats.hp * hpMultiplier)
-  const [opponentHp, setOpponentHp] = useState(opponentStats.hp * hpMultiplier)
+  const [playerHp, setPlayerHp] = useState(safePlayerStats.hp * hpMultiplier)
+  const [opponentHp, setOpponentHp] = useState(safeOpponentStats.hp * hpMultiplier)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [isRunning, setIsRunning] = useState(true)
   const [battleEnded, setBattleEnded] = useState(false)
@@ -208,8 +240,8 @@ export function PvPRealtimeBattle({
   }, [opponentHp])
 
   // Max HP
-  const playerMaxHp = playerStats.hp * hpMultiplier
-  const opponentMaxHp = opponentStats.hp * hpMultiplier
+  const playerMaxHp = safePlayerStats.hp * hpMultiplier
+  const opponentMaxHp = safeOpponentStats.hp * hpMultiplier
 
   // 낮은 HP 경고
   const isLowHp = playerHp / playerMaxHp < 0.3
@@ -568,17 +600,17 @@ export function PvPRealtimeBattle({
     })
   }, [opponentMaxHp, playerMaxHp, addFloatingDamage, showSkillNotification])
 
-  // 스탯 ref (effect 재시작 방지용)
-  const playerStatsRef = useRef(playerStats)
-  const opponentStatsRef = useRef(opponentStats)
+  // 스탯 ref (effect 재시작 방지용) - 안전한 스탯 사용
+  const playerStatsRef = useRef(safePlayerStats)
+  const opponentStatsRef = useRef(safeOpponentStats)
 
   useEffect(() => {
-    playerStatsRef.current = playerStats
-  }, [playerStats])
+    playerStatsRef.current = safePlayerStats
+  }, [safePlayerStats])
 
   useEffect(() => {
-    opponentStatsRef.current = opponentStats
-  }, [opponentStats])
+    opponentStatsRef.current = safeOpponentStats
+  }, [safeOpponentStats])
 
   // 메인 게임 루프
   useEffect(() => {

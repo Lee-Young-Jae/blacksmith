@@ -41,6 +41,7 @@ interface PvPMatchmakingProps {
   }
   myRating: number
   onGoldUpdate?: (amount: number) => void
+  ensureDefenseDeck?: (stats: CharacterStats, equipment: EquippedItems, combatPower: number) => Promise<boolean>
 }
 
 // =============================================
@@ -180,10 +181,21 @@ export function PvPMatchmaking({
   pvpBattle,
   myRating,
   onGoldUpdate,
+  ensureDefenseDeck,
 }: PvPMatchmakingProps) {
   const [selectedCards, setSelectedCards] = useState<CardSlots>([null, null, null])
   // AI 상대일 때, 플레이어 카드에 맞춰 재생성된 AI 카드
   const [matchedAICards, setMatchedAICards] = useState<BattleCard[]>([])
+
+  // 상대 찾기 + 자동 방어덱 등록
+  const handleSearchOpponent = async () => {
+    // 자동 방어덱 등록 (없으면 생성, 있으면 스탯 업데이트)
+    if (ensureDefenseDeck) {
+      await ensureDefenseDeck(playerStats, equipment, combatPower)
+    }
+    // 상대 검색
+    await searchOpponent(combatPower)
+  }
 
 
   const {
@@ -519,7 +531,7 @@ export function PvPMatchmaking({
 
       {/* 매칭 버튼 */}
       <button
-        onClick={() => searchOpponent(combatPower)}
+        onClick={handleSearchOpponent}
         disabled={isLoading}
         className="w-full py-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold text-lg rounded-lg hover:scale-105 transition-transform disabled:opacity-50"
       >
