@@ -29,6 +29,7 @@ type PvPTab = 'matchmaking' | 'defense' | 'cards' | 'leaderboard' | 'history'
 interface PvPArenaProps {
   playerStats: CharacterStats
   playerName: string
+  playerAvatarUrl?: string  // 플레이어 프로필 이미지
   combatPower: number
   equipment: EquippedItems
   gold: number
@@ -50,6 +51,7 @@ const TABS: { id: PvPTab; label: string; emoji: string }[] = [
 export function PvPArena({
   playerStats,
   playerName,
+  playerAvatarUrl,
   combatPower,
   equipment,
   gold,
@@ -78,8 +80,12 @@ export function PvPArena({
       {/* 헤더 - 내 정보 */}
       <div className="flex items-center justify-between mb-4 p-3 bg-gray-700/50 rounded-lg">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-            <span className="text-2xl">⚔️</span>
+          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center overflow-hidden">
+            {playerAvatarUrl ? (
+              <img src={playerAvatarUrl} alt={playerName} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-2xl">⚔️</span>
+            )}
           </div>
           <div>
             <p className="text-white font-bold">{playerName}</p>
@@ -168,6 +174,7 @@ export function PvPArena({
           <PvPMatchmaking
             playerStats={playerStats}
             playerName={playerName}
+            playerAvatarUrl={playerAvatarUrl}
             combatPower={combatPower}
             equipment={equipment}
             ownedCards={cardDeck.ownedCards}

@@ -213,7 +213,7 @@ export interface RealtimeBattleAction {
 
 export const PVP_BATTLE_CONFIG = {
   // 실시간 배틀 설정
-  BATTLE_DURATION: 15000,      // 배틀 총 시간 (15초)
+  BATTLE_DURATION: 30000,      // 배틀 총 시간 (30초)
   BASE_ATTACK_INTERVAL: 2000,  // 기본 공격 간격 (2초) - 공속 100 기준
   MIN_ATTACK_INTERVAL: 500,    // 최소 공격 간격 (0.5초)
 

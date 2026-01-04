@@ -1022,3 +1022,53 @@ body {
 .animate-shake {
   animation: shake 0.3s ease-in-out;
 }
+
+/* Bounce in animation for result cards */
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(50px);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05) translateY(-10px);
+  }
+  70% {
+    transform: scale(0.95) translateY(5px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-bounce-in {
+  animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+/* Victory glow animation */
+@keyframes victoryGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.4), 0 0 40px rgba(251, 191, 36, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.6), 0 0 60px rgba(251, 191, 36, 0.3);
+  }
+}
+
+.animate-victory-glow {
+  animation: victoryGlow 1.5s ease-in-out infinite;
+}
+
+/* Defeat fade animation */
+@keyframes defeatPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-defeat-pulse {
+  animation: defeatPulse 2s ease-in-out infinite;
+}

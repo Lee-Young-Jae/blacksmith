@@ -14,7 +14,7 @@ import { useAuth } from '../contexts/AuthContext'
 import type { CharacterStats } from '../types/stats'
 import type { BattleCard, BattleCardTier } from '../types/battleCard'
 import {
-  TIER_AVAILABLE_EFFECTS_PVP,
+  TIER_AVAILABLE_EFFECTS_AI,
   TIER_EFFECT_VALUES,
   EFFECT_TYPE_INFO,
   CARD_NAMES,
@@ -98,9 +98,9 @@ const AI_NAMES = [
   '그림자 도적', '숙련된 사냥꾼', '마법 수습생', '검은 기사',
 ]
 
-// AI 카드 생성
+// AI 카드 생성 (골드 보너스 제외)
 function generateAICard(tier: BattleCardTier): BattleCard {
-  const availableEffects = TIER_AVAILABLE_EFFECTS_PVP[tier]
+  const availableEffects = TIER_AVAILABLE_EFFECTS_AI[tier]
   const effectType = availableEffects[Math.floor(Math.random() * availableEffects.length)]
   const info = EFFECT_TYPE_INFO[effectType]
   const value = TIER_EFFECT_VALUES[tier][effectType]
@@ -148,6 +148,49 @@ function generateAICards(cardCount: number): BattleCard[] {
   }
 
   return cards
+}
+
+// 티어 순서 (낮은 것부터 높은 것 순)
+const TIER_ORDER: BattleCardTier[] = ['common', 'rare', 'epic', 'legendary']
+
+// 플레이어 카드 등급에 맞춰 AI 카드 생성
+// 30%: 더 높은 등급, 60%: 비슷한 등급, 10%: 더 낮은 등급
+export function generateAICardsMatchingPlayer(playerCards: BattleCard[]): BattleCard[] {
+  // 플레이어가 카드를 선택하지 않은 경우, 랜덤 생성
+  if (playerCards.length === 0) {
+    const cardCount = 1 + Math.floor(Math.random() * 3)
+    return generateAICards(cardCount)
+  }
+
+  // 플레이어 카드의 평균 티어 계산
+  const playerTierSum = playerCards.reduce((sum, card) => {
+    return sum + TIER_ORDER.indexOf(card.tier)
+  }, 0)
+  const avgTierIndex = playerTierSum / playerCards.length
+
+  const aiCards: BattleCard[] = []
+
+  // 플레이어와 같은 카드 수로 생성
+  for (let i = 0; i < playerCards.length; i++) {
+    const roll = Math.random()
+    let targetTierIndex: number
+
+    if (roll < 0.30) {
+      // 30%: 더 높은 등급 (+1)
+      targetTierIndex = Math.min(3, Math.round(avgTierIndex) + 1)
+    } else if (roll < 0.90) {
+      // 60%: 비슷한 등급 (±0)
+      targetTierIndex = Math.round(avgTierIndex)
+    } else {
+      // 10%: 더 낮은 등급 (-1)
+      targetTierIndex = Math.max(0, Math.round(avgTierIndex) - 1)
+    }
+
+    const targetTier = TIER_ORDER[targetTierIndex]
+    aiCards.push(generateAICard(targetTier))
+  }
+
+  return aiCards
 }
 
 function generateAIOpponent(playerCombatPower: number): PvPOpponent {

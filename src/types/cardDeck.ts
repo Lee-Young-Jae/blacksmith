@@ -1,6 +1,6 @@
 import type { CharacterStats } from './stats'
 import type { BattleCard, BattleCardTier, BattleCardEffectType, BattleCardEffect } from './battleCard'
-import { EFFECT_TYPE_INFO, CARD_NAMES, formatCardDescription } from './battleCard'
+import { EFFECT_TYPE_INFO, CARD_NAMES, TIER_EFFECT_VALUES, formatCardDescription } from './battleCard'
 import type { EquippedItems } from './equipment'
 
 // =============================================
@@ -29,13 +29,17 @@ export interface OwnedCardRow {
 }
 
 // OwnedCard를 BattleCard로 변환
+// 현재 밸런스 값을 사용하도록 TIER_EFFECT_VALUES에서 값을 가져옴
 export function ownedCardToBattleCard(owned: OwnedCard): BattleCard {
   const info = EFFECT_TYPE_INFO[owned.cardType]
   const name = CARD_NAMES[owned.cardType]?.[owned.tier] || owned.cardType
 
+  // 현재 밸런스 값 사용 (DB에 저장된 값 대신 최신 값 적용)
+  const currentValue = TIER_EFFECT_VALUES[owned.tier][owned.cardType] || owned.value
+
   const effect: BattleCardEffect = {
     type: owned.cardType,
-    value: owned.value,
+    value: currentValue,
     isPercentage: owned.isPercentage,
   }
 

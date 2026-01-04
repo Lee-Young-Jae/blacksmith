@@ -695,6 +695,7 @@ function GameContent() {
                 <PvPArena
                   playerStats={equippedStats}
                   playerName={userData.profile?.username || '모험가'}
+                  playerAvatarUrl={user?.user_metadata?.avatar_url || user?.user_metadata?.picture}
                   combatPower={totalCombatPower}
                   equipment={equipmentSystem.equipped}
                   gold={gold}
