@@ -97,6 +97,12 @@ export function PvPRealtimeBattle({
     }))
   )
 
+  // 스턴 상태 (스킬 사용 불가)
+  const [playerStunDuration, setPlayerStunDuration] = useState(0)
+  const [opponentStunDuration, setOpponentStunDuration] = useState(0)
+  const playerStunRef = useRef(0)
+  const opponentStunRef = useRef(0)
+
   // 스킬 상태 ref (게임 루프에서 사용)
   const playerSkillsRef = useRef(playerSkills)
   const opponentSkillsRef = useRef(opponentSkills)
@@ -110,14 +116,36 @@ export function PvPRealtimeBattle({
     opponentSkillsRef.current = opponentSkills
   }, [opponentSkills])
 
+  // 스턴 상태 ref 동기화
+  useEffect(() => {
+    playerStunRef.current = playerStunDuration
+  }, [playerStunDuration])
+
+  useEffect(() => {
+    opponentStunRef.current = opponentStunDuration
+  }, [opponentStunDuration])
+
   // 플로팅 데미지
   const [floatingDamages, setFloatingDamages] = useState<FloatingDamage[]>([])
   const damageIdRef = useRef(0)
+
+  // 스킬 사용 알림
+  const [skillNotification, setSkillNotification] = useState<{
+    user: 'player' | 'opponent'
+    skillName: string
+    emoji: string
+  } | null>(null)
 
   // 공격 타이머
   const playerNextAttackRef = useRef(1000)
   const opponentNextAttackRef = useRef(1200)
   const lastUpdateRef = useRef(Date.now())
+
+  // AI 스킬 체크 타이머 (1초마다)
+  const aiSkillCheckRef = useRef(2000)
+
+  // 경과 시간 ref (AI 스킬용)
+  const elapsedTimeRef = useRef(0)
 
   // HP ref (게임 루프에서 읽기용)
   const playerHpRef = useRef(playerHp)
@@ -147,6 +175,16 @@ export function PvPRealtimeBattle({
     setTimeout(() => {
       setFloatingDamages(prev => prev.filter(d => d.id !== id))
     }, 800)
+  }, [])
+
+  // 스킬 사용 알림 표시
+  const showSkillNotification = useCallback((
+    user: 'player' | 'opponent',
+    skillName: string,
+    emoji: string
+  ) => {
+    setSkillNotification({ user, skillName, emoji })
+    setTimeout(() => setSkillNotification(null), 1500)
   }, [])
 
   // 패시브 효과 계산
@@ -216,6 +254,18 @@ export function PvPRealtimeBattle({
 
   // 스킬 사용
   const useSkill = useCallback((skillIndex: number) => {
+    // 스턴 상태에서는 스킬 사용 불가
+    if (playerStunRef.current > 0) return
+
+    // 먼저 스킬 정보 확인
+    const skillToUse = playerSkillsRef.current[skillIndex]
+    if (!skillToUse) return
+    if (skillToUse.cooldownRemaining > 0) return
+    if (skillToUse.card.activationType === 'passive') return
+
+    // 스킬 사용 알림 표시
+    showSkillNotification('player', skillToUse.card.name, skillToUse.card.emoji)
+
     setPlayerSkills(prev => {
       const newSkills = [...prev]
       const skill = newSkills[skillIndex]
@@ -241,8 +291,11 @@ export function PvPRealtimeBattle({
         setOpponentHp(hp => Math.max(0, hp - bonusDamage))
         addFloatingDamage('opponent', bonusDamage, true, false)
       } else if (effect.type === 'stun') {
-        // 스턴: 상대 다음 공격 지연
-        opponentNextAttackRef.current += 2000
+        // 스턴: 상대 공격 지연 + 스킬 사용 불가
+        // effect.value는 스턴 확률(100%)이므로, 카드의 duration 또는 고정 2초 사용
+        const stunDuration = card.duration > 0 ? card.duration : 2
+        opponentNextAttackRef.current += stunDuration * 1000
+        setOpponentStunDuration(stunDuration)
       }
 
       // 지속 효과 활성화
@@ -263,25 +316,91 @@ export function PvPRealtimeBattle({
 
       return newSkills
     })
-  }, [playerMaxHp, addFloatingDamage])
+  }, [playerMaxHp, addFloatingDamage, showSkillNotification])
 
-  // AI 스킬 사용 로직
-  const aiUseSkill = useCallback(() => {
+  // AI 스킬 사용 로직 (지능적)
+  const aiUseSkill = useCallback((currentElapsedTime: number) => {
+    // 스턴 상태에서는 스킬 사용 불가
+    if (opponentStunRef.current > 0) return
+
+    const opponentHpRatio = opponentHpRef.current / opponentMaxHp
+    const playerHpRatio = playerHpRef.current / playerMaxHp
+    const battleProgress = currentElapsedTime / PVP_BATTLE_CONFIG.BATTLE_DURATION // 0~1
+
     setOpponentSkills(prev => {
       const newSkills = [...prev]
 
       // 사용 가능한 액티브 스킬 찾기
-      const availableSkillIndex = newSkills.findIndex(
-        s => s.card.activationType === 'active' &&
-          s.cooldownRemaining <= 0 &&
-          !s.isActive
-      )
+      const availableSkills = newSkills
+        .map((s, i) => ({ skill: s, index: i }))
+        .filter(({ skill }) =>
+          skill.card.activationType === 'active' &&
+          skill.cooldownRemaining <= 0 &&
+          !skill.isActive
+        )
 
-      if (availableSkillIndex === -1) return prev
+      if (availableSkills.length === 0) return prev
 
-      const skill = newSkills[availableSkillIndex]
+      // 스킬 우선순위 결정 (상황에 따라)
+      let selectedSkill: { skill: SkillState; index: number } | null = null
+
+      for (const { skill, index } of availableSkills) {
+        const effectType = skill.card.effect.type
+
+        // HP 회복: 체력 50% 이하이거나 후반부(60% 이상 진행)일 때
+        if (effectType === 'hp_recovery') {
+          if (opponentHpRatio < 0.5 || (opponentHpRatio < 0.8 && battleProgress > 0.6)) {
+            selectedSkill = { skill, index }
+            break
+          }
+        }
+        // 무적: 체력 40% 이하일 때 긴급 사용
+        else if (effectType === 'immunity') {
+          if (opponentHpRatio < 0.4) {
+            selectedSkill = { skill, index }
+            break
+          }
+        }
+        // 스턴: 상대 체력이 높을 때 또는 초반에 사용
+        else if (effectType === 'stun') {
+          if (playerHpRatio > 0.5 || battleProgress < 0.4) {
+            selectedSkill = { skill, index }
+            break
+          }
+        }
+        // 확정 치명타/연속 공격: 상대 체력이 낮을 때 마무리용
+        else if (effectType === 'guaranteed_crit' || effectType === 'double_attack') {
+          if (playerHpRatio < 0.5) {
+            selectedSkill = { skill, index }
+            break
+          }
+        }
+        // 광폭화: 초반~중반에 사용
+        else if (effectType === 'speed_boost') {
+          if (battleProgress < 0.5) {
+            selectedSkill = { skill, index }
+            break
+          }
+        }
+        // 강타, 기타: 항상 사용 가능
+        else if (effectType === 'first_strike') {
+          selectedSkill = { skill, index }
+        }
+      }
+
+      // 선택된 스킬이 없으면 아무 스킬이나 사용 (50% 확률)
+      if (!selectedSkill && Math.random() < 0.5) {
+        selectedSkill = availableSkills[0]
+      }
+
+      if (!selectedSkill) return prev
+
+      const { skill, index } = selectedSkill
       const card = skill.card
       const effect = card.effect
+
+      // 스킬 사용 알림 표시
+      showSkillNotification('opponent', card.name, card.emoji)
 
       // 즉시 효과
       if (effect.type === 'hp_recovery') {
@@ -293,19 +412,23 @@ export function PvPRealtimeBattle({
         setPlayerHp(hp => Math.max(0, hp - bonusDamage))
         addFloatingDamage('player', bonusDamage, true, false)
       } else if (effect.type === 'stun') {
-        playerNextAttackRef.current += 2000
+        // 스턴: 플레이어 공격 지연 + 스킬 사용 불가
+        // effect.value는 스턴 확률(100%)이므로, 카드의 duration 또는 고정 2초 사용
+        const stunDuration = card.duration > 0 ? card.duration : 2
+        playerNextAttackRef.current += stunDuration * 1000
+        setPlayerStunDuration(stunDuration)
       }
 
       // 지속 효과 활성화
       if (card.duration > 0) {
-        newSkills[availableSkillIndex] = {
+        newSkills[index] = {
           ...skill,
           isActive: true,
           durationRemaining: card.duration,
           cooldownRemaining: card.cooldown,
         }
       } else {
-        newSkills[availableSkillIndex] = {
+        newSkills[index] = {
           ...skill,
           cooldownRemaining: card.cooldown,
         }
@@ -313,7 +436,7 @@ export function PvPRealtimeBattle({
 
       return newSkills
     })
-  }, [opponentMaxHp, addFloatingDamage])
+  }, [opponentMaxHp, playerMaxHp, addFloatingDamage, showSkillNotification])
 
   // 스탯 ref (effect 재시작 방지용)
   const playerStatsRef = useRef(playerStats)
@@ -341,6 +464,7 @@ export function PvPRealtimeBattle({
       lastUpdateRef.current = now
 
       // 경과 시간 업데이트
+      elapsedTimeRef.current += deltaMs
       setElapsedTime(prev => {
         const newTime = prev + deltaMs
         if (newTime >= PVP_BATTLE_CONFIG.BATTLE_DURATION) {
@@ -363,6 +487,10 @@ export function PvPRealtimeBattle({
         durationRemaining: Math.max(0, skill.durationRemaining - deltaSec),
         isActive: skill.durationRemaining - deltaSec > 0 ? skill.isActive : false,
       })))
+
+      // 스턴 지속시간 감소
+      setPlayerStunDuration(prev => Math.max(0, prev - deltaSec))
+      setOpponentStunDuration(prev => Math.max(0, prev - deltaSec))
 
       // ref에서 현재 상태 가져오기
       const currentPlayerSkills = playerSkillsRef.current
@@ -440,9 +568,18 @@ export function PvPRealtimeBattle({
           return newHp
         })
 
-        // AI 스킬 사용 (30% 확률)
-        if (opponentIsAI && Math.random() < 0.3) {
-          aiUseSkill()
+        // AI 스킬 사용 (공격 시 70% 확률)
+        if (opponentIsAI && Math.random() < 0.7) {
+          aiUseSkill(elapsedTimeRef.current)
+        }
+      }
+
+      // AI 주기적 스킬 체크 (2초마다)
+      if (opponentIsAI) {
+        aiSkillCheckRef.current -= deltaMs
+        if (aiSkillCheckRef.current <= 0) {
+          aiSkillCheckRef.current = 2000 // 2초 간격
+          aiUseSkill(elapsedTimeRef.current)
         }
       }
     }, 50) // 20fps
@@ -502,11 +639,33 @@ export function PvPRealtimeBattle({
         </span>
       </div>
 
+      {/* 스킬 사용 알림 (고정 오버레이) */}
+      {skillNotification && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-bounce">
+          <div className={`py-2 px-6 rounded-full shadow-lg ${
+            skillNotification.user === 'opponent'
+              ? 'bg-red-600 border-2 border-red-400'
+              : 'bg-blue-600 border-2 border-blue-400'
+          }`}>
+            <span className="text-xl mr-2">{skillNotification.emoji}</span>
+            <span className="text-white font-bold">{skillNotification.skillName}</span>
+            <span className="text-white/80 text-sm ml-2">
+              ({skillNotification.user === 'opponent' ? opponentName : '나'})
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* 배틀 영역 */}
       <div className="relative bg-gradient-to-b from-gray-700 to-gray-800 rounded-xl p-4 min-h-[200px]">
         {/* 상대 */}
         <div className="absolute top-4 right-4 text-right">
-          <p className="text-white font-bold">{opponentName}</p>
+          <div className="flex items-center justify-end gap-2">
+            <p className="text-white font-bold">{opponentName}</p>
+            {opponentStunDuration > 0 && (
+              <span className="text-lg animate-bounce" title="기절">💫</span>
+            )}
+          </div>
           <div className="w-32 h-3 bg-gray-600 rounded-full mt-1">
             <div
               className="h-full bg-gradient-to-r from-red-500 to-red-400 rounded-full transition-all duration-200"
@@ -515,6 +674,9 @@ export function PvPRealtimeBattle({
           </div>
           <p className="text-xs text-gray-400 mt-0.5">
             {Math.floor(opponentHp)} / {opponentMaxHp}
+            {opponentStunDuration > 0 && (
+              <span className="text-purple-400 ml-1">({opponentStunDuration.toFixed(1)}s 기절)</span>
+            )}
           </p>
 
           {/* 상대 플로팅 데미지 */}
@@ -562,30 +724,50 @@ export function PvPRealtimeBattle({
         </div>
       </div>
 
+      {/* 스턴 상태 표시 */}
+      {playerStunDuration > 0 && (
+        <div className="bg-purple-900/80 border-2 border-purple-500 rounded-lg p-2 text-center animate-pulse">
+          <span className="text-2xl">💫</span>
+          <span className="text-purple-300 font-bold ml-2">
+            기절! ({playerStunDuration.toFixed(1)}s)
+          </span>
+        </div>
+      )}
+
       {/* 스킬 버튼들 */}
       <div className="grid grid-cols-3 gap-2">
         {playerSkills.map((skill, index) => {
           const isActive = skill.card.activationType === 'active'
           const onCooldown = skill.cooldownRemaining > 0
           const isBuffActive = skill.isActive
+          const isStunned = playerStunDuration > 0
 
           return (
             <button
               key={skill.card.id}
-              onClick={() => isActive && useSkill(index)}
-              disabled={!isActive || onCooldown || battleEnded}
+              onClick={() => isActive && !isStunned && useSkill(index)}
+              disabled={!isActive || onCooldown || battleEnded || isStunned}
               className={`relative p-3 rounded-lg border-2 transition-all ${
-                !isActive
-                  ? 'bg-gray-700/50 border-gray-600 cursor-default'
-                  : onCooldown
-                    ? 'bg-gray-700 border-gray-500 cursor-not-allowed opacity-60'
-                    : isBuffActive
-                      ? 'bg-yellow-900/50 border-yellow-500 animate-pulse'
-                      : `${BATTLE_CARD_TIER_COLORS[skill.card.tier]} hover:scale-105 cursor-pointer`
+                isStunned
+                  ? 'bg-purple-900/50 border-purple-600 cursor-not-allowed opacity-60'
+                  : !isActive
+                    ? 'bg-gray-700/50 border-gray-600 cursor-default'
+                    : onCooldown
+                      ? 'bg-gray-700 border-gray-500 cursor-not-allowed opacity-60'
+                      : isBuffActive
+                        ? 'bg-yellow-900/50 border-yellow-500 animate-pulse'
+                        : `${BATTLE_CARD_TIER_COLORS[skill.card.tier]} hover:scale-105 cursor-pointer`
               }`}
             >
+              {/* 스턴 오버레이 */}
+              {isStunned && isActive && (
+                <div className="absolute inset-0 flex items-center justify-center bg-purple-900/70 rounded-lg">
+                  <span className="text-2xl">💫</span>
+                </div>
+              )}
+
               {/* 쿨다운 오버레이 */}
-              {onCooldown && (
+              {!isStunned && onCooldown && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
                   <span className="text-white font-bold text-lg">
                     {Math.ceil(skill.cooldownRemaining)}s
