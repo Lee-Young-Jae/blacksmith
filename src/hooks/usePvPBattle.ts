@@ -312,10 +312,16 @@ export function usePvPBattle(): UsePvPBattleReturn {
       // 상대의 방어덱 카드 가져오기 (RPC 함수 사용 - RLS 우회)
       let defenseCards: BattleCard[] = []
       try {
+        console.log('🔍 Fetching defense cards for:', selected.user_id)
         const { data: cardsData, error: cardsError } = await supabase
           .rpc('get_opponent_defense_cards', { p_user_id: selected.user_id })
 
-        if (!cardsError && cardsData && cardsData.length > 0) {
+        console.log('🔍 RPC result:', { cardsData, cardsError })
+
+        if (cardsError) {
+          console.error('🔍 RPC error:', cardsError)
+        } else if (cardsData && cardsData.length > 0) {
+          console.log('🔍 Cards received:', cardsData)
           defenseCards = cardsData.map((card: { id: string; card_type: string; tier: string; value: number; is_percentage: boolean }) => {
             const ownedCard: OwnedCard = {
               id: card.id,
@@ -328,6 +334,9 @@ export function usePvPBattle(): UsePvPBattleReturn {
             }
             return ownedCardToBattleCard(ownedCard)
           })
+          console.log('🔍 Converted defenseCards:', defenseCards)
+        } else {
+          console.log('🔍 No cards returned from RPC')
         }
       } catch (err) {
         console.error('Failed to fetch defense cards:', err)

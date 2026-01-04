@@ -178,39 +178,32 @@ export function usePvPRanking(): UsePvPRankingReturn {
     setIsLoading(true)
 
     try {
-      // LEFT JOIN으로 변경하여 user_profiles가 없어도 표시
+      // RPC 함수 사용 (RLS 우회)
       const { data, error: fetchError } = await supabase
-        .from('pvp_rankings')
-        .select(`
-          user_id,
-          rating,
-          tier,
-          wins,
-          losses,
-          win_streak,
-          combat_power,
-          user_profiles(username)
-        `)
-        .order('rating', { ascending: false })
-        .limit(limit)
+        .rpc('get_pvp_leaderboard', { p_limit: limit })
 
       if (fetchError) throw fetchError
 
-      const entries: LeaderboardEntry[] = (data || []).map((row, index) => {
-        const profileData = row.user_profiles as unknown as { username: string } | { username: string }[] | null
-        const username = Array.isArray(profileData) ? profileData[0]?.username : profileData?.username
-        return {
-          rank: index + 1,
-          userId: row.user_id,
-          username: username || '플레이어',
-          rating: row.rating,
-          tier: row.tier as LeagueTier,
-          wins: row.wins,
-          losses: row.losses,
-          winStreak: row.win_streak,
-          combatPower: row.combat_power,
-        }
-      })
+      const entries: LeaderboardEntry[] = (data || []).map((row: {
+        user_id: string
+        username: string
+        rating: number
+        tier: string
+        wins: number
+        losses: number
+        win_streak: number
+        combat_power: number
+      }, index: number) => ({
+        rank: index + 1,
+        userId: row.user_id,
+        username: row.username || '플레이어',
+        rating: row.rating,
+        tier: row.tier as LeagueTier,
+        wins: row.wins,
+        losses: row.losses,
+        winStreak: row.win_streak,
+        combatPower: row.combat_power,
+      }))
 
       setLeaderboard(entries)
     } catch (err) {

@@ -138,6 +138,18 @@ export function PvPRealtimeBattle({
     }))
   )
 
+  // 카드가 늦게 로드되는 경우 스킬 상태 업데이트
+  useEffect(() => {
+    if (opponentCards.length > 0 && opponentSkills.length === 0) {
+      setOpponentSkills(opponentCards.map(card => ({
+        card,
+        cooldownRemaining: 0,
+        durationRemaining: 0,
+        isActive: false,
+      })))
+    }
+  }, [opponentCards, opponentSkills.length])
+
   // 스턴 상태 (스킬 사용 불가 + 공격 불가)
   const [playerStunDuration, setPlayerStunDuration] = useState(0)
   const [opponentStunDuration, setOpponentStunDuration] = useState(0)
@@ -848,8 +860,8 @@ export function PvPRealtimeBattle({
 
       {/* 스킬 사용 알림 (고정 오버레이) */}
       {skillNotification && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-bounce">
-          <div className={`py-2 px-6 rounded-full shadow-lg ${
+        <div className="fixed top-20 inset-x-0 z-50 flex justify-center pointer-events-none">
+          <div className={`py-2 px-6 rounded-full shadow-lg animate-pulse ${
             skillNotification.user === 'opponent'
               ? 'bg-red-600 border-2 border-red-400'
               : 'bg-blue-600 border-2 border-blue-400'

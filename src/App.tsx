@@ -16,6 +16,7 @@ import { DestroyEffect } from './components/DestroyEffect'
 import { EnhanceEffect } from './components/EnhanceEffect'
 import { EquipmentSlots, EquipmentInventory, EquipmentImage, EquipmentEnhancePanel, EquipmentSellPanel, EquipmentDisplay } from './components/equipment'
 import { StatsPanel } from './components/stats'
+import { DEFAULT_CHARACTER_STATS } from './types/stats'
 import { PotentialPanel } from './components/potential'
 import { GachaPanel } from './components/gacha'
 import { PvPArena } from './components/pvp/PvPArena'
@@ -185,8 +186,17 @@ function GameContent() {
     onChanceTimeActivated: () => {},
   })
 
-  // 배틀용 무기 및 스탯: 모든 장착 장비의 총 스탯 기반
-  const equippedStats = equipmentSystem.getEquippedStats()
+  // 배틀용 무기 및 스탯: 기본 스탯 + 모든 장착 장비의 총 스탯
+  const equipmentOnlyStats = equipmentSystem.getEquippedStats()
+  const equippedStats = {
+    attack: DEFAULT_CHARACTER_STATS.attack + equipmentOnlyStats.attack,
+    defense: DEFAULT_CHARACTER_STATS.defense + equipmentOnlyStats.defense,
+    hp: DEFAULT_CHARACTER_STATS.hp + equipmentOnlyStats.hp,
+    critRate: DEFAULT_CHARACTER_STATS.critRate + equipmentOnlyStats.critRate,
+    critDamage: DEFAULT_CHARACTER_STATS.critDamage + equipmentOnlyStats.critDamage,
+    penetration: DEFAULT_CHARACTER_STATS.penetration + equipmentOnlyStats.penetration,
+    attackSpeed: DEFAULT_CHARACTER_STATS.attackSpeed + equipmentOnlyStats.attackSpeed,
+  }
   const battleWeapon: UserWeapon | null = createBattleWeaponFromEquipment(
     equipmentSystem.equipped,
     equippedStats
