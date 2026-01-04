@@ -463,14 +463,25 @@ export function usePvPBattle(): UsePvPBattleReturn {
         }
       }
 
-      // 골드 지급
-      const { error: goldError } = await supabase
+      // 골드 지급 (현재 골드 조회 후 증가)
+      const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
-        .update({ gold: supabase.rpc('increment_gold', { amount: battle.attackerReward }) })
+        .select('gold')
         .eq('id', user.id)
+        .single()
 
-      if (goldError) {
-        console.error('Failed to update gold:', goldError)
+      if (profileError) {
+        console.error('Failed to get current gold:', profileError)
+      } else if (profileData) {
+        const newGold = (profileData.gold || 0) + battle.attackerReward
+        const { error: goldError } = await supabase
+          .from('user_profiles')
+          .update({ gold: newGold })
+          .eq('id', user.id)
+
+        if (goldError) {
+          console.error('Failed to update gold:', goldError)
+        }
       }
 
       setCurrentBattle(battle)
