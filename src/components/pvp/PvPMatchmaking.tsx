@@ -316,10 +316,13 @@ export function PvPMatchmaking({
     const loseGold = Math.floor(100 * aiMultiplier * goldMultiplier)
     const drawGold = Math.floor(250 * aiMultiplier * goldMultiplier)
 
-    // AI 상대일 경우 플레이어 카드에 맞춰 재생성된 카드 사용
-    const aiCards = opponent.isAI && matchedAICards.length > 0
+    // 상대 카드 결정:
+    // 1. AI 상대이면서 플레이어 카드에 맞춰 재생성된 카드가 있으면 사용
+    // 2. 그렇지 않으면 상대의 실제 방어덱 카드 사용
+    // 3. 없으면 AI 카드 (레거시) 또는 빈 배열
+    const opponentCards = opponent.isAI && matchedAICards.length > 0
       ? matchedAICards
-      : opponent.aiCards || []
+      : opponent.defenseCards || opponent.aiCards || []
 
     return (
       <PvPRealtimeBattle
@@ -329,7 +332,7 @@ export function PvPMatchmaking({
         playerCards={playerCards}
         opponentName={opponent.username}
         opponentStats={opponent.stats}
-        opponentCards={aiCards}
+        opponentCards={opponentCards}
         opponentIsAI={opponent.isAI}
         winReward={winGold}
         loseReward={loseGold}

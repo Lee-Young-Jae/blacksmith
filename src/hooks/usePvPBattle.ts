@@ -12,7 +12,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import type { CharacterStats } from '../types/stats'
-import type { BattleCard, BattleCardTier } from '../types/battleCard'
+import type { BattleCard, BattleCardTier, BattleCardEffectType } from '../types/battleCard'
 import {
   TIER_AVAILABLE_EFFECTS_AI,
   TIER_EFFECT_VALUES,
@@ -309,6 +309,49 @@ export function usePvPBattle(): UsePvPBattleReturn {
       // 랜덤하게 한 명 선택
       const selected = opponents[Math.floor(Math.random() * opponents.length)]
 
+      // 상대의 방어덱 카드 가져오기
+      let defenseCards: BattleCard[] = []
+      try {
+        const { data: defenseData } = await supabase
+          .from('user_defense_deck')
+          .select('card_slot_1, card_slot_2, card_slot_3')
+          .eq('user_id', selected.user_id)
+          .maybeSingle()
+
+        if (defenseData) {
+          const cardIds = [
+            defenseData.card_slot_1,
+            defenseData.card_slot_2,
+            defenseData.card_slot_3,
+          ].filter((id): id is string => id !== null)
+
+          if (cardIds.length > 0) {
+            const { data: cardsData } = await supabase
+              .from('user_cards')
+              .select('id, card_type, tier, value, is_percentage')
+              .in('id', cardIds)
+
+            if (cardsData) {
+              defenseCards = cardsData.map(card => {
+                const ownedCard: OwnedCard = {
+                  id: card.id,
+                  oderId: selected.user_id,
+                  cardType: card.card_type as BattleCardEffectType,
+                  tier: card.tier as BattleCardTier,
+                  value: card.value,
+                  isPercentage: card.is_percentage,
+                  createdAt: new Date(),
+                }
+                return ownedCardToBattleCard(ownedCard)
+              })
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch defense cards:', err)
+        // 카드 조회 실패해도 배틀은 진행
+      }
+
       setOpponent({
         userId: selected.user_id,
         username: selected.username,
@@ -318,6 +361,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
         stats: selected.total_stats as unknown as CharacterStats,
         cardCount: selected.card_count,
         isAI: false,
+        defenseCards,
       })
 
       setStatus('preparing')
@@ -424,33 +468,14 @@ export function usePvPBattle(): UsePvPBattleReturn {
       )
       battle.defenderReward = defenderRewards.gold
 
-      // AI 상대일 경우 레이팅 변경 없음, 보상 감소
+      // AI 상대일 경우 레이팅 변경 없음, 보상 감소, 기록 안 함
       if (opponent.isAI) {
         battle.attackerRatingChange = 0
         battle.defenderRatingChange = 0
         battle.attackerReward = Math.floor(battle.attackerReward * 0.5) // AI전 보상 50%
-
-        // AI 전투도 승/패 횟수만 업데이트 (레이팅 변동 없음)
-        const { data: rankingData } = await supabase
-          .from('pvp_rankings')
-          .select('wins, losses, draws, weekly_battles')
-          .eq('user_id', user.id)
-          .maybeSingle()
-
-        if (rankingData) {
-          await supabase
-            .from('pvp_rankings')
-            .update({
-              wins: rankingData.wins + (battle.result === 'attacker_win' ? 1 : 0),
-              losses: rankingData.losses + (battle.result === 'defender_win' ? 1 : 0),
-              draws: rankingData.draws + (battle.result === 'draw' ? 1 : 0),
-              weekly_battles: rankingData.weekly_battles + 1,
-            })
-            .eq('user_id', user.id)
-        }
       }
 
-      // DB에 기록 저장 (AI 상대는 제외 - 배틀 기록만)
+      // DB에 기록 저장 (유저 vs 유저만 기록)
       if (!opponent.isAI) {
         const { error: recordError } = await supabase.rpc('record_pvp_battle', {
           p_attacker_id: user.id,
@@ -544,7 +569,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
     setIsLoading(true)
 
     try {
-      // 공격전 기록
+      // 공격전 기록 (defender_snapshot에서 username도 가져옴)
       const { data: attackerBattles, error: attackerError } = await supabase
         .from('pvp_battles')
         .select(`
@@ -556,6 +581,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
           total_rounds,
           is_revenge,
           created_at,
+          defender_snapshot,
           defender:user_profiles!defender_id(username)
         `)
         .eq('attacker_id', user.id)
@@ -564,7 +590,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
 
       if (attackerError) throw attackerError
 
-      // 방어전 기록
+      // 방어전 기록 (attacker_snapshot에서 username도 가져옴)
       const { data: defenderBattles, error: defenderError } = await supabase
         .from('pvp_battles')
         .select(`
@@ -576,6 +602,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
           total_rounds,
           is_revenge,
           created_at,
+          attacker_snapshot,
           attacker:user_profiles!attacker_id(username)
         `)
         .eq('defender_id', user.id)
@@ -590,10 +617,12 @@ export function usePvPBattle(): UsePvPBattleReturn {
       for (const battle of attackerBattles || []) {
         const defenderData = battle.defender as unknown as { username: string } | { username: string }[] | null
         const defenderName = Array.isArray(defenderData) ? defenderData[0]?.username : defenderData?.username
+        // 스냅샷에서 username 가져오기 (대체용)
+        const snapshotName = (battle.defender_snapshot as { username?: string } | null)?.username
         logs.push({
           id: battle.id,
           opponentId: battle.defender_id,
-          opponentName: defenderName || '알 수 없음',
+          opponentName: defenderName || snapshotName || '알 수 없음',
           opponentTier: 'bronze', // TODO: 조회 필요
           isAttacker: true,
           result: battle.result,
@@ -611,10 +640,12 @@ export function usePvPBattle(): UsePvPBattleReturn {
       for (const battle of defenderBattles || []) {
         const attackerData = battle.attacker as unknown as { username: string } | { username: string }[] | null
         const attackerName = Array.isArray(attackerData) ? attackerData[0]?.username : attackerData?.username
+        // 스냅샷에서 username 가져오기 (대체용)
+        const snapshotName = (battle.attacker_snapshot as { username?: string } | null)?.username
         logs.push({
           id: battle.id,
           opponentId: battle.attacker_id,
-          opponentName: attackerName || '알 수 없음',
+          opponentName: attackerName || snapshotName || '알 수 없음',
           opponentTier: 'bronze',
           isAttacker: false,
           result: battle.result,
@@ -687,14 +718,17 @@ export function usePvPBattle(): UsePvPBattleReturn {
     setError(null)
 
     try {
-      // 상대 프로필 조회
-      const { data: profileData, error: profileError } = await supabase
+      // 상대 프로필 조회 (없을 수 있음)
+      const { data: profileData } = await supabase
         .from('user_profiles')
         .select('username')
         .eq('id', opponentId)
-        .single()
+        .maybeSingle()
 
-      if (profileError) throw profileError
+      if (!profileData) {
+        setError('상대 정보를 찾을 수 없습니다.')
+        return false
+      }
 
       // 상대 방어덱 정보 조회 (없을 수 있음)
       const { data: defenseData } = await supabase
@@ -710,6 +744,36 @@ export function usePvPBattle(): UsePvPBattleReturn {
         .eq('user_id', opponentId)
         .maybeSingle()
 
+      // 방어덱 카드 가져오기
+      let defenseCards: BattleCard[] = []
+      if (defenseData) {
+        const defense = defenseData as DefenseDeckRow
+        const cardIds = [defense.card_slot_1, defense.card_slot_2, defense.card_slot_3]
+          .filter((id): id is string => id !== null)
+
+        if (cardIds.length > 0) {
+          const { data: cardsData } = await supabase
+            .from('user_cards')
+            .select('id, card_type, tier, value, is_percentage')
+            .in('id', cardIds)
+
+          if (cardsData) {
+            defenseCards = cardsData.map(card => {
+              const ownedCard: OwnedCard = {
+                id: card.id,
+                oderId: opponentId,
+                cardType: card.card_type as BattleCardEffectType,
+                tier: card.tier as BattleCardTier,
+                value: card.value,
+                isPercentage: card.is_percentage,
+                createdAt: new Date(),
+              }
+              return ownedCardToBattleCard(ownedCard)
+            })
+          }
+        }
+      }
+
       // 방어덱이 없으면 기본 스탯으로 AI 상대 생성
       if (!defenseData) {
         const aiOpponent = generateAIOpponent(1000) // 기본 전투력
@@ -720,6 +784,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
           rating: rankingData?.rating || 1000,
           tier: rankingData?.tier || 'bronze',
           isAI: false, // 실제 유저이므로 false
+          defenseCards: [],
         })
       } else {
         const defense = defenseData as DefenseDeckRow
@@ -732,6 +797,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
           stats: defense.total_stats as unknown as CharacterStats,
           cardCount: [defense.card_slot_1, defense.card_slot_2, defense.card_slot_3]
             .filter(Boolean).length,
+          defenseCards,
         })
       }
 
