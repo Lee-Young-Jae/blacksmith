@@ -324,14 +324,6 @@ export function PvPMatchmaking({
       ? matchedAICards
       : opponent.defenseCards || opponent.aiCards || []
 
-    // 디버깅: 상대 카드 확인
-    console.log('🎯 Battle opponent info:', {
-      isAI: opponent.isAI,
-      defenseCards: opponent.defenseCards?.length || 0,
-      aiCards: opponent.aiCards?.length || 0,
-      finalCards: opponentCards.length,
-    })
-
     return (
       <PvPRealtimeBattle
         playerName={playerName}

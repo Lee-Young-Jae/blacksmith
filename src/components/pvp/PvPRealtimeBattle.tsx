@@ -80,6 +80,13 @@ export function PvPRealtimeBattle({
   const hpMultiplier = PVP_BATTLE_CONFIG.HP_MULTIPLIER
   const damageReduction = PVP_BATTLE_CONFIG.DAMAGE_REDUCTION
 
+  // DEBUG: Props로 받은 스탯 확인
+  console.log('🎮 PvPRealtimeBattle Props:', {
+    playerStats,
+    playerStatsAttackSpeed: playerStats.attackSpeed,
+    typeof_attackSpeed: typeof playerStats.attackSpeed,
+  })
+
   // 기본 스탯 (장비 미착용 시 사용)
   const DEFAULT_STATS: CharacterStats = {
     hp: 100,
@@ -111,6 +118,12 @@ export function PvPRealtimeBattle({
     attackSpeed: opponentStats.attackSpeed || DEFAULT_STATS.attackSpeed,
     penetration: opponentStats.penetration ?? DEFAULT_STATS.penetration,
   }
+
+  // DEBUG: Safe stats 확인
+  console.log('🎮 Safe Player Stats:', {
+    safePlayerStats,
+    safeAttackSpeed: safePlayerStats.attackSpeed,
+  })
 
   // 상태
   const [playerHp, setPlayerHp] = useState(safePlayerStats.hp * hpMultiplier)
@@ -685,6 +698,14 @@ export function PvPRealtimeBattle({
       if (playerNextAttackRef.current <= 0) {
         const safeAttackSpeed = Math.max(1, currentPlayerStats.attackSpeed || 100)
         const interval = 2000 / (safeAttackSpeed / 100)
+
+        // DEBUG: 공격속도 디버그
+        console.log('🔍 Player Attack Debug:', {
+          rawAttackSpeed: currentPlayerStats.attackSpeed,
+          safeAttackSpeed,
+          interval,
+          playerStatsRef: playerStatsRef.current?.attackSpeed,
+        })
         const speedBoost = getPassiveBonus(currentPlayerSkills, 'speed_boost')
         const activeSpeedBoost = getActiveEffectValue(currentPlayerSkills, 'speed_boost')
         // 광전사: HP 50% 이하일 때 체력에 비례해서 공격속도 증가
@@ -697,6 +718,15 @@ export function PvPRealtimeBattle({
         }
         const adjustedInterval = interval / (1 + (speedBoost + activeSpeedBoost + berserkerBonus) / 100)
         playerNextAttackRef.current = Math.max(500, adjustedInterval)
+
+        // DEBUG: 최종 공격 간격
+        console.log('🔍 Final Attack Interval:', {
+          adjustedInterval,
+          nextAttackIn: playerNextAttackRef.current,
+          speedBoost,
+          activeSpeedBoost,
+          berserkerBonus,
+        })
 
         // 데미지 계산 (처형 효과를 위해 상대 HP 비율 전달)
         const opponentHpRatio = opponentHpRef.current / opponentMaxHp
