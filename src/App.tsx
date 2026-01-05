@@ -419,6 +419,7 @@ function GameContent() {
           <UserProfile
             username={userData.profile?.username}
             battlesRemaining={dailyBattle.battlesRemaining}
+            maxBattles={dailyBattle.maxBattles}
             onUpdateUsername={userData.updateUsername}
           />
         </div>

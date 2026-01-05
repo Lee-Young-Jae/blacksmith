@@ -110,10 +110,32 @@ export function calculateCombatPower(stats: CharacterStats): number {
   )
 }
 
+// 숫자 포맷팅 (소수점 정밀도 문제 해결)
+export function formatNumber(value: number, decimals: number = 1): number {
+  const factor = Math.pow(10, decimals)
+  return Math.round(value * factor) / factor
+}
+
+// 숫자를 문자열로 포맷팅 (소수점 정밀도 문제 해결)
+export function formatNumberString(value: number, decimals: number = 1): string {
+  const rounded = formatNumber(value, decimals)
+  // 정수인 경우 소수점 없이 표시
+  return Number.isInteger(rounded) ? rounded.toString() : rounded.toFixed(decimals)
+}
+
+// 퍼센트 스탯 여부 확인
+export const PERCENTAGE_STATS: (keyof CharacterStats)[] = [
+  'critRate', 'critDamage', 'penetration', 'attackSpeed', 'evasion'
+]
+
 // 스탯 포맷팅 (표시용)
 export function formatStat(stat: keyof CharacterStats, value: number): string {
-  const isPercentage = ['critRate', 'critDamage', 'penetration', 'attackSpeed', 'evasion'].includes(stat)
-  return isPercentage ? `${value}%` : value.toLocaleString()
+  const isPercentage = PERCENTAGE_STATS.includes(stat)
+  if (isPercentage) {
+    const formatted = formatNumberString(value, 1)
+    return `${formatted}%`
+  }
+  return Math.round(value).toLocaleString()
 }
 
 // 스탯 비교 (증감 표시용)

@@ -10,6 +10,7 @@ import {
 } from '../../types/equipment'
 import type { EnhanceResult } from '../../types/starforce'
 import type { CharacterStats } from '../../types/stats'
+import { formatNumberString } from '../../types/stats'
 import { GiAnvilImpact, GiUpgrade } from 'react-icons/gi'
 
 interface StatChanges {
@@ -229,27 +230,27 @@ export default function EquipmentEnhancePanel({
               {/* 치명타 확률 - 잠재옵션만 */}
               <div className="flex items-center justify-between">
                 <span className="text-xs text-[var(--color-text-secondary)]">치명타</span>
-                <span className="text-xs text-[var(--color-text-primary)]">{currentStats.critRate}%</span>
+                <span className="text-xs text-[var(--color-text-primary)]">{formatNumberString(currentStats.critRate)}%</span>
               </div>
               {/* 치명타 데미지 - 잠재옵션만 */}
               <div className="flex items-center justify-between">
                 <span className="text-xs text-[var(--color-text-secondary)]">치명타 피해</span>
-                <span className="text-xs text-[var(--color-text-primary)]">{currentStats.critDamage}%</span>
+                <span className="text-xs text-[var(--color-text-primary)]">{formatNumberString(currentStats.critDamage)}%</span>
               </div>
               {/* 관통력 - 잠재옵션만 */}
               <div className="flex items-center justify-between">
                 <span className="text-xs text-[var(--color-text-secondary)]">관통력</span>
-                <span className="text-xs text-[var(--color-text-primary)]">{currentStats.penetration}%</span>
+                <span className="text-xs text-[var(--color-text-primary)]">{formatNumberString(currentStats.penetration)}%</span>
               </div>
               {/* 공격속도 - 잠재옵션만 */}
               <div className="flex items-center justify-between">
                 <span className="text-xs text-[var(--color-text-secondary)]">공격속도</span>
-                <span className="text-xs text-[var(--color-text-primary)]">{currentStats.attackSpeed}%</span>
+                <span className="text-xs text-[var(--color-text-primary)]">{formatNumberString(currentStats.attackSpeed)}%</span>
               </div>
               {/* 회피율 - 잠재옵션만 */}
               <div className="flex items-center justify-between">
                 <span className="text-xs text-[var(--color-text-secondary)]">회피율</span>
-                <span className="text-xs text-[var(--color-text-primary)]">{currentStats.evasion}%</span>
+                <span className="text-xs text-[var(--color-text-primary)]">{formatNumberString(currentStats.evasion)}%</span>
               </div>
             </div>
             {/* 스타포스 안내 */}

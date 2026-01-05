@@ -5,10 +5,11 @@ import { NicknameEditModal } from './NicknameEditModal'
 interface UserProfileProps {
   username?: string
   battlesRemaining: number
+  maxBattles: number
   onUpdateUsername?: (newUsername: string) => Promise<boolean>
 }
 
-export function UserProfile({ username, battlesRemaining, onUpdateUsername }: UserProfileProps) {
+export function UserProfile({ username, battlesRemaining, maxBattles, onUpdateUsername }: UserProfileProps) {
   const { user, signOut } = useAuth()
   const [showMenu, setShowMenu] = useState(false)
   const [showNicknameModal, setShowNicknameModal] = useState(false)
@@ -100,13 +101,13 @@ export function UserProfile({ username, battlesRemaining, onUpdateUsername }: Us
                 <div className="flex items-center justify-between">
                   <span className="text-gray-400 text-sm">오늘 대결 횟수</span>
                   <span className={`font-bold ${battlesRemaining > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {battlesRemaining}/10
+                    {battlesRemaining}/{maxBattles}
                   </span>
                 </div>
                 <div className="mt-2 h-2 bg-gray-700 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-green-500 to-blue-500 transition-all"
-                    style={{ width: `${(battlesRemaining / 10) * 100}%` }}
+                    style={{ width: `${(battlesRemaining / maxBattles) * 100}%` }}
                   />
                 </div>
               </div>

@@ -69,9 +69,10 @@ export function getMaintainRate(level: number): number {
  * - 후반(16+): 가파른 증가로 도전감 제공
  *
  * 공식: baseCost * (1 + level * 0.15 + level² * 0.012)
+ * v2: 스타포스 보너스 상향에 따른 비용 50% 증가
  */
 export function getEnhanceCost(level: number): number {
-  const baseCost = 100
+  const baseCost = 150  // 100 → 150 (50% 증가)
   const levelFactor = 1 + level * 0.15 + Math.pow(level, 2) * 0.012
   return Math.floor(baseCost * levelFactor)
 }

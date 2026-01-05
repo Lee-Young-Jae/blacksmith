@@ -5,7 +5,9 @@ import {
   STAT_COLORS,
   DEFAULT_CHARACTER_STATS,
   formatStat,
+  formatNumberString,
   calculateCombatPower,
+  PERCENTAGE_STATS,
 } from '../../types/stats'
 
 interface StatsPanelProps {
@@ -80,7 +82,7 @@ export default function StatsPanel({
             const total = totalStats[stat]
             const base = DEFAULT_CHARACTER_STATS[stat]
             const bonus = equipmentStats[stat]
-            const isPercentage = ['critRate', 'critDamage', 'penetration', 'attackSpeed', 'evasion'].includes(stat)
+            const isPercentage = PERCENTAGE_STATS.includes(stat)
 
             return (
               <div key={stat} className="info-box p-3">
@@ -102,7 +104,7 @@ export default function StatsPanel({
                     <span>기본 {formatStat(stat, base)}</span>
                     <span>+</span>
                     <span className="text-[var(--color-success)]">
-                      장비 +{bonus}{isPercentage ? '%' : ''}
+                      장비 +{isPercentage ? formatNumberString(bonus) : Math.round(bonus)}{isPercentage ? '%' : ''}
                     </span>
                   </div>
                 )}

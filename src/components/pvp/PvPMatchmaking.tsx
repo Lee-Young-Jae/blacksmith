@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from "react";
 import type { CharacterStats } from "../../types/stats";
+import { formatNumberString } from "../../types/stats";
 import type { OwnedCard, CardSlots } from "../../types/cardDeck";
 import type { EquippedItems } from "../../types/equipment";
 import type { BattleCard } from "../../types/battleCard";
@@ -552,6 +553,7 @@ export function PvPMatchmaking({
             ].map((stat) => {
               const playerWins = stat.player > stat.opp;
               const oppWins = stat.opp > stat.player;
+              const formatValue = (v: number) => stat.suffix ? formatNumberString(v) : Math.round(v);
               return (
                 <div key={stat.label} className="flex items-center text-xs">
                   <span
@@ -559,7 +561,7 @@ export function PvPMatchmaking({
                       playerWins ? `text-${stat.color}-400` : "text-gray-400"
                     }`}
                   >
-                    {stat.player}
+                    {formatValue(stat.player)}
                     {stat.suffix || ""}
                   </span>
                   <div className="flex-1 mx-2 h-1.5 bg-gray-700 rounded-full overflow-hidden flex">
@@ -585,7 +587,7 @@ export function PvPMatchmaking({
                       oppWins ? `text-${stat.color}-400` : "text-gray-400"
                     }`}
                   >
-                    {stat.opp}
+                    {formatValue(stat.opp)}
                     {stat.suffix || ""}
                   </span>
                 </div>
@@ -672,31 +674,31 @@ export function PvPMatchmaking({
           </div>
           <div className="bg-gray-800/50 rounded p-2 text-center">
             <p className="text-cyan-400 font-bold">
-              {playerStats.attackSpeed}%
+              {formatNumberString(playerStats.attackSpeed)}%
             </p>
             <p className="text-gray-500">공속</p>
           </div>
         </div>
         <div className="grid grid-cols-4 gap-2 text-xs mt-2">
           <div className="bg-gray-800/50 rounded p-2 text-center">
-            <p className="text-yellow-400 font-bold">{playerStats.critRate}%</p>
+            <p className="text-yellow-400 font-bold">{formatNumberString(playerStats.critRate)}%</p>
             <p className="text-gray-500">치명타</p>
           </div>
           <div className="bg-gray-800/50 rounded p-2 text-center">
             <p className="text-orange-400 font-bold">
-              {playerStats.critDamage}%
+              {formatNumberString(playerStats.critDamage)}%
             </p>
             <p className="text-gray-500">치명뎀</p>
           </div>
           <div className="bg-gray-800/50 rounded p-2 text-center">
             <p className="text-purple-400 font-bold">
-              {playerStats.penetration}%
+              {formatNumberString(playerStats.penetration)}%
             </p>
             <p className="text-gray-500">관통력</p>
           </div>
           <div className="bg-gray-800/50 rounded p-2 text-center">
             <p className="text-emerald-400 font-bold">
-              {playerStats.evasion}%
+              {formatNumberString(playerStats.evasion)}%
             </p>
             <p className="text-gray-500">회피율</p>
           </div>
