@@ -51,6 +51,7 @@ export type BattleCardEffectType =
   | 'anti_heal'          // 치유 감소 (상대 회복량 감소)
   | 'berserker'          // 광전사 (체력 낮을수록 공격속도 증가)
   | 'execute'            // 처형 (저체력 상대에게 추가 데미지)
+  | 'shield_bash'        // 방패 강타 (방어력 기반 즉시 데미지)
 
 // 카드 효과 데이터
 export interface BattleCardEffect {
@@ -142,6 +143,9 @@ export const EFFECT_TYPE_INFO: Record<BattleCardEffectType, {
 
   // 처형: 저체력 상대에게 추가 데미지 (마무리 특화)
   execute: { name: '처형', emoji: '💀', minTier: 'epic', isPvPOnly: true, activationType: 'passive', cooldown: 0, duration: 0 },
+
+  // 방패 강타: 방어력 기반 즉시 데미지 (CD 8초, 약 3-4회 사용)
+  shield_bash: { name: '방패 강타', emoji: '🛡️', minTier: 'common', isPvPOnly: true, activationType: 'active', cooldown: 8, duration: 0 },
 }
 
 // =============================================
@@ -178,6 +182,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     anti_heal: 0,
     berserker: 0,
     execute: 0,
+    // 방패 강타: 방어력의 30% 즉시 데미지
+    shield_bash: 30,
   },
   rare: {
     // 패시브: 10% = +105 가치
@@ -209,6 +215,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     // 광전사: 체력 50%→0% 시 공격속도 0%→+20% (선형)
     berserker: 20,
     execute: 0,  // rare에서는 나오지 않음
+    // 방패 강타: 방어력의 40% 즉시 데미지
+    shield_bash: 40,
   },
   epic: {
     // 패시브: 15% = +157.5 가치
@@ -244,6 +252,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     berserker: 30,
     // 처형: 상대 체력 30% 이하일 때 데미지 +30%
     execute: 30,
+    // 방패 강타: 방어력의 50% 즉시 데미지
+    shield_bash: 50,
   },
   legendary: {
     // 패시브: 25% = +262.5 가치
@@ -281,6 +291,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     berserker: 50,
     // 처형: 상대 체력 30% 이하일 때 데미지 +50%
     execute: 50,
+    // 방패 강타: 방어력의 60% 즉시 데미지
+    shield_bash: 60,
   },
 }
 
@@ -294,18 +306,18 @@ export const TIER_AVAILABLE_EFFECTS: Record<BattleCardTier, BattleCardEffectType
 
 // 등급별로 나올 수 있는 효과 타입 (PvP용 - 플레이어, 골드 보너스 포함)
 export const TIER_AVAILABLE_EFFECTS_PVP: Record<BattleCardTier, BattleCardEffectType[]> = {
-  common: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'first_strike', 'gold_bonus'],
-  rare: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'lifesteal', 'anti_heal', 'berserker'],
-  epic: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'silence', 'anti_heal', 'berserker', 'execute'],
-  legendary: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'double_attack', 'stun', 'silence', 'anti_heal', 'berserker', 'execute'],
+  common: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'first_strike', 'gold_bonus', 'shield_bash'],
+  rare: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'lifesteal', 'anti_heal', 'berserker', 'shield_bash'],
+  epic: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash'],
+  legendary: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'double_attack', 'stun', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash'],
 }
 
 // 등급별로 나올 수 있는 효과 타입 (AI 상대용 - 골드 보너스 제외)
 export const TIER_AVAILABLE_EFFECTS_AI: Record<BattleCardTier, BattleCardEffectType[]> = {
-  common: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'first_strike'],
-  rare: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'damage_reflect', 'first_strike', 'hp_recovery', 'speed_boost', 'lifesteal', 'anti_heal', 'berserker'],
-  epic: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'silence', 'anti_heal', 'berserker', 'execute'],
-  legendary: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'double_attack', 'stun', 'silence', 'anti_heal', 'berserker', 'execute'],
+  common: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'first_strike', 'shield_bash'],
+  rare: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'damage_reflect', 'first_strike', 'hp_recovery', 'speed_boost', 'lifesteal', 'anti_heal', 'berserker', 'shield_bash'],
+  epic: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash'],
+  legendary: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'double_attack', 'stun', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash'],
 }
 
 // 카드 이름 생성
@@ -425,6 +437,12 @@ export const CARD_NAMES: Record<BattleCardEffectType, Record<BattleCardTier, str
     epic: '처형자의 낫',
     legendary: '사신의 선고',
   },
+  shield_bash: {
+    common: '방패 밀기',
+    rare: '방패 강타',
+    epic: '철벽 돌진',
+    legendary: '불굴의 수호자',
+  },
 }
 
 // 랜덤 등급 롤
@@ -448,8 +466,8 @@ export function generateRandomCard(): BattleCard {
   const value = TIER_EFFECT_VALUES[tier][effectType]
   const info = EFFECT_TYPE_INFO[effectType]
 
-  // 효과가 % 기반인지 결정 (first_strike, guaranteed_crit, double_attack, stun, immunity, silence는 고정값)
-  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute'].includes(effectType)
+  // 효과가 % 기반인지 결정 (first_strike, guaranteed_crit, double_attack, stun, immunity, silence, shield_bash는 고정값)
+  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
 
   const effect: BattleCardEffect = {
     type: effectType,
@@ -517,6 +535,8 @@ export function formatCardDescription(effect: BattleCardEffect): string {
       return `HP 50% 이하 시 체력 비례 공속 최대 +${effect.value}%`
     case 'execute':
       return `상대 HP 30% 이하 시 데미지 +${effect.value}%`
+    case 'shield_bash':
+      return `방어력의 ${effect.value}% 즉시 데미지`
     default:
       return info.name
   }
@@ -556,7 +576,7 @@ export function generateRandomPvPCard(): BattleCard {
   const value = TIER_EFFECT_VALUES[tier][effectType]
   const info = EFFECT_TYPE_INFO[effectType]
 
-  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute'].includes(effectType)
+  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
 
   const effect: BattleCardEffect = {
     type: effectType,
@@ -584,7 +604,7 @@ export function generatePvPCardByTier(tier: BattleCardTier): BattleCard {
   const value = TIER_EFFECT_VALUES[tier][effectType]
   const info = EFFECT_TYPE_INFO[effectType]
 
-  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute'].includes(effectType)
+  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
 
   const effect: BattleCardEffect = {
     type: effectType,
@@ -613,7 +633,7 @@ export function generateAICard(): BattleCard {
   const value = TIER_EFFECT_VALUES[tier][effectType]
   const info = EFFECT_TYPE_INFO[effectType]
 
-  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute'].includes(effectType)
+  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
 
   const effect: BattleCardEffect = {
     type: effectType,
@@ -641,7 +661,7 @@ export function generateAICardByTier(tier: BattleCardTier): BattleCard {
   const value = TIER_EFFECT_VALUES[tier][effectType]
   const info = EFFECT_TYPE_INFO[effectType]
 
-  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute'].includes(effectType)
+  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
 
   const effect: BattleCardEffect = {
     type: effectType,
@@ -671,7 +691,7 @@ export function generateCardByEffect(effectType: BattleCardEffectType, tier: Bat
   if (value === 0) {
     const minTier = info.minTier
     const minValue = TIER_EFFECT_VALUES[minTier][effectType]
-    const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute'].includes(effectType)
+    const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
 
     return {
       id: `card-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -686,7 +706,7 @@ export function generateCardByEffect(effectType: BattleCardEffectType, tier: Bat
     }
   }
 
-  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute'].includes(effectType)
+  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
 
   return {
     id: `card-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,

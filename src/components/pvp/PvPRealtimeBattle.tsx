@@ -425,6 +425,12 @@ export function PvPRealtimeBattle({
         const bonusDamage = effect.value
         setOpponentHp(hp => Math.max(0, hp - bonusDamage))
         addFloatingDamage('opponent', bonusDamage, true, false)
+      } else if (effect.type === 'shield_bash') {
+        // 방패 강타: 방어력 기반 즉시 데미지
+        const defense = safePlayerStats.defense * (1 + getPassiveBonus(playerSkillsRef.current, 'defense_boost') / 100)
+        const bonusDamage = Math.floor(defense * effect.value / 100)
+        setOpponentHp(hp => Math.max(0, hp - bonusDamage))
+        addFloatingDamage('opponent', bonusDamage, true, false)
       } else if (effect.type === 'stun') {
         // 스턴: 상대 공격 지연 + 스킬 사용 불가
         // effect.value는 스턴 확률(100%)이므로, 카드의 duration 또는 고정 2초 사용
@@ -540,6 +546,10 @@ export function PvPRealtimeBattle({
         else if (effectType === 'first_strike') {
           selectedSkill = { skill, index }
         }
+        // 방패 강타: 방어력이 높을 때 더 효과적, 항상 사용 가능
+        else if (effectType === 'shield_bash') {
+          selectedSkill = { skill, index }
+        }
       }
 
       // 선택된 스킬이 없으면 아무 스킬이나 사용 (50% 확률)
@@ -572,6 +582,12 @@ export function PvPRealtimeBattle({
         setOpponentHealFatigue(10)
       } else if (effect.type === 'first_strike') {
         const bonusDamage = effect.value
+        setPlayerHp(hp => Math.max(0, hp - bonusDamage))
+        addFloatingDamage('player', bonusDamage, true, false)
+      } else if (effect.type === 'shield_bash') {
+        // 방패 강타: 방어력 기반 즉시 데미지
+        const defense = safeOpponentStats.defense * (1 + getPassiveBonus(opponentSkillsRef.current, 'defense_boost') / 100)
+        const bonusDamage = Math.floor(defense * effect.value / 100)
         setPlayerHp(hp => Math.max(0, hp - bonusDamage))
         addFloatingDamage('player', bonusDamage, true, false)
       } else if (effect.type === 'stun') {
