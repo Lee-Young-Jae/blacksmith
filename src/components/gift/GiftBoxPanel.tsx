@@ -13,7 +13,9 @@ interface GiftBoxPanelProps {
   isLoading: boolean
   onClaimCondolence: (giftId: string) => Promise<boolean>
   onClaimEquipment: (giftId: string) => Promise<string | null>
+  onClaimGold: (giftId: string) => Promise<number | null>
   onEquipmentClaimed?: () => void
+  onGoldClaimed?: (amount: number) => void
   onSendEquipment?: () => void
   onClose: () => void
 }
@@ -24,7 +26,9 @@ export function GiftBoxPanel({
   isLoading,
   onClaimCondolence,
   onClaimEquipment,
+  onClaimGold,
   onEquipmentClaimed,
+  onGoldClaimed,
   onSendEquipment,
   onClose,
 }: GiftBoxPanelProps) {
@@ -45,11 +49,17 @@ export function GiftBoxPanel({
 
     if (selectedGift.giftType === 'condolence') {
       success = await onClaimCondolence(selectedGift.id)
-    } else {
+    } else if (selectedGift.giftType === 'equipment') {
       const equipmentId = await onClaimEquipment(selectedGift.id)
       success = !!equipmentId
       if (success && onEquipmentClaimed) {
         onEquipmentClaimed()
+      }
+    } else if (selectedGift.giftType === 'gold') {
+      const goldAmount = await onClaimGold(selectedGift.id)
+      success = goldAmount !== null
+      if (success && goldAmount && onGoldClaimed) {
+        onGoldClaimed(goldAmount)
       }
     }
 
@@ -103,7 +113,7 @@ export function GiftBoxPanel({
 
         {/* 필터 탭 */}
         <div className="p-2 border-b border-[var(--color-border)] shrink-0">
-          <div className="flex gap-2">
+          <div className="flex gap-2 overflow-x-auto">
             <FilterTab
               label="전체"
               count={unclaimedCount.total}
@@ -121,6 +131,12 @@ export function GiftBoxPanel({
               count={unclaimedCount.equipment}
               isActive={filter === 'equipment'}
               onClick={() => setFilter('equipment')}
+            />
+            <FilterTab
+              label="골드"
+              count={unclaimedCount.gold}
+              isActive={filter === 'gold'}
+              onClick={() => setFilter('gold')}
             />
           </div>
         </div>
@@ -200,11 +216,49 @@ function FilterTab({
 // 선물 카드 컴포넌트
 function GiftCard({ gift, onClick }: { gift: Gift; onClick: () => void }) {
   const isCondolence = gift.giftType === 'condolence'
+  const isGold = gift.giftType === 'gold'
+  const isEquipment = gift.giftType === 'equipment'
 
   // 장비 이름 가져오기
-  const equipmentName = !isCondolence && gift.equipmentBase && gift.equipmentData
+  const equipmentName = isEquipment && gift.equipmentBase && gift.equipmentData
     ? getEquipmentName(gift.equipmentBase, gift.equipmentData.star_level)
     : null
+
+  // 아이콘 결정
+  const getIcon = () => {
+    if (isCondolence) {
+      if (gift.condolenceImage) {
+        return (
+          <img
+            src={gift.condolenceImage.src}
+            alt=""
+            className="w-10 h-10 object-contain"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.style.display = 'none'
+              target.parentElement!.innerHTML = '<span class="text-3xl">🙏</span>'
+            }}
+          />
+        )
+      }
+      return <span className="text-3xl">🙏</span>
+    }
+    if (isGold) {
+      return <span className="text-3xl">🪙</span>
+    }
+    return <span className="text-3xl">{gift.equipmentBase?.emoji || '🎁'}</span>
+  }
+
+  // 이름 결정
+  const getName = () => {
+    if (isCondolence) {
+      return gift.condolenceImage?.name || '묵념'
+    }
+    if (isGold) {
+      return `${gift.goldAmount?.toLocaleString() || 0} 골드`
+    }
+    return equipmentName || '장비'
+  }
 
   return (
     <button
@@ -212,25 +266,10 @@ function GiftCard({ gift, onClick }: { gift: Gift; onClick: () => void }) {
       className="w-full p-4 rounded-xl bg-[var(--color-bg-elevated-2)] border border-[var(--color-border)] hover:bg-[var(--color-bg-elevated-3)] hover:border-[var(--color-primary)]/50 transition-all text-left flex items-center gap-4"
     >
       {/* 아이콘 */}
-      <div className="w-14 h-14 rounded-xl bg-[var(--color-bg-elevated-3)] flex items-center justify-center shrink-0">
-        {isCondolence ? (
-          gift.condolenceImage ? (
-            <img
-              src={gift.condolenceImage.src}
-              alt=""
-              className="w-10 h-10 object-contain"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement
-                target.style.display = 'none'
-                target.parentElement!.innerHTML = '<span class="text-3xl">🙏</span>'
-              }}
-            />
-          ) : (
-            <span className="text-3xl">🙏</span>
-          )
-        ) : (
-          <span className="text-3xl">{gift.equipmentBase?.emoji || '🎁'}</span>
-        )}
+      <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${
+        isGold ? 'bg-amber-500/20' : 'bg-[var(--color-bg-elevated-3)]'
+      }`}>
+        {getIcon()}
       </div>
 
       {/* 정보 */}
@@ -240,11 +279,9 @@ function GiftCard({ gift, onClick }: { gift: Gift; onClick: () => void }) {
             {GIFT_TYPE_ICONS[gift.giftType]} {GIFT_TYPE_NAMES[gift.giftType]}
           </span>
         </div>
-        <p className="font-bold text-[var(--color-text-primary)] truncate">
-          {isCondolence
-            ? gift.condolenceImage?.name || '묵념'
-            : equipmentName || '장비'}
-          {!isCondolence && gift.equipmentData && gift.equipmentData.star_level > 0 && (
+        <p className={`font-bold truncate ${isGold ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-primary)]'}`}>
+          {getName()}
+          {isEquipment && gift.equipmentData && gift.equipmentData.star_level > 0 && (
             <span className="text-yellow-400 ml-1">+{gift.equipmentData.star_level}</span>
           )}
         </p>

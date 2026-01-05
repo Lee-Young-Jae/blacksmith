@@ -32,7 +32,7 @@ import { useBattle } from './hooks/useBattle'
 import { useBattleCards } from './hooks/useBattleCards'
 import { useEquipment } from './hooks/useEquipment'
 import { useGift } from './hooks/useGift'
-import { GiftIcon, GiftBoxPanel, SendCondolenceModal, SendEquipmentModal } from './components/gift'
+import { GiftIcon, GiftBoxPanel, SendCondolenceModal, SendEquipmentModal, AdminGoldPanel } from './components/gift'
 import { getTotalAttack } from './utils/starforce'
 import type { AIDifficulty } from './types/battle'
 import type { UserWeapon, WeaponType, WeaponLevel } from './types/weapon'
@@ -125,6 +125,7 @@ function GameContent() {
   // 선물함 관련 상태
   const [showGiftBox, setShowGiftBox] = useState(false)
   const [showSendEquipment, setShowSendEquipment] = useState(false)
+  const [showAdminGold, setShowAdminGold] = useState(false)
   const [condolenceTarget, setCondolenceTarget] = useState<{
     userId: string
     username: string
@@ -202,6 +203,18 @@ function GameContent() {
       setView('acquire')
     }
   }, [userData.weapon, userData.isLoading])
+
+  // 관리자 단축키 (Ctrl+Shift+G: 골드 지급 패널)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'G') {
+        e.preventDefault()
+        setShowAdminGold(prev => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   // 스타포스 훅 (로컬 무기 기반)
   const starForce = useStarForce(localWeapon, {
@@ -890,7 +903,9 @@ function GameContent() {
           isLoading={giftSystem.isLoading}
           onClaimCondolence={giftSystem.claimCondolence}
           onClaimEquipment={giftSystem.claimEquipment}
+          onClaimGold={giftSystem.claimGold}
           onEquipmentClaimed={() => equipmentSystem.loadEquipment()}
+          onGoldClaimed={(amount) => userData.updateGold(gold + amount)}
           onSendEquipment={() => {
             setShowGiftBox(false)
             setShowSendEquipment(true)
@@ -923,6 +938,15 @@ function GameContent() {
             return success
           }}
           onClose={() => setShowSendEquipment(false)}
+        />
+      )}
+
+      {/* 관리자 골드 지급 패널 */}
+      {showAdminGold && (
+        <AdminGoldPanel
+          onSearch={giftSystem.searchUsers}
+          onSendGold={giftSystem.sendGold}
+          onClose={() => setShowAdminGold(false)}
         />
       )}
     </div>

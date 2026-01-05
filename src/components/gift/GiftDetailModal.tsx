@@ -23,6 +23,7 @@ export function GiftDetailModal({ gift, onClaim, onClose }: GiftDetailModalProps
 
   const isCondolence = gift.giftType === 'condolence'
   const isEquipment = gift.giftType === 'equipment'
+  const isGold = gift.giftType === 'gold'
 
   // 장비 이름 가져오기
   const equipmentName = isEquipment && gift.equipmentBase && gift.equipmentData
@@ -114,6 +115,18 @@ export function GiftDetailModal({ gift, onClaim, onClose }: GiftDetailModalProps
             </div>
           )}
 
+          {/* 골드 */}
+          {isGold && (
+            <div className="text-center space-y-3">
+              <div className="w-32 h-32 mx-auto bg-amber-500/20 rounded-2xl flex items-center justify-center">
+                <span className="text-7xl">🪙</span>
+              </div>
+              <p className="text-2xl font-bold text-[var(--color-accent)]">
+                {gift.goldAmount?.toLocaleString() || 0} 골드
+              </p>
+            </div>
+          )}
+
           {/* 메시지 */}
           {gift.message && (
             <div className="bg-[var(--color-bg-elevated-2)] rounded-lg p-3">
@@ -148,7 +161,7 @@ export function GiftDetailModal({ gift, onClaim, onClose }: GiftDetailModalProps
                   수령 중...
                 </>
               ) : (
-                isEquipment ? '수령하기' : '확인'
+                isEquipment || isGold ? '수령하기' : '확인'
               )}
             </button>
           )}

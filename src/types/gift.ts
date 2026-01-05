@@ -1,7 +1,7 @@
 import type { EquipmentBase } from './equipment'
 
 // 선물 유형
-export type GiftType = 'condolence' | 'equipment'
+export type GiftType = 'condolence' | 'equipment' | 'gold'
 
 // 묵념 이미지 정의
 export interface CondolenceImage {
@@ -51,6 +51,7 @@ export interface GiftRow {
   gift_type: GiftType
   condolence_image_id: string | null
   equipment_data: GiftEquipmentData | null
+  gold_amount: number | null
   message: string | null
   enhancement_history_id: string | null
   is_claimed: boolean
@@ -79,6 +80,9 @@ export interface Gift {
   equipmentData?: GiftEquipmentData
   equipmentBase?: EquipmentBase
 
+  // 골드인 경우
+  goldAmount?: number
+
   message?: string
   enhancementHistoryId?: string
 
@@ -93,6 +97,7 @@ export interface GiftCount {
   total: number
   condolence: number
   equipment: number
+  gold: number
 }
 
 // 선물 보내기 요청 타입
@@ -134,10 +139,12 @@ export function getTimeUntilExpiry(expiresAt: Date): string {
 export const GIFT_TYPE_NAMES: Record<GiftType, string> = {
   condolence: '묵념',
   equipment: '장비',
+  gold: '골드',
 }
 
 // 선물 유형 아이콘
 export const GIFT_TYPE_ICONS: Record<GiftType, string> = {
   condolence: '🙏',
   equipment: '🎁',
+  gold: '🪙',
 }
