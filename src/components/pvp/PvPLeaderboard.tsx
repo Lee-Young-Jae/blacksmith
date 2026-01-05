@@ -35,6 +35,15 @@ interface PvPLeaderboardProps {
 function TierBadge({ tier }: { tier: LeagueTier }) {
   const info = TIER_INFO[tier]
 
+  // 유효하지 않은 티어인 경우 기본값 사용
+  if (!info) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-gray-700 text-gray-400">
+        🎮 {tier || '없음'}
+      </span>
+    )
+  }
+
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${info.bgColor} ${info.color}`}>
       {info.emoji} {info.name}
@@ -158,7 +167,7 @@ export function PvPLeaderboard({
       )}
 
       {/* 주간 보상 */}
-      {myRanking && (
+      {myRanking && TIER_INFO[myRanking.tier] && (
         <div className={`rounded-lg p-4 ${
           canClaimWeekly
             ? 'bg-yellow-900/30 border border-yellow-500/50'

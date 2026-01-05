@@ -40,11 +40,43 @@ interface PotentialRow {
   is_unlocked: boolean
 }
 
+// 파괴된 장비 정보 (복구용)
+export interface DestroyedEquipment {
+  id: string  // DB id
+  equipment: UserEquipment
+  destroyedAt: Date
+  originalStarLevel: number
+}
+
+// DB Row 타입 (파괴된 장비)
+interface DestroyedEquipmentRow {
+  id: string
+  user_id: string
+  equipment_base_id: string
+  original_star_level: number
+  potentials_snapshot: PotentialLine[]
+  destroyed_at: string
+}
+
 interface EquipmentState {
   inventory: UserEquipment[]
   equipped: EquippedItems
+  destroyedEquipments: DestroyedEquipment[]  // 복구 가능한 파괴된 장비
   isLoading: boolean
   error: string | null
+}
+
+// 복구 기본 비용 (재료 장비 + 골드)
+const RECOVERY_BASE_COST = 500
+
+// 필요한 재료 개수 계산 (스타레벨 기반)
+// ★0-5: 1개, ★6-10: 2개, ★11-15: 3개, ★16-20: 4개, ★21+: 5개
+export function getRequiredMaterialCount(starLevel: number): number {
+  if (starLevel <= 5) return 1
+  if (starLevel <= 10) return 2
+  if (starLevel <= 15) return 3
+  if (starLevel <= 20) return 4
+  return 5
 }
 
 export function useEquipment() {
@@ -52,6 +84,7 @@ export function useEquipment() {
   const [state, setState] = useState<EquipmentState>({
     inventory: [],
     equipped: {},
+    destroyedEquipments: [],
     isLoading: true,
     error: null,
   })
@@ -59,11 +92,12 @@ export function useEquipment() {
   // 장비 데이터 로드
   useEffect(() => {
     if (!user) {
-      setState({ inventory: [], equipped: {}, isLoading: false, error: null })
+      setState({ inventory: [], equipped: {}, destroyedEquipments: [], isLoading: false, error: null })
       return
     }
 
     loadEquipment()
+    loadDestroyedEquipments()
   }, [user])
 
   // 장비 로드 함수
@@ -141,12 +175,13 @@ export function useEquipment() {
         }
       }
 
-      setState({
+      setState(prev => ({
         inventory,
         equipped,
+        destroyedEquipments: prev.destroyedEquipments,  // 복구 목록 유지
         isLoading: false,
         error: null,
-      })
+      }))
     } catch (err) {
       console.error('Failed to load equipment:', err)
       setState(prev => ({
@@ -154,6 +189,57 @@ export function useEquipment() {
         isLoading: false,
         error: err instanceof Error ? err.message : '장비 로드 실패',
       }))
+    }
+  }, [user])
+
+  // 파괴된 장비 로드 함수 (Supabase)
+  const loadDestroyedEquipments = useCallback(async () => {
+    if (!user) return
+
+    try {
+      const { data, error } = await supabase
+        .from('destroyed_equipment')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('destroyed_at', { ascending: false })
+
+      if (error) throw error
+
+      const typedData = (data || []) as DestroyedEquipmentRow[]
+
+      const destroyedEquipments: DestroyedEquipment[] = typedData
+        .map(row => {
+          const equipmentBase = getEquipmentById(row.equipment_base_id)
+          if (!equipmentBase) return null
+
+          // 가상 UserEquipment 객체 생성 (복구 UI용)
+          const equipment: UserEquipment = {
+            id: row.id, // destroyed_equipment의 id 사용
+            equipmentBaseId: row.equipment_base_id,
+            equipmentBase,
+            starLevel: row.original_star_level,
+            consecutiveFails: 0,
+            potentials: row.potentials_snapshot || [],
+            isEquipped: false,
+            createdAt: new Date(row.destroyed_at),
+            updatedAt: new Date(row.destroyed_at),
+          }
+
+          return {
+            id: row.id,
+            equipment,
+            destroyedAt: new Date(row.destroyed_at),
+            originalStarLevel: row.original_star_level,
+          }
+        })
+        .filter((item): item is DestroyedEquipment => item !== null)
+
+      setState(prev => ({
+        ...prev,
+        destroyedEquipments,
+      }))
+    } catch (err) {
+      console.error('Failed to load destroyed equipments:', err)
     }
   }, [user])
 
@@ -364,6 +450,235 @@ export function useEquipment() {
     }
   }, [user, state.inventory])
 
+  // 장비 파괴 (강화 실패 시) - Supabase에 복구용 데이터 저장
+  const destroyEquipment = useCallback(async (equipmentId: string): Promise<boolean> => {
+    if (!user) return false
+
+    const equipment = state.inventory.find(e => e.id === equipmentId)
+    if (!equipment) return false
+
+    // 잠재옵션이 해제된 슬롯이 있는지 확인
+    const hasUnlockedPotentials = equipment.potentials.some(p => p.isUnlocked)
+
+    try {
+      // 장착 중이면 먼저 해제
+      if (equipment.isEquipped) {
+        const { error: unequipError } = await supabase
+          .from('user_equipment')
+          .update({ is_equipped: false, equipped_slot: null })
+          .eq('id', equipmentId)
+
+        if (unequipError) throw unequipError
+      }
+
+      // 잠재옵션이 해제된 장비만 destroyed_equipment에 저장
+      if (hasUnlockedPotentials) {
+        const { data: destroyedData, error: destroyedError } = await supabase
+          .from('destroyed_equipment')
+          .insert({
+            user_id: user.id,
+            equipment_base_id: equipment.equipmentBaseId,
+            original_star_level: equipment.starLevel,
+            potentials_snapshot: equipment.potentials,
+          })
+          .select()
+          .single()
+
+        if (destroyedError) throw destroyedError
+
+        // 로컬 상태에 추가
+        const newDestroyedItem: DestroyedEquipment = {
+          id: destroyedData.id,
+          equipment: { ...equipment, isEquipped: false },
+          destroyedAt: new Date(),
+          originalStarLevel: equipment.starLevel,
+        }
+
+        setState(prev => ({
+          ...prev,
+          destroyedEquipments: [newDestroyedItem, ...prev.destroyedEquipments].slice(0, 5),
+        }))
+      }
+
+      // DB에서 장비 삭제
+      const { error: deleteError } = await supabase
+        .from('user_equipment')
+        .delete()
+        .eq('id', equipmentId)
+
+      if (deleteError) throw deleteError
+
+      setState(prev => {
+        // 인벤토리에서 제거
+        const newInventory = prev.inventory.filter(e => e.id !== equipmentId)
+
+        // 장착 목록에서도 제거
+        const slot = equipment.equipmentBase.slot
+        const newEquipped = { ...prev.equipped }
+        if (prev.equipped[slot]?.id === equipmentId) {
+          delete newEquipped[slot]
+        }
+
+        return {
+          ...prev,
+          inventory: newInventory,
+          equipped: newEquipped,
+        }
+      })
+
+      return true
+    } catch (err) {
+      console.error('Failed to destroy equipment:', err)
+      return false
+    }
+  }, [user, state.inventory])
+
+  // 복구 비용 계산: 기본 1,000G + (해제된 슬롯 × 500G) + (원래 스타레벨 × 300G)
+  // 재료로 동일 슬롯의 장비가 추가로 필요함
+  const getRecoveryCost = useCallback((destroyed: DestroyedEquipment): number => {
+    const unlockedSlots = destroyed.equipment.potentials.filter(p => p.isUnlocked).length
+    const slotCost = unlockedSlots * 500
+    const levelCost = destroyed.originalStarLevel * 300
+    return RECOVERY_BASE_COST + slotCost + levelCost
+  }, [])
+
+  // 복구 가능한 재료 장비 조회 (동일 슬롯의 미장착 장비)
+  const getRecoveryMaterials = useCallback((destroyed: DestroyedEquipment): UserEquipment[] => {
+    const targetSlot = destroyed.equipment.equipmentBase.slot
+    return state.inventory.filter(e =>
+      e.equipmentBase.slot === targetSlot &&
+      !e.isEquipped &&
+      e.id !== destroyed.equipment.id  // 자기 자신은 제외 (혹시 남아있을 경우)
+    )
+  }, [state.inventory])
+
+  // 장비 복구 (다중 재료 장비 + 골드 소모, ★1로 복구)
+  const recoverEquipment = useCallback(async (
+    destroyedId: string,
+    materialEquipmentIds: string[]
+  ): Promise<UserEquipment | null> => {
+    if (!user) return null
+
+    const destroyed = state.destroyedEquipments.find(d => d.id === destroyedId)
+    if (!destroyed) return null
+
+    // 필요한 재료 개수 확인
+    const requiredCount = getRequiredMaterialCount(destroyed.originalStarLevel)
+    if (materialEquipmentIds.length < requiredCount) return null
+
+    // 재료 장비들 확인
+    const targetSlot = destroyed.equipment.equipmentBase.slot
+    const materials = materialEquipmentIds.map(id => state.inventory.find(e => e.id === id))
+
+    // 모든 재료가 유효한지 확인
+    for (const material of materials) {
+      if (!material) return null
+      if (material.equipmentBase.slot !== targetSlot) return null
+      if (material.isEquipped) return null
+    }
+
+    try {
+      // 1. 재료 장비들 삭제
+      const { error: deleteError } = await supabase
+        .from('user_equipment')
+        .delete()
+        .in('id', materialEquipmentIds)
+
+      if (deleteError) throw deleteError
+
+      // 2. DB에 장비 재생성 (★1로 복구)
+      const { data: equipmentData, error: equipmentError } = await supabase
+        .from('user_equipment')
+        .insert({
+          user_id: user.id,
+          equipment_base_id: destroyed.equipment.equipmentBaseId,
+          star_level: 1,  // ★1로 복구
+          consecutive_fails: 0,
+          is_equipped: false,
+          equipped_slot: null,
+        })
+        .select()
+        .single()
+
+      if (equipmentError) throw equipmentError
+
+      const typedEquipment = equipmentData as UserEquipmentRow
+
+      // 잠재옵션 복구 (원래 상태 그대로)
+      const potentialInserts = destroyed.equipment.potentials.map((pot, index) => ({
+        equipment_id: typedEquipment.id,
+        line_index: index,
+        stat_type: pot.stat,
+        stat_value: pot.value,
+        is_percentage: pot.isPercentage,
+        tier: pot.tier,
+        is_locked: pot.isLocked,
+        is_unlocked: pot.isUnlocked,
+      }))
+
+      if (potentialInserts.length > 0) {
+        const { error: potentialsError } = await supabase
+          .from('equipment_potentials')
+          .insert(potentialInserts)
+
+        if (potentialsError) throw potentialsError
+      }
+
+      // 3. destroyed_equipment에서 삭제
+      const { error: removeDestroyedError } = await supabase
+        .from('destroyed_equipment')
+        .delete()
+        .eq('id', destroyedId)
+
+      if (removeDestroyedError) throw removeDestroyedError
+
+      const recoveredEquipment: UserEquipment = {
+        id: typedEquipment.id,
+        equipmentBaseId: destroyed.equipment.equipmentBaseId,
+        equipmentBase: destroyed.equipment.equipmentBase,
+        starLevel: 1,  // ★1로 복구
+        consecutiveFails: 0,
+        potentials: destroyed.equipment.potentials,
+        isEquipped: false,
+        createdAt: new Date(typedEquipment.created_at),
+        updatedAt: new Date(typedEquipment.updated_at),
+      }
+
+      setState(prev => ({
+        ...prev,
+        // 재료 장비들 제거 + 복구된 장비 추가
+        inventory: [recoveredEquipment, ...prev.inventory.filter(e => !materialEquipmentIds.includes(e.id))],
+        destroyedEquipments: prev.destroyedEquipments.filter(d => d.id !== destroyedId),
+      }))
+
+      return recoveredEquipment
+    } catch (err) {
+      console.error('Failed to recover equipment:', err)
+      return null
+    }
+  }, [user, state.destroyedEquipments, state.inventory])
+
+  // 복구 목록에서 제거 (Supabase에서도 삭제)
+  const removeFromDestroyedList = useCallback(async (destroyedId: string) => {
+    if (!user) return
+
+    try {
+      const { error } = await supabase
+        .from('destroyed_equipment')
+        .delete()
+        .eq('id', destroyedId)
+
+      if (error) throw error
+
+      setState(prev => ({
+        ...prev,
+        destroyedEquipments: prev.destroyedEquipments.filter(d => d.id !== destroyedId),
+      }))
+    } catch (err) {
+      console.error('Failed to remove from destroyed list:', err)
+    }
+  }, [user])
+
   // 장비 업데이트 (강화 후)
   const updateEquipment = useCallback(async (
     equipmentId: string,
@@ -526,6 +841,11 @@ export function useEquipment() {
     equipItem,
     unequipItem,
     sellEquipment,
+    destroyEquipment,
+    recoverEquipment,
+    getRecoveryCost,
+    getRecoveryMaterials,
+    removeFromDestroyedList,
     updateEquipment,
     updatePotentials,
     getEquippedStats,

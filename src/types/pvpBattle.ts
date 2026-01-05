@@ -164,6 +164,7 @@ export interface PvPOpponent {
   isAI?: boolean     // AI 상대 여부 (폴백용)
   aiCards?: BattleCard[]  // AI 상대의 카드 (실시간 배틀용)
   defenseCards?: BattleCard[]  // 실제 유저의 방어덱 카드
+  equipmentSnapshot?: EquippedItems  // 장비 스냅샷
 }
 
 // =============================================
@@ -188,6 +189,9 @@ export interface PvPBattleLog {
 
   isRevenge: boolean
   canRevenge: boolean  // 방어전이고 아직 복수 안했으면 true
+
+  // 상대방 스냅샷 (상세 정보 보기용)
+  opponentSnapshot?: BattleSnapshot
 
   createdAt: Date
 }

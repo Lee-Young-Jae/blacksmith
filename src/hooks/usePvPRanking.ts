@@ -23,12 +23,14 @@ import type {
 } from '../types/league'
 import {
   getTierInfo,
+  getTierFromRating,
   getPointsToNextTier,
   getTierProgress,
   getWinRate,
   canClaimWeeklyReward,
   getWeekStart,
   ELO_CONFIG,
+  LEAGUE_TIERS,
 } from '../types/league'
 
 // =============================================
@@ -193,17 +195,24 @@ export function usePvPRanking(): UsePvPRankingReturn {
         losses: number
         win_streak: number
         combat_power: number
-      }, index: number) => ({
-        rank: index + 1,
-        userId: row.user_id,
-        username: row.username || '플레이어',
-        rating: row.rating,
-        tier: row.tier as LeagueTier,
-        wins: row.wins,
-        losses: row.losses,
-        winStreak: row.win_streak,
-        combatPower: row.combat_power,
-      }))
+      }, index: number) => {
+        // 유효한 티어인지 확인하고, 아니면 레이팅에서 계산
+        const validTier = row.tier && LEAGUE_TIERS.includes(row.tier as LeagueTier)
+          ? row.tier as LeagueTier
+          : getTierFromRating(row.rating || 0)
+
+        return {
+          rank: index + 1,
+          userId: row.user_id,
+          username: row.username || '플레이어',
+          rating: row.rating,
+          tier: validTier,
+          wins: row.wins,
+          losses: row.losses,
+          winStreak: row.win_streak,
+          combatPower: row.combat_power,
+        }
+      })
 
       setLeaderboard(entries)
     } catch (err) {
@@ -240,12 +249,18 @@ export function usePvPRanking(): UsePvPRankingReturn {
       const entries: LeaderboardEntry[] = (data || []).map((row, index) => {
         const profileData = row.user_profiles as unknown as { username: string } | { username: string }[] | null
         const username = Array.isArray(profileData) ? profileData[0]?.username : profileData?.username
+
+        // 유효한 티어인지 확인하고, 아니면 레이팅에서 계산
+        const validTier = row.tier && LEAGUE_TIERS.includes(row.tier as LeagueTier)
+          ? row.tier as LeagueTier
+          : getTierFromRating(row.rating || 0)
+
         return {
           rank: index + 1,
           userId: row.user_id,
           username: username || '플레이어',
           rating: row.rating,
-          tier: row.tier as LeagueTier,
+          tier: validTier,
           wins: row.wins,
           losses: row.losses,
           winStreak: row.win_streak,

@@ -2,6 +2,13 @@ import { useState } from 'react'
 import type { UserEquipment } from '../../types/equipment'
 import { getEquipmentDisplayName, getEquipmentComment } from '../../types/equipment'
 import type { EnhanceResult } from '../../types/starforce'
+import type { CharacterStats } from '../../types/stats'
+
+interface StatChanges {
+  attack: number
+  defense: number
+  hp: number
+}
 
 interface EquipmentEnhancePanelProps {
   equipment: UserEquipment | null
@@ -19,6 +26,8 @@ interface EquipmentEnhancePanelProps {
   currentCombatPower: number
   nextCombatPower: number
   combatPowerGain: number
+  currentStats: CharacterStats | null
+  statChanges: StatChanges | null
 
   // Chance time
   consecutiveFails: number
@@ -46,6 +55,8 @@ export default function EquipmentEnhancePanel({
   currentCombatPower,
   nextCombatPower,
   combatPowerGain,
+  currentStats,
+  statChanges,
   consecutiveFails,
   chanceTimeActive,
   isMaxLevel,
@@ -155,20 +166,89 @@ export default function EquipmentEnhancePanel({
 
       {/* Stats */}
       <div className="card-body space-y-3 sm:space-y-4">
-        {/* 전투력 변화 - 더 컴팩트하게 */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-[var(--color-bg-elevated-2)]">
-          <div className="text-xs text-[var(--color-text-secondary)]">전투력</div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-[var(--color-text-primary)]">{currentCombatPower.toLocaleString()}</span>
-            <span className="text-[var(--color-text-muted)]">→</span>
-            <span className="text-sm text-[var(--color-accent)] font-bold">
-              {nextCombatPower.toLocaleString()}
-            </span>
-            <span className="text-[var(--color-success)] text-xs font-medium bg-[var(--color-success)]/10 px-1.5 py-0.5 rounded">
-              +{combatPowerGain.toLocaleString()}
-            </span>
+        {/* 전투력 변화 */}
+        <div className="p-3 rounded-lg bg-[var(--color-bg-elevated-2)]">
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-[var(--color-text-secondary)]">전투력</div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-[var(--color-text-primary)]">{currentCombatPower.toLocaleString()}</span>
+              <span className="text-[var(--color-text-muted)]">→</span>
+              <span className="text-sm text-[var(--color-accent)] font-bold">
+                {nextCombatPower.toLocaleString()}
+              </span>
+              <span className="text-[var(--color-success)] text-xs font-medium bg-[var(--color-success)]/10 px-1.5 py-0.5 rounded">
+                +{combatPowerGain.toLocaleString()}
+              </span>
+            </div>
           </div>
         </div>
+
+        {/* 장비 스탯 전체 */}
+        {currentStats && statChanges && (
+          <div className="p-3 rounded-lg bg-[var(--color-bg-elevated-2)]">
+            <div className="text-xs text-[var(--color-text-muted)] mb-2">장비 스탯</div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+              {/* 공격력 - 스타포스 증가 */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[var(--color-text-secondary)]">공격력</span>
+                <div className="text-xs">
+                  <span className="text-[var(--color-text-primary)]">{currentStats.attack}</span>
+                  {statChanges.attack > 0 && (
+                    <span className="text-[var(--color-success)] ml-1">+{statChanges.attack}</span>
+                  )}
+                </div>
+              </div>
+              {/* 방어력 - 스타포스 증가 */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[var(--color-text-secondary)]">방어력</span>
+                <div className="text-xs">
+                  <span className="text-[var(--color-text-primary)]">{currentStats.defense}</span>
+                  {statChanges.defense > 0 && (
+                    <span className="text-[var(--color-success)] ml-1">+{statChanges.defense}</span>
+                  )}
+                </div>
+              </div>
+              {/* HP - 스타포스 증가 */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[var(--color-text-secondary)]">HP</span>
+                <div className="text-xs">
+                  <span className="text-[var(--color-text-primary)]">{currentStats.hp}</span>
+                  {statChanges.hp > 0 && (
+                    <span className="text-[var(--color-success)] ml-1">+{statChanges.hp}</span>
+                  )}
+                </div>
+              </div>
+              {/* 치명타 확률 - 잠재옵션만 */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[var(--color-text-secondary)]">치명타</span>
+                <span className="text-xs text-[var(--color-text-primary)]">{currentStats.critRate}%</span>
+              </div>
+              {/* 치명타 데미지 - 잠재옵션만 */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[var(--color-text-secondary)]">치명타 피해</span>
+                <span className="text-xs text-[var(--color-text-primary)]">{currentStats.critDamage}%</span>
+              </div>
+              {/* 관통력 - 잠재옵션만 */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[var(--color-text-secondary)]">관통력</span>
+                <span className="text-xs text-[var(--color-text-primary)]">{currentStats.penetration}%</span>
+              </div>
+              {/* 공격속도 - 잠재옵션만 */}
+              <div className="flex items-center justify-between col-span-2">
+                <span className="text-xs text-[var(--color-text-secondary)]">공격속도</span>
+                <span className="text-xs text-[var(--color-text-primary)]">{currentStats.attackSpeed}%</span>
+              </div>
+            </div>
+            {/* 스타포스 안내 */}
+            {statChanges.attack === 0 && statChanges.defense === 0 && statChanges.hp === 0 && (
+              <div className="mt-2 pt-2 border-t border-[var(--color-border)] text-center">
+                <span className="text-[10px] text-[var(--color-text-muted)]">
+                  이 장비는 스타포스로 스탯이 증가하지 않습니다
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 확률 섹션 - 간소화 */}
         <div className="space-y-2">
@@ -291,12 +371,6 @@ export default function EquipmentEnhancePanel({
             </div>
           )}
 
-          {/* 파괴 경고 */}
-          {canDestroy && !chanceTimeActive && (
-            <div className="flex items-center justify-center py-2 px-3 rounded-lg bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/30">
-              <span className="text-[var(--color-danger)] text-sm font-medium">파괴 위험!</span>
-            </div>
-          )}
         </div>
 
         {/* 마지막 결과 */}

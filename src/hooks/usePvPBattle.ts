@@ -29,12 +29,20 @@ import type {
 } from '../types/pvpBattle'
 import type { OwnedCard, CardSlots } from '../types/cardDeck'
 import { ownedCardToBattleCard } from '../types/cardDeck'
-import { calculatePvPBattle, calculateTotalGoldBonus } from '../utils/pvpBattle'
+import { calculateTotalGoldBonus } from '../utils/pvpBattle'
 import { calculateRatingChange, getTierFromRating, calculateBattleRewards } from '../types/league'
 
 // =============================================
 // 타입 정의
 // =============================================
+
+// PvPRealtimeBattle에서 반환하는 결과 타입
+export interface RealtimeBattleResult {
+  winner: 'player' | 'opponent' | 'draw'
+  playerFinalHp: number
+  opponentFinalHp: number
+  battleDuration: number
+}
 
 interface UsePvPBattleReturn {
   // 상태
@@ -52,9 +60,13 @@ interface UsePvPBattleReturn {
   selectAttackDeck: (cards: CardSlots) => void
   startBattle: (
     attackerSnapshot: BattleSnapshot,
+    attackerCards: BattleCard[]
+  ) => void
+  recordBattleResult: (
+    result: RealtimeBattleResult,
     attackerCards: BattleCard[],
     defenderCards: BattleCard[]
-  ) => Promise<PvPBattle | null>
+  ) => Promise<void>
   cancelSearch: () => void
   resetBattle: () => void
 
@@ -269,6 +281,8 @@ export function usePvPBattle(): UsePvPBattleReturn {
   const [unreadDefenseBattles, setUnreadDefenseBattles] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  // 배틀 결과 기록용 스냅샷 저장
+  const [savedAttackerSnapshot, setSavedAttackerSnapshot] = useState<BattleSnapshot | null>(null)
 
   // =============================================
   // 상대 검색
@@ -309,9 +323,12 @@ export function usePvPBattle(): UsePvPBattleReturn {
       // 랜덤하게 한 명 선택
       const selected = opponents[Math.floor(Math.random() * opponents.length)]
 
-      // 상대의 방어덱 카드 가져오기 (RPC 함수 사용 - RLS 우회)
+      // 상대의 방어덱 카드 및 장비 스냅샷 가져오기
       let defenseCards: BattleCard[] = []
+      let equipmentSnapshot: Record<string, unknown> | undefined
+
       try {
+        // 카드 가져오기 (RPC 함수 사용 - RLS 우회)
         const { data: cardsData, error: cardsError } = await supabase
           .rpc('get_opponent_defense_cards', { p_user_id: selected.user_id })
 
@@ -329,8 +346,19 @@ export function usePvPBattle(): UsePvPBattleReturn {
             return ownedCardToBattleCard(ownedCard)
           })
         }
+
+        // 장비 스냅샷 가져오기
+        const { data: defenseData } = await supabase
+          .from('user_defense_deck')
+          .select('equipment_snapshot')
+          .eq('user_id', selected.user_id)
+          .maybeSingle()
+
+        if (defenseData?.equipment_snapshot) {
+          equipmentSnapshot = defenseData.equipment_snapshot as Record<string, unknown>
+        }
       } catch (err) {
-        console.error('Failed to fetch defense cards:', err)
+        console.error('Failed to fetch defense data:', err)
       }
 
       setOpponent({
@@ -343,6 +371,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
         cardCount: selected.card_count,
         isAI: false,
         defenseCards,
+        equipmentSnapshot: equipmentSnapshot as PvPOpponent['equipmentSnapshot'],
       })
 
       setStatus('preparing')
@@ -371,89 +400,100 @@ export function usePvPBattle(): UsePvPBattleReturn {
   }, [])
 
   // =============================================
-  // 배틀 시작
+  // 배틀 시작 (상태만 변경, 실제 결과는 PvPRealtimeBattle에서 계산)
   // =============================================
 
-  const startBattle = useCallback(async (
+  const startBattle = useCallback((
     attackerSnapshot: BattleSnapshot,
-    attackerCards: BattleCard[],
-    defenderCards: BattleCard[]
-  ): Promise<PvPBattle | null> => {
+    attackerCards: BattleCard[]
+  ): void => {
     if (!user || !opponent) {
       setError('배틀을 시작할 수 없습니다.')
-      return null
+      return
     }
 
     setStatus('fighting')
     setError(null)
-    setAttackDeck(attackerCards) // 상태도 업데이트
+    setAttackDeck(attackerCards)
+    setSavedAttackerSnapshot(attackerSnapshot)
+    // 실제 배틀은 PvPRealtimeBattle 컴포넌트에서 진행
+    // 결과는 recordBattleResult()로 기록
+  }, [user, opponent])
+
+  // =============================================
+  // 배틀 결과 기록 (PvPRealtimeBattle 종료 후 호출)
+  // =============================================
+
+  const recordBattleResult = useCallback(async (
+    result: RealtimeBattleResult,
+    attackerCards: BattleCard[],
+    defenderCards: BattleCard[]
+  ): Promise<void> => {
+    if (!user || !opponent || !savedAttackerSnapshot) {
+      console.error('Cannot record battle: missing data')
+      return
+    }
 
     try {
-      // 배틀 시뮬레이션
-      const battle = calculatePvPBattle({
-        attackerId: user.id,
-        defenderId: opponent.userId,
-        attackerName: attackerSnapshot.username,
-        defenderName: opponent.username,
-        attackerStats: attackerSnapshot.stats,
-        defenderStats: opponent.stats,
-        attackerCards, // 직접 전달받은 카드 사용
-        defenderCards,
-        isRevenge: false,
-      })
+      // 결과 변환
+      const battleResult = result.winner === 'player' ? 'attacker_win'
+        : result.winner === 'opponent' ? 'defender_win'
+        : 'draw'
 
       // 레이팅 변경 계산
-      const attackerRating = attackerSnapshot.rating
+      const attackerRating = savedAttackerSnapshot.rating
       const defenderRating = opponent.rating
 
-      let ratingChanges: { winnerChange: number; loserChange: number }
-      if (battle.result === 'draw') {
-        ratingChanges = calculateRatingChange(attackerRating, defenderRating, true)
-        battle.attackerRatingChange = ratingChanges.winnerChange
-        battle.defenderRatingChange = ratingChanges.loserChange
-      } else if (battle.result === 'attacker_win') {
-        ratingChanges = calculateRatingChange(attackerRating, defenderRating, false)
-        battle.attackerRatingChange = ratingChanges.winnerChange
-        battle.defenderRatingChange = ratingChanges.loserChange
+      let attackerRatingChange: number
+      let defenderRatingChange: number
+
+      if (battleResult === 'draw') {
+        const ratingChanges = calculateRatingChange(attackerRating, defenderRating, true)
+        attackerRatingChange = ratingChanges.winnerChange
+        defenderRatingChange = ratingChanges.loserChange
+      } else if (battleResult === 'attacker_win') {
+        const ratingChanges = calculateRatingChange(attackerRating, defenderRating, false)
+        attackerRatingChange = ratingChanges.winnerChange
+        defenderRatingChange = ratingChanges.loserChange
       } else {
-        ratingChanges = calculateRatingChange(defenderRating, attackerRating, false)
-        battle.attackerRatingChange = ratingChanges.loserChange
-        battle.defenderRatingChange = ratingChanges.winnerChange
+        const ratingChanges = calculateRatingChange(defenderRating, attackerRating, false)
+        attackerRatingChange = ratingChanges.loserChange
+        defenderRatingChange = ratingChanges.winnerChange
       }
 
       // 보상 계산
       const attackerTier = getTierFromRating(attackerRating)
-      const myResult = battle.result === 'attacker_win' ? 'win'
-        : battle.result === 'defender_win' ? 'lose' : 'draw'
+      const myResult = battleResult === 'attacker_win' ? 'win'
+        : battleResult === 'defender_win' ? 'lose' : 'draw'
       const rewards = calculateBattleRewards(
         myResult,
         attackerTier,
-        battle.attackerRatingChange,
+        attackerRatingChange,
         false
       )
 
       // 골드 보너스 카드 효과 적용
       const goldBonusPercent = calculateTotalGoldBonus(attackerCards)
       const baseGold = rewards.gold
-      battle.attackerReward = Math.floor(baseGold * (1 + goldBonusPercent / 100))
+      let attackerReward = Math.floor(baseGold * (1 + goldBonusPercent / 100))
 
       // 방어자 보상
       const defenderTier = getTierFromRating(defenderRating)
-      const defenderResult = battle.result === 'defender_win' ? 'win'
-        : battle.result === 'attacker_win' ? 'lose' : 'draw'
+      const defenderResult = battleResult === 'defender_win' ? 'win'
+        : battleResult === 'attacker_win' ? 'lose' : 'draw'
       const defenderRewards = calculateBattleRewards(
         defenderResult,
         defenderTier,
-        battle.defenderRatingChange,
+        defenderRatingChange,
         false
       )
-      battle.defenderReward = defenderRewards.gold
+      const defenderReward = defenderRewards.gold
 
       // AI 상대일 경우 레이팅 변경 없음, 보상 감소, 기록 안 함
       if (opponent.isAI) {
-        battle.attackerRatingChange = 0
-        battle.defenderRatingChange = 0
-        battle.attackerReward = Math.floor(battle.attackerReward * 0.5) // AI전 보상 50%
+        attackerRatingChange = 0
+        defenderRatingChange = 0
+        attackerReward = Math.floor(attackerReward * 0.5) // AI전 보상 50%
       }
 
       // DB에 기록 저장 (유저 vs 유저만 기록)
@@ -461,21 +501,23 @@ export function usePvPBattle(): UsePvPBattleReturn {
         const { error: recordError } = await supabase.rpc('record_pvp_battle', {
           p_attacker_id: user.id,
           p_defender_id: opponent.userId,
-          p_result: battle.result,
-          p_attacker_rating_change: battle.attackerRatingChange,
-          p_defender_rating_change: battle.defenderRatingChange,
-          p_attacker_reward: battle.attackerReward,
-          p_defender_reward: battle.defenderReward,
-          p_battle_log: battle.rounds,
-          p_total_rounds: battle.totalRounds,
-          p_attacker_cards: attackDeck,
+          p_result: battleResult,
+          p_attacker_rating_change: attackerRatingChange,
+          p_defender_rating_change: defenderRatingChange,
+          p_attacker_reward: attackerReward,
+          p_defender_reward: defenderReward,
+          p_battle_log: [],
+          p_total_rounds: Math.ceil(result.battleDuration / 1000),
+          p_attacker_cards: attackerCards,
           p_defender_cards: defenderCards,
-          p_attacker_snapshot: attackerSnapshot,
+          p_attacker_snapshot: savedAttackerSnapshot,
           p_defender_snapshot: {
             oderId: opponent.userId,
             username: opponent.username,
             stats: opponent.stats,
             combatPower: opponent.combatPower,
+            equipment: opponent.equipmentSnapshot || {},
+            cards: defenderCards,
             tier: opponent.tier,
             rating: opponent.rating,
           },
@@ -484,42 +526,31 @@ export function usePvPBattle(): UsePvPBattleReturn {
 
         if (recordError) {
           console.error('Failed to record battle:', recordError)
-          // 기록 실패해도 배틀 결과는 보여줌
         }
       }
 
-      // 골드 지급 (현재 골드 조회 후 증가)
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('gold')
-        .eq('id', user.id)
-        .single()
-
-      if (profileError) {
-        console.error('Failed to get current gold:', profileError)
-      } else if (profileData) {
-        const newGold = (profileData.gold || 0) + battle.attackerReward
-        const { error: goldError } = await supabase
+      // 골드는 PvPMatchmaking의 onBattleEnd에서 onGoldUpdate로 처리됨
+      // DB 동기화만 수행
+      if (!opponent.isAI) {
+        const { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
-          .update({ gold: newGold })
+          .select('gold')
           .eq('id', user.id)
+          .single()
 
-        if (goldError) {
-          console.error('Failed to update gold:', goldError)
+        if (!profileError && profileData) {
+          const newGold = (profileData.gold || 0) + attackerReward
+          await supabase
+            .from('user_profiles')
+            .update({ gold: newGold })
+            .eq('id', user.id)
         }
       }
 
-      setCurrentBattle(battle)
-      // status는 'fighting'으로 유지 - PvPBattleReplay 컴포넌트가 애니메이션을 관리
-      // 애니메이션 완료 후 사용자가 보상 받기를 클릭하면 resetBattle()이 호출됨
-      return battle
     } catch (err) {
-      console.error('Failed to execute battle:', err)
-      setError('배틀 실행에 실패했습니다.')
-      setStatus('idle')
-      return null
+      console.error('Failed to record battle result:', err)
     }
-  }, [user, opponent])
+  }, [user, opponent, savedAttackerSnapshot])
 
   // =============================================
   // 취소/리셋
@@ -538,6 +569,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
     setAttackDeck([])
     setCurrentBattle(null)
     setError(null)
+    setSavedAttackerSnapshot(null)
   }, [])
 
   // =============================================
@@ -599,12 +631,13 @@ export function usePvPBattle(): UsePvPBattleReturn {
         const defenderData = battle.defender as unknown as { username: string } | { username: string }[] | null
         const defenderName = Array.isArray(defenderData) ? defenderData[0]?.username : defenderData?.username
         // 스냅샷에서 username 가져오기 (대체용)
-        const snapshotName = (battle.defender_snapshot as { username?: string } | null)?.username
+        const snapshot = battle.defender_snapshot as BattleSnapshot | null
+        const snapshotName = snapshot?.username
         logs.push({
           id: battle.id,
           opponentId: battle.defender_id,
           opponentName: defenderName || snapshotName || '알 수 없음',
-          opponentTier: 'bronze', // TODO: 조회 필요
+          opponentTier: snapshot?.tier || 'bronze',
           isAttacker: true,
           result: battle.result,
           myResult: battle.result === 'attacker_win' ? 'win'
@@ -614,6 +647,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
           totalRounds: battle.total_rounds,
           isRevenge: battle.is_revenge,
           canRevenge: false,
+          opponentSnapshot: snapshot || undefined,
           createdAt: new Date(battle.created_at),
         })
       }
@@ -622,12 +656,13 @@ export function usePvPBattle(): UsePvPBattleReturn {
         const attackerData = battle.attacker as unknown as { username: string } | { username: string }[] | null
         const attackerName = Array.isArray(attackerData) ? attackerData[0]?.username : attackerData?.username
         // 스냅샷에서 username 가져오기 (대체용)
-        const snapshotName = (battle.attacker_snapshot as { username?: string } | null)?.username
+        const snapshot = battle.attacker_snapshot as BattleSnapshot | null
+        const snapshotName = snapshot?.username
         logs.push({
           id: battle.id,
           opponentId: battle.attacker_id,
           opponentName: attackerName || snapshotName || '알 수 없음',
-          opponentTier: 'bronze',
+          opponentTier: snapshot?.tier || 'bronze',
           isAttacker: false,
           result: battle.result,
           myResult: battle.result === 'defender_win' ? 'win'
@@ -637,6 +672,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
           totalRounds: battle.total_rounds,
           isRevenge: battle.is_revenge,
           canRevenge: !battle.is_revenge && battle.result === 'attacker_win',
+          opponentSnapshot: snapshot || undefined,
           createdAt: new Date(battle.created_at),
         })
       }
@@ -773,6 +809,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
           cardCount: [defense.card_slot_1, defense.card_slot_2, defense.card_slot_3]
             .filter(Boolean).length,
           defenseCards,
+          equipmentSnapshot: defense.equipment_snapshot as PvPOpponent['equipmentSnapshot'],
         })
       }
 
@@ -809,6 +846,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
     searchOpponent,
     selectAttackDeck,
     startBattle,
+    recordBattleResult,
     cancelSearch,
     resetBattle,
     loadBattleLogs,

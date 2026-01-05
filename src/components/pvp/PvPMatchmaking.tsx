@@ -11,7 +11,7 @@ import type { EquippedItems } from '../../types/equipment'
 import type { BattleCard } from '../../types/battleCard'
 import type { PvPOpponent, BattleSnapshot } from '../../types/pvpBattle'
 import { ownedCardToBattleCard, TIER_ORDER } from '../../types/cardDeck'
-import { generateAICardsMatchingPlayer } from '../../hooks/usePvPBattle'
+import { generateAICardsMatchingPlayer, type RealtimeBattleResult } from '../../hooks/usePvPBattle'
 import { BATTLE_CARD_TIER_COLORS } from '../../types/battleCard'
 import { calculateTotalGoldBonus } from '../../utils/pvpBattle'
 import { PvPRealtimeBattle } from './PvPRealtimeBattle'
@@ -35,7 +35,8 @@ interface PvPMatchmakingProps {
     error: string | null
     isLoading: boolean
     searchOpponent: (combatPower: number) => Promise<boolean>
-    startBattle: (snapshot: BattleSnapshot, attackerCards: BattleCard[], defenderCards: BattleCard[]) => Promise<any>
+    startBattle: (snapshot: BattleSnapshot, attackerCards: BattleCard[]) => void
+    recordBattleResult: (result: RealtimeBattleResult, attackerCards: BattleCard[], defenderCards: BattleCard[]) => Promise<void>
     cancelSearch: () => void
     resetBattle: () => void
   }
@@ -205,6 +206,7 @@ export function PvPMatchmaking({
     isLoading,
     searchOpponent,
     startBattle,
+    recordBattleResult,
     cancelSearch,
     resetBattle,
   } = pvpBattle
@@ -223,7 +225,7 @@ export function PvPMatchmaking({
   }
 
   // 대전 시작 - 실시간 배틀로 전환
-  const handleStartBattle = async () => {
+  const handleStartBattle = () => {
     // 공격 카드 변환
     const attackCards = selectedCards
       .filter((c): c is OwnedCard => c !== null)
@@ -249,7 +251,8 @@ export function PvPMatchmaking({
 
     // startBattle 호출하면 status가 'fighting'으로 변경됨
     // 실제 배틀은 PvPRealtimeBattle 컴포넌트에서 처리
-    await startBattle(snapshot, attackCards, [])
+    // 결과 기록은 onBattleEnd에서 recordBattleResult로 처리
+    startBattle(snapshot, attackCards)
   }
 
   // 검색 중
@@ -337,8 +340,11 @@ export function PvPMatchmaking({
         winReward={winGold}
         loseReward={loseGold}
         drawReward={drawGold}
-        onBattleEnd={(result) => {
-          // 보상 처리
+        onBattleEnd={async (result) => {
+          // 실제 배틀 결과를 DB에 기록
+          await recordBattleResult(result, playerCards, opponentCards)
+
+          // 보상 처리 (UI 업데이트)
           const reward = result.winner === 'player' ? winGold
             : result.winner === 'opponent' ? loseGold
             : drawGold

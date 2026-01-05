@@ -31,7 +31,7 @@ export function useEquipmentStarForce(options: UseEquipmentStarForceOptions = {}
 
   // Sync selected equipment with inventory changes
   useEffect(() => {
-    if (!selectedEquipment || !options.inventory || isDestroyed) return
+    if (!selectedEquipment || !options.inventory) return
 
     const updated = options.inventory.find(e => e.id === selectedEquipment.id)
     if (updated) {
@@ -43,21 +43,29 @@ export function useEquipmentStarForce(options: UseEquipmentStarForceOptions = {}
         setSelectedEquipment(updated)
       }
     } else {
-      // Equipment was removed (sold/destroyed)
+      // Equipment was removed (sold/destroyed) - always clear regardless of isDestroyed state
       setSelectedEquipment(null)
       setIsDestroyed(false)
     }
-  }, [options.inventory, selectedEquipment?.id, isDestroyed])
+  }, [options.inventory, selectedEquipment?.id])
 
   const level = selectedEquipment?.starLevel ?? 0
   const consecutiveFails = selectedEquipment?.consecutiveFails ?? 0
   const chanceTimeActive = isChanceTime(consecutiveFails)
 
   const selectEquipment = useCallback((equipment: UserEquipment | null) => {
+    // Validate that equipment exists in inventory before selecting
+    if (equipment && options.inventory) {
+      const exists = options.inventory.some(e => e.id === equipment.id)
+      if (!exists) {
+        // Equipment no longer exists (destroyed/sold), don't select
+        return
+      }
+    }
     setSelectedEquipment(equipment)
     setLastResult(null)
     setIsDestroyed(false)
-  }, [])
+  }, [options.inventory])
 
   const isMaxLevel = level >= MAX_STAR_LEVEL
 
@@ -132,6 +140,13 @@ export function useEquipmentStarForce(options: UseEquipmentStarForceOptions = {}
 
   const combatPowerGain = nextCombatPower - currentCombatPower
 
+  // Calculate stat changes (only for stats affected by starforce)
+  const statChanges = currentStats && nextStats ? {
+    attack: nextStats.attack - currentStats.attack,
+    defense: nextStats.defense - currentStats.defense,
+    hp: nextStats.hp - currentStats.hp,
+  } : null
+
   return {
     // State
     selectedEquipment,
@@ -152,6 +167,8 @@ export function useEquipmentStarForce(options: UseEquipmentStarForceOptions = {}
     currentCombatPower,
     nextCombatPower,
     combatPowerGain,
+    currentStats,
+    statChanges,
 
     // Level info
     isMaxLevel,

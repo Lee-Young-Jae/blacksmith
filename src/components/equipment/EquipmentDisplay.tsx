@@ -1,4 +1,3 @@
-import { StarDisplay } from '../StarDisplay'
 import EquipmentImage from './EquipmentImage'
 import type { UserEquipment } from '../../types/equipment'
 import {
@@ -13,7 +12,6 @@ import {
 interface EquipmentDisplayProps {
   equipment: UserEquipment
   isEnhancing?: boolean
-  showStars?: boolean
 }
 
 // 레벨별 배경 그라데이션
@@ -28,7 +26,6 @@ const LEVEL_BG_COLORS: Record<string, string> = {
 export default function EquipmentDisplay({
   equipment,
   isEnhancing = false,
-  showStars = true,
 }: EquipmentDisplayProps) {
   const { equipmentBase, starLevel } = equipment
   const levelTier = getLevelTier(starLevel)
@@ -40,11 +37,6 @@ export default function EquipmentDisplay({
 
   return (
     <div className="flex flex-col items-center gap-4">
-      {/* 별 레벨 표시 */}
-      {showStars && (
-        <StarDisplay level={starLevel} maxDisplay={25} />
-      )}
-
       {/* 장비 이미지 영역 */}
       <div
         className={`relative transition-all duration-300 ${

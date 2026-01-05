@@ -4,7 +4,17 @@
  * 대전 기록을 표시합니다.
  */
 
-import type { PvPBattleLog } from '../../types/pvpBattle'
+import { useState } from 'react'
+import type { PvPBattleLog, BattleSnapshot } from '../../types/pvpBattle'
+import {
+  EQUIPMENT_SLOT_NAMES,
+  EQUIPMENT_SLOT_EMOJIS,
+  EQUIPMENT_SLOTS,
+  getEquipmentDisplayName,
+  getEquipmentAtLevel,
+} from '../../types/equipment'
+import type { EquipmentSlot, UserEquipment } from '../../types/equipment'
+import { POTENTIAL_TIER_COLORS, POTENTIAL_TIER_NAMES, STAT_NAMES } from '../../types/potential'
 
 // =============================================
 // 타입 정의
@@ -18,15 +28,200 @@ interface PvPBattleHistoryProps {
 }
 
 // =============================================
+// 장비 상세 카드 컴포넌트
+// =============================================
+
+function EquipmentCard({ slot, item }: { slot: EquipmentSlot; item: UserEquipment }) {
+  const [showPotentials, setShowPotentials] = useState(false)
+
+  if (!item || !item.equipmentBase) return null
+
+  const displayName = getEquipmentDisplayName(item)
+  const levelData = getEquipmentAtLevel(item.equipmentBase, item.starLevel)
+  const unlockedPotentials = item.potentials?.filter(p => p.isUnlocked) || []
+
+  return (
+    <div className="bg-gray-800/50 rounded-lg p-2 space-y-1">
+      {/* 장비 헤더 */}
+      <div className="flex items-center gap-2">
+        {/* 이미지 또는 이모지 */}
+        {levelData.image ? (
+          <img
+            src={levelData.image}
+            alt={displayName}
+            className="w-10 h-10 object-contain rounded bg-gray-900/50"
+          />
+        ) : (
+          <div className="w-10 h-10 flex items-center justify-center bg-gray-900/50 rounded text-xl">
+            {item.equipmentBase.emoji || EQUIPMENT_SLOT_EMOJIS[slot]}
+          </div>
+        )}
+
+        {/* 이름 및 정보 */}
+        <div className="flex-1 min-w-0">
+          <p className="text-white text-sm font-medium truncate">{displayName}</p>
+          <p className="text-gray-500 text-xs">{EQUIPMENT_SLOT_NAMES[slot]}</p>
+        </div>
+
+        {/* 스타 레벨 뱃지 */}
+        {item.starLevel > 0 && (
+          <div className="text-yellow-400 text-xs font-bold bg-yellow-400/10 px-1.5 py-0.5 rounded">
+            ★{item.starLevel}
+          </div>
+        )}
+      </div>
+
+      {/* 잠재옵션 토글 */}
+      {unlockedPotentials.length > 0 && (
+        <div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowPotentials(!showPotentials)
+            }}
+            className="text-xs text-purple-400 hover:text-purple-300"
+          >
+            잠재옵션 {unlockedPotentials.length}개 {showPotentials ? '▲' : '▼'}
+          </button>
+
+          {showPotentials && (
+            <div className="mt-1 space-y-0.5">
+              {unlockedPotentials.map((potential, idx) => {
+                const tierColorClass = POTENTIAL_TIER_COLORS[potential.tier]?.split(' ')[0] || 'text-gray-400'
+                const statName = STAT_NAMES[potential.stat]
+                return (
+                  <div key={idx} className={`text-xs ${tierColorClass}`}>
+                    {statName}: {potential.isPercentage ? `+${potential.value}%` : `+${potential.value}`}
+                    <span className="text-gray-600 ml-1">({POTENTIAL_TIER_NAMES[potential.tier]})</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// =============================================
+// 상대방 상세 정보 컴포넌트
+// =============================================
+
+function OpponentDetails({ snapshot }: { snapshot: BattleSnapshot }) {
+  const [showEquipment, setShowEquipment] = useState(false)
+  const stats = snapshot.stats
+
+  const equippedSlots = EQUIPMENT_SLOTS.filter(
+    slot => snapshot.equipment?.[slot]?.equipmentBase
+  )
+
+  return (
+    <div className="mt-3 pt-3 border-t border-gray-600/50 space-y-3">
+      {/* 전투력 및 레이팅 */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-gray-400 text-sm">전투력</span>
+          <span className="text-yellow-400 font-bold">{snapshot.combatPower.toLocaleString()}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-gray-400 text-sm">레이팅</span>
+          <span className="text-purple-400 font-bold">{snapshot.rating} RP</span>
+        </div>
+      </div>
+
+      {/* 주요 스탯 */}
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div className="bg-gray-800/50 rounded p-2 text-center">
+          <p className="text-red-400 font-bold">{stats.hp.toLocaleString()}</p>
+          <p className="text-gray-500">HP</p>
+        </div>
+        <div className="bg-gray-800/50 rounded p-2 text-center">
+          <p className="text-orange-400 font-bold">{stats.attack}</p>
+          <p className="text-gray-500">공격력</p>
+        </div>
+        <div className="bg-gray-800/50 rounded p-2 text-center">
+          <p className="text-blue-400 font-bold">{stats.defense}</p>
+          <p className="text-gray-500">방어력</p>
+        </div>
+      </div>
+
+      {/* 세부 스탯 */}
+      <div className="grid grid-cols-4 gap-1 text-xs">
+        <div className="text-center">
+          <span className="text-gray-500">크리티컬 </span>
+          <span className="text-yellow-400">{stats.critRate}%</span>
+        </div>
+        <div className="text-center">
+          <span className="text-gray-500">크뎀 </span>
+          <span className="text-yellow-400">{stats.critDamage}%</span>
+        </div>
+        <div className="text-center">
+          <span className="text-gray-500">관통력 </span>
+          <span className="text-cyan-400">{stats.penetration}%</span>
+        </div>
+        <div className="text-center">
+          <span className="text-gray-500">공속 </span>
+          <span className="text-green-400">{stats.attackSpeed}</span>
+        </div>
+      </div>
+
+      {/* 장비 목록 */}
+      {equippedSlots.length > 0 && (
+        <div className="space-y-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowEquipment(!showEquipment)
+            }}
+            className="flex items-center gap-2 text-sm text-gray-300 hover:text-white"
+          >
+            <span>장착 장비</span>
+            <span className="text-purple-400 font-medium">{equippedSlots.length}개</span>
+            <span className={`text-gray-500 text-xs transition-transform ${showEquipment ? 'rotate-180' : ''}`}>
+              ▼
+            </span>
+          </button>
+
+          {showEquipment && (
+            <div className="grid grid-cols-1 gap-2">
+              {equippedSlots.map(slot => (
+                <EquipmentCard
+                  key={slot}
+                  slot={slot}
+                  item={snapshot.equipment![slot]!}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 사용 카드 */}
+      {snapshot.cards && snapshot.cards.length > 0 && (
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-gray-400">사용 카드</span>
+          <span className="text-purple-400 font-medium">{snapshot.cards.length}장</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// =============================================
 // 배틀 로그 항목 컴포넌트
 // =============================================
 
 function BattleLogItem({
   log,
   onRevenge,
+  isExpanded,
+  onToggle,
 }: {
   log: PvPBattleLog
   onRevenge: () => void
+  isExpanded: boolean
+  onToggle: () => void
 }) {
   const resultColor = log.myResult === 'win'
     ? 'text-green-400'
@@ -53,10 +248,14 @@ function BattleLogItem({
       : 'bg-gray-700/30'
 
   const timeAgo = getTimeAgo(log.createdAt)
+  const hasSnapshot = !!log.opponentSnapshot
 
   return (
-    <div className={`rounded-lg p-3 ${bgColor}`}>
-      <div className="flex items-center justify-between">
+    <div className={`rounded-lg p-3 ${bgColor} ${hasSnapshot ? 'cursor-pointer' : ''}`}>
+      <div
+        className="flex items-center justify-between"
+        onClick={hasSnapshot ? onToggle : undefined}
+      >
         {/* 결과 및 상대 정보 */}
         <div className="flex items-center gap-3">
           <span className="text-2xl">{resultEmoji}</span>
@@ -65,6 +264,11 @@ function BattleLogItem({
               <span className={`font-bold ${resultColor}`}>{resultText}</span>
               <span className="text-gray-400 text-sm">vs</span>
               <span className="text-white font-medium">{log.opponentName}</span>
+              {hasSnapshot && (
+                <span className={`text-gray-500 text-xs transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                  ▼
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-400">
               <span>{log.isAttacker ? '공격전' : '방어전'}</span>
@@ -96,13 +300,21 @@ function BattleLogItem({
         <span className="text-gray-500 text-xs">{timeAgo}</span>
         {log.canRevenge && (
           <button
-            onClick={onRevenge}
+            onClick={(e) => {
+              e.stopPropagation()
+              onRevenge()
+            }}
             className="px-3 py-1 bg-orange-600 text-white text-xs font-medium rounded hover:bg-orange-500"
           >
             복수전
           </button>
         )}
       </div>
+
+      {/* 상대방 상세 정보 (확장 시) */}
+      {isExpanded && log.opponentSnapshot && (
+        <OpponentDetails snapshot={log.opponentSnapshot} />
+      )}
     </div>
   )
 }
@@ -135,6 +347,8 @@ export function PvPBattleHistory({
   onRefresh,
   onRevenge,
 }: PvPBattleHistoryProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
   // 통계 계산
   const stats = {
     total: battleLogs.length,
@@ -148,6 +362,10 @@ export function PvPBattleHistory({
   const winRate = stats.total > 0
     ? Math.round((stats.wins / stats.total) * 100)
     : 0
+
+  const handleToggle = (id: string) => {
+    setExpandedId(prev => prev === id ? null : id)
+  }
 
   return (
     <div className="space-y-4">
@@ -183,6 +401,9 @@ export function PvPBattleHistory({
         </div>
       </div>
 
+      {/* 안내 문구 */}
+      <p className="text-gray-500 text-xs text-center">기록을 클릭하면 상대방 정보를 확인할 수 있습니다</p>
+
       {/* 새로고침 버튼 */}
       <div className="flex justify-end">
         <button
@@ -206,6 +427,8 @@ export function PvPBattleHistory({
               key={log.id}
               log={log}
               onRevenge={() => onRevenge(log.opponentId)}
+              isExpanded={expandedId === log.id}
+              onToggle={() => handleToggle(log.id)}
             />
           ))
         ) : (

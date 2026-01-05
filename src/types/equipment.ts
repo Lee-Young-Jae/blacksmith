@@ -221,18 +221,15 @@ export function getEquipmentDisplayName(equipment: UserEquipment): string {
 }
 
 // 판매 가격 계산
+// 공식: 30 + (★레벨 × 30) + (★레벨² × 0.5)
+// 가챠 비용(1,000G) 대비 3~8% 수준으로 골드 재순환 방지
 export function getEquipmentSellPrice(equipment: UserEquipment): number {
-  const { starLevel, potentials } = equipment
-  const basePrice = 100  // 기본 판매가
+  const { starLevel } = equipment
+  const basePrice = 30
+  const linearBonus = starLevel * 30
+  const quadraticBonus = Math.pow(starLevel, 2) * 0.5
 
-  // 스타 레벨 보너스
-  const levelBonus = 1 + starLevel * 5 + Math.pow(starLevel, 2)
-
-  // 해제된 잠재옵션 슬롯 개수에 따른 보너스
-  const unlockedSlots = potentials.filter(p => p.isUnlocked).length
-  const potentialBonus = 1 + unlockedSlots * 0.5
-
-  return Math.floor(basePrice * levelBonus * potentialBonus)
+  return Math.floor(basePrice + linearBonus + quadraticBonus)
 }
 
 // 판매 시 잠재옵션 경고 필요 여부 (해제된 슬롯이 있으면 경고)

@@ -14,7 +14,7 @@ import { BattleCardSelect } from './components/BattleCardSelect'
 import { LiveFeed } from './components/LiveFeed'
 import { DestroyEffect } from './components/DestroyEffect'
 import { EnhanceEffect } from './components/EnhanceEffect'
-import { EquipmentSlots, EquipmentInventory, EquipmentImage, EquipmentEnhancePanel, EquipmentSellPanel, EquipmentDisplay } from './components/equipment'
+import { EquipmentSlots, EquipmentInventory, EquipmentImage, EquipmentEnhancePanel, EquipmentSellPanel, EquipmentDisplay, EquipmentRecoveryPanel } from './components/equipment'
 import { StatsPanel } from './components/stats'
 import { DEFAULT_CHARACTER_STATS } from './types/stats'
 import { PotentialPanel } from './components/potential'
@@ -141,7 +141,7 @@ function GameContent() {
       })
     },
     onDestroy: async (equipment) => {
-      await equipmentSystem.sellEquipment(equipment.id)
+      await equipmentSystem.destroyEquipment(equipment.id)
     },
     // Sync with inventory for list updates
     inventory: equipmentSystem.inventory,
@@ -612,7 +612,7 @@ function GameContent() {
                 </div>
 
                 {/* 강화 패널 */}
-                <div className="flex-1 lg:max-w-md">
+                <div className="flex-1 lg:max-w-md space-y-4">
                   <EquipmentEnhancePanel
                     equipment={equipmentStarForce.selectedEquipment}
                     isEnhancing={equipmentStarForce.isEnhancing}
@@ -627,6 +627,8 @@ function GameContent() {
                     currentCombatPower={equipmentStarForce.currentCombatPower}
                     nextCombatPower={equipmentStarForce.nextCombatPower}
                     combatPowerGain={equipmentStarForce.combatPowerGain}
+                    currentStats={equipmentStarForce.currentStats}
+                    statChanges={equipmentStarForce.statChanges}
                     consecutiveFails={equipmentStarForce.consecutiveFails}
                     chanceTimeActive={equipmentStarForce.chanceTimeActive}
                     isMaxLevel={equipmentStarForce.isMaxLevel}
@@ -639,6 +641,26 @@ function GameContent() {
                     }}
                     onResetAfterDestroy={equipmentStarForce.resetAfterDestroy}
                   />
+
+                  {/* 파괴된 장비 복구 패널 */}
+                  {equipmentSystem.destroyedEquipments.length > 0 && (
+                    <EquipmentRecoveryPanel
+                      destroyedEquipments={equipmentSystem.destroyedEquipments}
+                      inventory={equipmentSystem.inventory}
+                      gold={gold}
+                      getRecoveryCost={equipmentSystem.getRecoveryCost}
+                      getRecoveryMaterials={equipmentSystem.getRecoveryMaterials}
+                      onRecover={async (destroyedId, materialIds) => {
+                        const destroyed = equipmentSystem.destroyedEquipments.find(d => d.id === destroyedId)
+                        if (!destroyed) return
+                        const cost = equipmentSystem.getRecoveryCost(destroyed)
+                        if (gold < cost) return
+                        await userData.updateGold(gold - cost)
+                        await equipmentSystem.recoverEquipment(destroyedId, materialIds)
+                      }}
+                      onRemove={equipmentSystem.removeFromDestroyedList}
+                    />
+                  )}
                 </div>
               </div>
             )}

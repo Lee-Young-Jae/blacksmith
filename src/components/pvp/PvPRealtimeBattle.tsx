@@ -816,9 +816,8 @@ export function PvPRealtimeBattle({
   const timeProgress = elapsedTime / PVP_BATTLE_CONFIG.BATTLE_DURATION
 
   return (
-    <div className={`space-y-3 transition-transform duration-75 ${
-      screenShake ? 'translate-x-1' : ''
-    }`}>
+    <>
+      {/* 고정 오버레이들 - transform 컨테이너 밖에 배치 */}
       {/* 낮은 HP 경고 오버레이 */}
       {isLowHp && (
         <div className="fixed inset-0 pointer-events-none z-40 animate-pulse"
@@ -827,6 +826,33 @@ export function PvPRealtimeBattle({
           }}
         />
       )}
+
+      {/* 스킬 사용 알림 (고정 오버레이) */}
+      {skillNotification && (
+        <div className="fixed top-20 left-0 right-0 z-50 flex justify-center pointer-events-none">
+          <div
+            className={`py-2 px-6 rounded-full shadow-lg ${
+              skillNotification.user === 'opponent'
+                ? 'bg-red-600 border-2 border-red-400'
+                : 'bg-blue-600 border-2 border-blue-400'
+            }`}
+            style={{
+              animation: 'skillPopup 1.5s ease-out forwards',
+            }}
+          >
+            <span className="text-xl mr-2">{skillNotification.emoji}</span>
+            <span className="text-white font-bold">{skillNotification.skillName}</span>
+            <span className="text-white/80 text-sm ml-2">
+              ({skillNotification.user === 'opponent' ? opponentName : '나'})
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* 메인 배틀 컨테이너 - 흔들림 효과 적용 */}
+      <div className={`space-y-3 transition-transform duration-75 ${
+        screenShake ? 'translate-x-1' : ''
+      }`}>
 
       {/* 타이머 + 진행 바 */}
       <div className={`rounded-lg p-2 border transition-colors ${
@@ -857,23 +883,6 @@ export function PvPRealtimeBattle({
           />
         </div>
       </div>
-
-      {/* 스킬 사용 알림 (고정 오버레이) */}
-      {skillNotification && (
-        <div className="fixed top-20 inset-x-0 z-50 flex justify-center pointer-events-none">
-          <div className={`py-2 px-6 rounded-full shadow-lg animate-pulse ${
-            skillNotification.user === 'opponent'
-              ? 'bg-red-600 border-2 border-red-400'
-              : 'bg-blue-600 border-2 border-blue-400'
-          }`}>
-            <span className="text-xl mr-2">{skillNotification.emoji}</span>
-            <span className="text-white font-bold">{skillNotification.skillName}</span>
-            <span className="text-white/80 text-sm ml-2">
-              ({skillNotification.user === 'opponent' ? opponentName : '나'})
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* 배틀 영역 */}
       <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-xl p-4 space-y-4 border border-gray-700 shadow-lg">
@@ -1443,6 +1452,7 @@ export function PvPRealtimeBattle({
           </div>
         )
       })()}
-    </div>
+      </div>
+    </>
   )
 }
