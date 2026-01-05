@@ -13,6 +13,7 @@ import type {
   WeeklyReward,
 } from '../../types/league'
 import { TIER_INFO, LEAGUE_TIERS } from '../../types/league'
+import { GiTrophy, GiMedal, GiRibbonMedal } from 'react-icons/gi'
 
 // =============================================
 // 타입 정의
@@ -63,10 +64,10 @@ function LeaderboardItem({
   isMe: boolean
 }) {
   const getRankDisplay = (rank: number) => {
-    if (rank === 1) return { emoji: '🥇', color: 'text-yellow-400' }
-    if (rank === 2) return { emoji: '🥈', color: 'text-gray-300' }
-    if (rank === 3) return { emoji: '🥉', color: 'text-orange-400' }
-    return { emoji: `#${rank}`, color: 'text-gray-400' }
+    if (rank === 1) return { Icon: GiTrophy, color: 'text-yellow-400' }
+    if (rank === 2) return { Icon: GiMedal, color: 'text-gray-300' }
+    if (rank === 3) return { Icon: GiRibbonMedal, color: 'text-orange-400' }
+    return { Icon: null, color: 'text-gray-400' }
   }
 
   const rankDisplay = getRankDisplay(entry.rank)
@@ -80,10 +81,10 @@ function LeaderboardItem({
     }`}>
       {/* 순위 */}
       <div className={`w-10 text-center font-bold ${rankDisplay.color}`}>
-        {entry.rank <= 3 ? (
-          <span className="text-xl">{rankDisplay.emoji}</span>
+        {rankDisplay.Icon ? (
+          <rankDisplay.Icon className="text-xl mx-auto" />
         ) : (
-          <span>{rankDisplay.emoji}</span>
+          <span>#{entry.rank}</span>
         )}
       </div>
 

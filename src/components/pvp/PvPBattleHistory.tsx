@@ -15,6 +15,8 @@ import {
 } from '../../types/equipment'
 import type { EquipmentSlot, UserEquipment } from '../../types/equipment'
 import { POTENTIAL_TIER_COLORS, POTENTIAL_TIER_NAMES, STAT_NAMES } from '../../types/potential'
+import { GiTrophyCup, GiBrokenHeart, GiShakingHands } from 'react-icons/gi'
+import type { IconType } from 'react-icons'
 
 // =============================================
 // 타입 정의
@@ -235,11 +237,17 @@ function BattleLogItem({
       ? '패배'
       : '무승부'
 
-  const resultEmoji = log.myResult === 'win'
-    ? '🎉'
+  const ResultIcon: IconType = log.myResult === 'win'
+    ? GiTrophyCup
     : log.myResult === 'lose'
-      ? '😢'
-      : '🤝'
+      ? GiBrokenHeart
+      : GiShakingHands
+
+  const resultIconColor = log.myResult === 'win'
+    ? 'text-green-400'
+    : log.myResult === 'lose'
+      ? 'text-red-400'
+      : 'text-gray-400'
 
   const bgColor = log.myResult === 'win'
     ? 'bg-green-900/20'
@@ -258,7 +266,7 @@ function BattleLogItem({
       >
         {/* 결과 및 상대 정보 */}
         <div className="flex items-center gap-3">
-          <span className="text-2xl">{resultEmoji}</span>
+          <ResultIcon className={`text-2xl ${resultIconColor}`} />
           <div>
             <div className="flex items-center gap-2">
               <span className={`font-bold ${resultColor}`}>{resultText}</span>

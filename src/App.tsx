@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { GiAnvilImpact } from 'react-icons/gi'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { LoginScreen } from './components/LoginScreen'
 import { UserProfile } from './components/UserProfile'
@@ -17,7 +18,7 @@ import { DestroyEffect } from './components/DestroyEffect'
 import { EnhanceEffect } from './components/EnhanceEffect'
 import { EquipmentSlots, EquipmentInventory, EquipmentImage, EquipmentEnhancePanel, EquipmentSellPanel, EquipmentDisplay, EquipmentRecoveryPanel } from './components/equipment'
 import { StatsPanel } from './components/stats'
-import { DEFAULT_CHARACTER_STATS } from './types/stats'
+import { DEFAULT_CHARACTER_STATS, calculateCombatPower } from './types/stats'
 import { PotentialPanel } from './components/potential'
 import { GachaPanel } from './components/gacha'
 import { PvPArena } from './components/pvp/PvPArena'
@@ -342,7 +343,8 @@ function GameContent() {
 
   const hasWeapon = !!localWeapon && !localWeapon.isDestroyed
   const hasEquipment = equipmentSystem.inventory.length > 0
-  const totalCombatPower = equipmentSystem.getTotalCombatPower()
+  // 총 전투력 = 기본 스탯 + 장비 스탯 (equippedStats 재사용)
+  const totalCombatPower = calculateCombatPower(equippedStats)
 
   // 착용중인 장비를 맨 위로 정렬
   const sortedInventory = [...equipmentSystem.inventory].sort((a, b) => {
@@ -445,7 +447,13 @@ function GameContent() {
                       inventory={equipmentSystem.inventory}
                       onEquip={equipmentSystem.equipItem}
                       onUnequip={equipmentSystem.unequipItem}
-                      onSell={equipmentSystem.sellEquipment}
+                      onSell={async (equipmentId) => {
+                        const sellPrice = await equipmentSystem.sellEquipment(equipmentId)
+                        if (sellPrice > 0) {
+                          await userData.updateGold(gold + sellPrice)
+                        }
+                        return sellPrice
+                      }}
                       filterSlot={inventoryFilterSlot}
                       onFilterChange={setInventoryFilterSlot}
                     />
@@ -592,7 +600,7 @@ function GameContent() {
                   {!equipmentStarForce.selectedEquipment && (
                     <div className="card p-8 text-center">
                       <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[var(--color-bg-elevated-2)] flex items-center justify-center">
-                        <span className="text-4xl">⬆️</span>
+                        <GiAnvilImpact className="text-4xl text-[var(--color-text-muted)]" />
                       </div>
                       <p className="text-[var(--color-text-secondary)]">
                         아래에서 강화할 장비를 선택하세요

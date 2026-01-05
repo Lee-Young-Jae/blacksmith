@@ -20,6 +20,8 @@ import { CardFusion } from './CardFusion'
 import { usePvPBattle } from '../../hooks/usePvPBattle'
 import { useCardDeck } from '../../hooks/useCardDeck'
 import { usePvPRanking } from '../../hooks/usePvPRanking'
+import { GiCrossedSwords, GiShield, GiCardPlay, GiTrophy, GiScrollUnfurled, GiTicket } from 'react-icons/gi'
+import type { IconType } from 'react-icons'
 
 // =============================================
 // 타입 정의
@@ -37,12 +39,12 @@ interface PvPArenaProps {
   onGoldUpdate?: (amount: number) => void
 }
 
-const TABS: { id: PvPTab; label: string; emoji: string }[] = [
-  { id: 'matchmaking', label: '대전', emoji: '⚔️' },
-  { id: 'defense', label: '방어덱', emoji: '🛡️' },
-  { id: 'cards', label: '카드', emoji: '🎴' },
-  { id: 'leaderboard', label: '랭킹', emoji: '🏆' },
-  { id: 'history', label: '기록', emoji: '📜' },
+const TABS: { id: PvPTab; label: string; Icon: IconType }[] = [
+  { id: 'matchmaking', label: '대전', Icon: GiCrossedSwords },
+  { id: 'defense', label: '방어덱', Icon: GiShield },
+  { id: 'cards', label: '카드', Icon: GiCardPlay },
+  { id: 'leaderboard', label: '랭킹', Icon: GiTrophy },
+  { id: 'history', label: '기록', Icon: GiScrollUnfurled },
 ]
 
 // =============================================
@@ -102,7 +104,7 @@ export function PvPArena({
           {/* 티켓 */}
           <div className="text-center">
             <div className="flex items-center gap-1">
-              <span className="text-lg">🎫</span>
+              <GiTicket className="text-lg text-cyan-400" />
               <span className="text-cyan-400 font-bold">{pvpRanking.totalTickets}</span>
             </div>
             <p className="text-gray-500 text-xs">티켓</p>
@@ -161,7 +163,7 @@ export function PvPArena({
                 : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'
             }`}
           >
-            <span>{tab.emoji}</span>
+            <tab.Icon className="text-lg" />
             <span className="text-sm">{tab.label}</span>
             {tab.id === 'history' && pvpBattle.unreadDefenseBattles > 0 && (
               <span className="ml-1 px-1.5 py-0.5 bg-red-500 text-white text-xs rounded-full">

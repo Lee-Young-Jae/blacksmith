@@ -76,25 +76,27 @@ export default function EquipmentInventory({
 
   return (
     <div className="card">
-      <div className="card-header flex-row items-center justify-between">
-        <h2 className="text-base font-bold text-[var(--color-text-primary)] flex items-center gap-2">
-          <span className="text-xl">🎒</span>
-          인벤토리
-          <span className="text-sm text-[var(--color-text-muted)] font-normal">
-            ({filteredInventory.length})
-          </span>
-        </h2>
+      <div className="card-header">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-bold text-[var(--color-text-primary)] flex items-center gap-2">
+            <span className="text-xl">🎒</span>
+            인벤토리
+            <span className="text-sm text-[var(--color-text-muted)] font-normal">
+              ({filteredInventory.length})
+            </span>
+          </h2>
 
-        {/* Sort dropdown */}
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as SortOption)}
-          className="bg-[var(--color-bg-elevated-2)] text-[var(--color-text-primary)] text-sm rounded-lg px-3 py-2 border border-[var(--color-border)] min-h-[44px]"
-        >
-          <option value="recent">최신순</option>
-          <option value="combatPower">전투력순</option>
-          <option value="starLevel">장비레벨순</option>
-        </select>
+          {/* Sort dropdown */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            className="bg-[var(--color-bg-elevated-3)] text-[var(--color-text-primary)] text-sm rounded-lg px-2 py-1.5 border border-[var(--color-border)]"
+          >
+            <option value="recent">최신순</option>
+            <option value="combatPower">전투력순</option>
+            <option value="starLevel">레벨순</option>
+          </select>
+        </div>
       </div>
 
       <div className="card-body space-y-4">

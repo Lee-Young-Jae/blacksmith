@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef } from 'react'
 import type { PvPBattle } from '../../types/pvpBattle'
 import { PVP_BATTLE_CONFIG } from '../../types/pvpBattle'
+import { GiCrossedSwords, GiShield } from 'react-icons/gi'
 
 // =============================================
 // 타입 정의
@@ -74,7 +75,7 @@ function BattleCharacter({
   isLeft,
   floatingDamages,
   attackSpeed,
-  emoji,
+  icon,
   gradientFrom,
   gradientTo,
 }: {
@@ -83,7 +84,7 @@ function BattleCharacter({
   isLeft: boolean
   floatingDamages: FloatingDamage[]
   attackSpeed: number
-  emoji: string
+  icon: React.ReactNode
   gradientFrom: string
   gradientTo: string
 }) {
@@ -121,7 +122,7 @@ function BattleCharacter({
             shadow-lg
           `}
         >
-          {emoji}
+          {icon}
         </div>
 
         {/* 공격 이펙트 */}
@@ -503,7 +504,7 @@ export function PvPBattleReplay({
             isLeft={true}
             floatingDamages={attackerFloatingDamages}
             attackSpeed={battle.attackerStats.attackSpeed}
-            emoji="⚔️"
+            icon={<GiCrossedSwords className="text-white" />}
             gradientFrom="from-blue-500"
             gradientTo="to-purple-600"
           />
@@ -519,7 +520,7 @@ export function PvPBattleReplay({
             isLeft={false}
             floatingDamages={defenderFloatingDamages}
             attackSpeed={battle.defenderStats.attackSpeed}
-            emoji="🛡️"
+            icon={<GiShield className="text-white" />}
             gradientFrom="from-red-500"
             gradientTo="to-orange-600"
           />

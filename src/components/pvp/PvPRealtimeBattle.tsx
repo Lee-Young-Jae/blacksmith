@@ -8,6 +8,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import type { CharacterStats } from '../../types/stats'
 import type { BattleCard } from '../../types/battleCard'
 import { PVP_BATTLE_CONFIG } from '../../types/pvpBattle'
+import { GiCrossedSwords, GiTwoCoins, GiTrophy, GiCardRandom, GiStopwatch } from 'react-icons/gi'
+import { FaUser, FaSkull, FaHandshake } from 'react-icons/fa'
 
 // =============================================
 // 타입 정의
@@ -877,10 +879,10 @@ export function PvPRealtimeBattle({
           : 'bg-gray-800/80 border-gray-700'
       }`}>
         <div className="flex items-center justify-between mb-1">
-          <span className={`text-xs font-medium ${
+          <span className={`text-xs font-medium flex items-center gap-1 ${
             timeRemaining < 5 ? 'text-red-300' : 'text-gray-400'
           }`}>
-            ⏱️ 남은 시간
+            <GiStopwatch /> 남은 시간
           </span>
           <span className={`text-xl font-bold ${
             timeRemaining < 5 ? 'text-red-400 animate-pulse' : 'text-yellow-400'
@@ -987,7 +989,7 @@ export function PvPRealtimeBattle({
           {/* 구분선 */}
           <div className="absolute inset-x-0 top-1/2 flex items-center gap-3">
             <div className="flex-1 h-px bg-gray-600" />
-            <span className="text-2xl font-bold text-gray-500">⚔️</span>
+            <GiCrossedSwords className="text-2xl text-gray-500" />
             <div className="flex-1 h-px bg-gray-600" />
           </div>
 
@@ -1066,7 +1068,7 @@ export function PvPRealtimeBattle({
               {playerAvatarUrl ? (
                 <img src={playerAvatarUrl} alt={playerName} className="w-6 h-6 rounded-full object-cover border border-cyan-400" />
               ) : (
-                <span className="text-cyan-400">👤</span>
+                <FaUser className="text-cyan-400" />
               )}
               <span className="text-cyan-400 font-bold text-lg">{playerName}</span>
               {playerStunDuration > 0 && (
@@ -1252,7 +1254,7 @@ export function PvPRealtimeBattle({
             className="p-2 pb-3 rounded-xl border-2 border-dashed border-gray-600 bg-gray-800/30"
           >
             <div className="text-center text-gray-500">
-              <span className="text-3xl opacity-30">🃏</span>
+              <GiCardRandom className="text-3xl opacity-30 mx-auto" />
               <p className="text-xs mt-1">빈 슬롯</p>
             </div>
           </div>
@@ -1306,8 +1308,8 @@ export function PvPRealtimeBattle({
                 'bg-gradient-to-r from-gray-600 via-gray-500 to-gray-600'
               }`}>
                 {/* 결과 이모지 */}
-                <div className="text-5xl mb-2">
-                  {isWin ? '🏆' : isLose ? '💀' : '🤝'}
+                <div className="text-5xl mb-2 flex justify-center">
+                  {isWin ? <GiTrophy className="text-yellow-300" /> : isLose ? <FaSkull className="text-red-300" /> : <FaHandshake className="text-gray-300" />}
                 </div>
                 {/* 결과 텍스트 */}
                 <h2 className={`text-3xl font-black tracking-wider ${
@@ -1417,7 +1419,7 @@ export function PvPRealtimeBattle({
                 }`}>
                   <p className="text-xs text-gray-400 mb-1">획득 보상</p>
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-2xl">💰</span>
+                    <GiTwoCoins className="text-2xl text-yellow-400" />
                     <span className={`text-2xl font-black ${
                       isWin ? 'text-yellow-400' : isLose ? 'text-gray-400' : 'text-gray-300'
                     }`}>
@@ -1461,7 +1463,7 @@ export function PvPRealtimeBattle({
                         : 'bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-400 hover:to-gray-500 text-white'
                   }`}
                 >
-                  {isWin ? '🎉 확인' : isLose ? '😢 확인' : '🤝 확인'}
+                  확인
                 </button>
               </div>
             </div>

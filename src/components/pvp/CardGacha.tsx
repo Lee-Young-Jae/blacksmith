@@ -9,6 +9,7 @@ import type { OwnedCard } from '../../types/cardDeck'
 import { ownedCardToBattleCard } from '../../types/cardDeck'
 import { BATTLE_CARD_TIER_COLORS, BATTLE_CARD_TIER_NAMES } from '../../types/battleCard'
 import { CARD_GACHA_SINGLE_COST, CARD_GACHA_MULTI_COST } from '../../hooks/useCardDeck'
+import { GiCardPlay, GiTwoCoins } from 'react-icons/gi'
 
 // =============================================
 // 타입 정의
@@ -102,7 +103,7 @@ export function CardGacha({
       {/* 설명 */}
       <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4">
         <h4 className="text-white font-bold mb-2 flex items-center gap-2">
-          <span className="text-xl">🎴</span>
+          <GiCardPlay className="text-xl text-purple-400" />
           카드 뽑기
         </h4>
         <p className="text-gray-400 text-sm">
@@ -113,7 +114,7 @@ export function CardGacha({
       {/* 보유 현황 */}
       <div className="flex items-center justify-between bg-gray-700/50 rounded-lg p-3">
         <div className="flex items-center gap-2">
-          <span className="text-xl">🎴</span>
+          <GiCardPlay className="text-xl text-purple-400" />
           <span className="text-gray-400">보유 카드</span>
         </div>
         <span className="text-white font-bold">{ownedCardCount}장</span>
@@ -155,7 +156,7 @@ export function CardGacha({
         >
           <div className="text-lg mb-1">1장 뽑기</div>
           <div className="flex items-center justify-center gap-1 text-sm">
-            <span>🪙</span>
+            <GiTwoCoins className="text-yellow-400" />
             <span>{CARD_GACHA_SINGLE_COST.toLocaleString()}</span>
           </div>
         </button>
@@ -171,7 +172,7 @@ export function CardGacha({
         >
           <div className="text-lg mb-1">10장 뽑기</div>
           <div className="flex items-center justify-center gap-1 text-sm">
-            <span>🪙</span>
+            <GiTwoCoins className="text-yellow-400" />
             <span>{CARD_GACHA_MULTI_COST.toLocaleString()}</span>
             <span className="text-green-400 text-xs ml-1">(10% 할인)</span>
           </div>

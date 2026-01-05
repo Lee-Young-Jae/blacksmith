@@ -3,6 +3,7 @@ import type { UserEquipment } from '../../types/equipment'
 import { getEquipmentDisplayName, getEquipmentComment } from '../../types/equipment'
 import type { EnhanceResult } from '../../types/starforce'
 import type { CharacterStats } from '../../types/stats'
+import { GiAnvilImpact } from 'react-icons/gi'
 
 interface StatChanges {
   attack: number
@@ -72,7 +73,7 @@ export default function EquipmentEnhancePanel({
       <div className="card">
         <div className="card-body text-center py-8 sm:py-12">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--color-bg-elevated-2)] flex items-center justify-center">
-            <span className="text-2xl text-[var(--color-text-muted)]">★</span>
+            <GiAnvilImpact className="text-3xl text-[var(--color-text-muted)]" />
           </div>
           <h2 className="text-base sm:text-lg font-bold text-[var(--color-text-primary)] mb-2">장비 강화</h2>
           <p className="text-[var(--color-text-secondary)] text-sm">위에서 강화할 장비를 선택하세요</p>

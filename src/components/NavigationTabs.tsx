@@ -1,3 +1,14 @@
+import {
+  GiChestArmor,
+  GiPerspectiveDiceSixFacesRandom,
+  GiSparkles,
+  GiUpgrade,
+  GiCrossedSwords,
+  GiTwoCoins
+} from 'react-icons/gi'
+import { FaRobot } from 'react-icons/fa'
+import type { IconType } from 'react-icons'
+
 export type TabType = 'equipment' | 'gacha' | 'potential' | 'enhance' | 'battle' | 'pvp' | 'sell'
 
 interface NavigationTabsProps {
@@ -7,19 +18,19 @@ interface NavigationTabsProps {
   hasEquipment?: boolean
 }
 
-const TABS: { id: TabType; label: string; emoji: string; requiresWeapon?: boolean; requiresEquipment?: boolean }[] = [
-  { id: 'equipment', label: '장비', emoji: '🛡️' },
-  { id: 'gacha', label: '뽑기', emoji: '🎰' },
-  { id: 'potential', label: '잠재', emoji: '✨', requiresEquipment: true },
-  { id: 'enhance', label: '강화', emoji: '⭐', requiresEquipment: true },
-  { id: 'battle', label: 'AI대결', emoji: '🤖', requiresWeapon: true },
-  { id: 'pvp', label: 'PvP', emoji: '⚔️', requiresEquipment: true },
-  { id: 'sell', label: '판매', emoji: '💰', requiresEquipment: true },
+const TABS: { id: TabType; label: string; Icon: IconType; requiresWeapon?: boolean; requiresEquipment?: boolean }[] = [
+  { id: 'equipment', label: '장비', Icon: GiChestArmor },
+  { id: 'gacha', label: '뽑기', Icon: GiPerspectiveDiceSixFacesRandom },
+  { id: 'potential', label: '잠재', Icon: GiSparkles, requiresEquipment: true },
+  { id: 'enhance', label: '강화', Icon: GiUpgrade, requiresEquipment: true },
+  { id: 'battle', label: 'AI대결', Icon: FaRobot, requiresWeapon: true },
+  { id: 'pvp', label: 'PvP', Icon: GiCrossedSwords, requiresEquipment: true },
+  { id: 'sell', label: '판매', Icon: GiTwoCoins, requiresEquipment: true },
 ]
 
 export function NavigationTabs({ activeTab, onTabChange, hasWeapon, hasEquipment }: NavigationTabsProps) {
   return (
-    <nav className="tab-nav justify-center overflow-x-auto">
+    <nav className="tab-nav justify-center overflow-x-auto scrollbar-hide">
       {TABS.map(tab => {
         const isActive = activeTab === tab.id
         const isDisabled =
@@ -31,10 +42,10 @@ export function NavigationTabs({ activeTab, onTabChange, hasWeapon, hasEquipment
             key={tab.id}
             onClick={() => !isDisabled && onTabChange(tab.id)}
             disabled={isDisabled}
-            className={`tab-item flex items-center gap-1.5 px-3 py-2 sm:px-5 sm:py-2.5 ${isActive ? 'active' : ''}`}
+            className={`tab-item flex items-center gap-1 px-2.5 py-2 md:px-4 md:py-2.5 md:gap-1.5 shrink-0 ${isActive ? 'active' : ''}`}
           >
-            <span className="text-base sm:text-lg">{tab.emoji}</span>
-            <span className="hidden sm:inline text-sm">{tab.label}</span>
+            <tab.Icon className="text-lg md:text-xl" />
+            <span className="hidden md:inline text-sm">{tab.label}</span>
           </button>
         )
       })}

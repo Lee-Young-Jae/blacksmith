@@ -8,6 +8,7 @@ import { useState, useCallback } from 'react'
 import type { OwnedCard, FusableTier } from '../../types/cardDeck'
 import { ownedCardToBattleCard, FUSION_REQUIREMENTS, FUSION_RESULT_NAMES } from '../../types/cardDeck'
 import { BATTLE_CARD_TIER_COLORS, BATTLE_CARD_TIER_NAMES } from '../../types/battleCard'
+import { GiCrystalBall, GiCardPlay, GiCardRandom } from 'react-icons/gi'
 
 // =============================================
 // 타입 정의
@@ -212,7 +213,7 @@ export function CardFusion({
       {/* 설명 */}
       <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-4">
         <h4 className="text-white font-bold mb-2 flex items-center gap-2">
-          <span className="text-xl">🔮</span>
+          <GiCrystalBall className="text-xl text-amber-400" />
           카드 합성
         </h4>
         <p className="text-gray-400 text-sm">
@@ -287,7 +288,7 @@ export function CardFusion({
         <div className="flex flex-col items-center py-8">
           <div className="relative">
             <div className="w-20 h-20 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
-            <span className="absolute inset-0 flex items-center justify-center text-3xl">🔮</span>
+            <GiCrystalBall className="absolute inset-0 flex items-center justify-center text-3xl text-amber-400 m-auto" />
           </div>
           <p className="text-amber-400 font-medium mt-4">합성 중...</p>
         </div>
@@ -299,7 +300,7 @@ export function CardFusion({
           {/* 선택 현황 + 버튼 */}
           <div className="flex items-center justify-between bg-gray-700/50 rounded-lg p-3">
             <div className="flex items-center gap-2">
-              <span className={`text-lg ${style.text}`}>🎴</span>
+              <GiCardPlay className={`text-lg ${style.text}`} />
               <span className="text-gray-400">
                 선택: <span className={selectedCardIds.size === requirement.required ? 'text-green-400' : 'text-white'}>
                   {selectedCardIds.size}
@@ -329,7 +330,7 @@ export function CardFusion({
           {/* 카드 목록 */}
           {tierCards.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              <span className="text-4xl mb-2 block">🃏</span>
+              <GiCardRandom className="text-4xl mb-2 mx-auto" />
               <p>{FUSION_RESULT_NAMES[selectedTier]} 등급 카드가 없습니다.</p>
             </div>
           ) : (
@@ -357,7 +358,7 @@ export function CardFusion({
           >
             {canExecuteFusion ? (
               <div className="flex items-center justify-center gap-2">
-                <span>🔮</span>
+                <GiCrystalBall />
                 <span>합성하기</span>
                 <span className="text-sm">
                   → {FUSION_RESULT_NAMES[requirement.resultTier]}
@@ -365,7 +366,7 @@ export function CardFusion({
               </div>
             ) : (
               <div className="flex items-center justify-center gap-2">
-                <span>🔮</span>
+                <GiCrystalBall />
                 <span>
                   {tierCards.length < requirement.required
                     ? `${requirement.required - tierCards.length}장 더 필요`
