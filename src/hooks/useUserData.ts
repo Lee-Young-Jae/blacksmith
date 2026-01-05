@@ -357,7 +357,7 @@ export function useUserData() {
     }
   }, [user, state.weapon])
 
-  // 강화 기록 저장
+  // 강화 기록 저장 (무기용)
   const recordEnhancement = useCallback(async (
     fromLevel: number,
     toLevel: number,
@@ -393,6 +393,57 @@ export function useUserData() {
     }
   }, [user, state.weapon])
 
+  // 강화 기록 저장 (장비용 - 범용)
+  const recordEquipmentEnhancement = useCallback(async (
+    itemName: string,
+    fromLevel: number,
+    toLevel: number,
+    result: 'success' | 'maintain' | 'destroy',
+    wasChanceTime: boolean,
+    goldSpent: number
+  ) => {
+    if (!user) {
+      console.warn('recordEquipmentEnhancement: user is null')
+      return false
+    }
+
+    console.log('📝 Recording enhancement:', {
+      user_id: user.id,
+      itemName,
+      fromLevel,
+      toLevel,
+      result,
+      wasChanceTime,
+    })
+
+    try {
+      const { data, error } = await supabase
+        .from('enhancement_history')
+        .insert({
+          user_id: user.id,
+          weapon_id: null,  // 장비는 weapon_id 없음
+          weapon_name: itemName,
+          from_level: fromLevel,
+          to_level: toLevel,
+          result,
+          was_chance_time: wasChanceTime,
+          gold_spent: goldSpent,
+        })
+        .select()
+
+      if (error) {
+        console.error('❌ Enhancement history insert error:', error)
+        throw error
+      }
+
+      console.log('✅ Enhancement recorded:', data)
+      return true
+    } catch (err) {
+      console.error('Failed to record equipment enhancement:', err)
+      return false
+    }
+  }, [user])
+
   return {
     ...state,
     updateGold,
@@ -402,5 +453,6 @@ export function useUserData() {
     updateWeapon,
     removeWeapon,
     recordEnhancement,
+    recordEquipmentEnhancement,
   }
 }

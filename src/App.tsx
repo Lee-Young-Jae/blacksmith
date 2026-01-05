@@ -12,6 +12,7 @@ import { BattleArena } from './components/BattleArena'
 import { BattleCardSelect } from './components/BattleCardSelect'
 // import { SellPanel } from './components/SellPanel'  // Legacy weapon sell
 import { LiveFeed } from './components/LiveFeed'
+import { useLiveFeed } from './hooks/useLiveFeed'
 import { DestroyEffect } from './components/DestroyEffect'
 import { EnhanceEffect } from './components/EnhanceEffect'
 import { EquipmentSlots, EquipmentInventory, EquipmentImage, EquipmentEnhancePanel, EquipmentSellPanel, EquipmentDisplay, EquipmentRecoveryPanel } from './components/equipment'
@@ -106,6 +107,7 @@ function GameContent() {
   const userData = useUserData()
   const dailyBattle = useDailyBattle()
   const equipmentSystem = useEquipment()
+  const liveFeed = useLiveFeed()
 
   const [view, setView] = useState<GameView>('acquire')
   const [activeTab, setActiveTab] = useState<TabType>('equipment')
@@ -134,14 +136,44 @@ function GameContent() {
         starLevel: newLevel,
         consecutiveFails: 0,
       })
+      // 강화 기록 저장
+      const itemName = getEquipmentName(equipment.equipmentBase, newLevel)
+      await userData.recordEquipmentEnhancement(
+        itemName,
+        equipment.starLevel,
+        newLevel,
+        'success',
+        equipment.consecutiveFails >= 2, // 찬스타임 여부
+        0 // 골드 비용은 별도 처리됨
+      )
     },
     onMaintain: async (equipment, newFails) => {
       await equipmentSystem.updateEquipment(equipment.id, {
         consecutiveFails: newFails,
       })
+      // 강화 기록 저장
+      const itemName = getEquipmentName(equipment.equipmentBase, equipment.starLevel)
+      await userData.recordEquipmentEnhancement(
+        itemName,
+        equipment.starLevel,
+        equipment.starLevel,
+        'maintain',
+        false,
+        0
+      )
     },
     onDestroy: async (equipment) => {
       await equipmentSystem.destroyEquipment(equipment.id)
+      // 강화 기록 저장
+      const itemName = getEquipmentName(equipment.equipmentBase, equipment.starLevel)
+      await userData.recordEquipmentEnhancement(
+        itemName,
+        equipment.starLevel,
+        0,
+        'destroy',
+        false,
+        0
+      )
     },
     // Sync with inventory for list updates
     inventory: equipmentSystem.inventory,
@@ -397,7 +429,7 @@ function GameContent() {
                 {/* 상단: 슬롯 + 인벤토리 */}
                 <div className="flex flex-col lg:flex-row gap-6">
                   {/* 좌측: 장착 슬롯 */}
-                  <div className="lg:w-80 flex-shrink-0 space-y-4">
+                  <div className="lg:w-80 flex-shrink-0">
                     <EquipmentSlots
                       equipped={equipmentSystem.equipped}
                       inventory={equipmentSystem.inventory}
@@ -422,6 +454,9 @@ function GameContent() {
 
                 {/* 하단: 스탯 패널 */}
                 <StatsPanel equipmentStats={equipmentSystem.getEquippedStats()} />
+
+                {/* 실시간 강화 피드 */}
+                <LiveFeed items={liveFeed.items} />
               </div>
             )}
 
@@ -684,9 +719,6 @@ function GameContent() {
                       </p>
                     </div>
                   )}
-
-                  {/* 실시간 피드 */}
-                  <LiveFeed items={[]} />
                 </div>
 
                 {/* 우측: 액션 패널 */}

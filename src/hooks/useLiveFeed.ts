@@ -19,18 +19,37 @@ export function useLiveFeed() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // 초기 데이터 로드
+    // 초기 데이터 로드 (RPC 함수 사용)
     const loadInitialData = async () => {
       try {
         const { data, error } = await supabase
-          .from('recent_enhancements')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(20)
+          .rpc('get_recent_enhancements', { p_limit: 20 })
 
-        if (error) throw error
+        if (error) {
+          // RPC 함수가 없으면 뷰로 폴백
+          console.warn('RPC not available, falling back to view:', error)
+          const { data: viewData, error: viewError } = await supabase
+            .from('recent_enhancements')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(20)
 
-        if (data) {
+          if (viewError) throw viewError
+
+          if (viewData) {
+            const typedData = viewData as unknown as RecentEnhancementRow[]
+            setItems(typedData.map(row => ({
+              id: row.id,
+              username: row.username,
+              weaponName: row.weapon_name,
+              fromLevel: row.from_level,
+              toLevel: row.to_level,
+              result: row.result as EnhanceResult,
+              wasChanceTime: row.was_chance_time,
+              timestamp: new Date(row.created_at),
+            })))
+          }
+        } else if (data) {
           const typedData = data as unknown as RecentEnhancementRow[]
           setItems(typedData.map(row => ({
             id: row.id,
