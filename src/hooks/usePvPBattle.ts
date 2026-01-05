@@ -301,6 +301,16 @@ export function usePvPBattle(): UsePvPBattleReturn {
     setIsLoading(true)
 
     try {
+      // 30% 확률로 AI 매칭
+      const AI_MATCH_CHANCE = 0.3
+      if (Math.random() < AI_MATCH_CHANCE) {
+        const aiOpponent = generateAIOpponent(combatPower)
+        setOpponent(aiOpponent)
+        setStatus('preparing')
+        setIsLoading(false)
+        return true
+      }
+
       // 레이팅 기반 매칭 (최근 상대 자동 제외)
       const { data, error: searchError } = await supabase
         .rpc('find_pvp_opponent_by_rating', {
