@@ -149,7 +149,7 @@ function OpponentDetails({ snapshot }: { snapshot: BattleSnapshot }) {
       </div>
 
       {/* 세부 스탯 */}
-      <div className="grid grid-cols-4 gap-1 text-xs">
+      <div className="grid grid-cols-5 gap-1 text-xs">
         <div className="text-center">
           <span className="text-gray-500">크리티컬 </span>
           <span className="text-yellow-400">{stats.critRate}%</span>
@@ -165,6 +165,10 @@ function OpponentDetails({ snapshot }: { snapshot: BattleSnapshot }) {
         <div className="text-center">
           <span className="text-gray-500">공속 </span>
           <span className="text-green-400">{stats.attackSpeed}</span>
+        </div>
+        <div className="text-center">
+          <span className="text-gray-500">회피 </span>
+          <span className="text-emerald-400">{stats.evasion || 0}%</span>
         </div>
       </div>
 

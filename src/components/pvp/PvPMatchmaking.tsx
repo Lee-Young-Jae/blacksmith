@@ -542,6 +542,13 @@ export function PvPMatchmaking({
                 color: "cyan",
                 suffix: "%",
               },
+              {
+                label: "회피율",
+                player: playerStats.evasion,
+                opp: opponent.stats.evasion || 0,
+                color: "emerald",
+                suffix: "%",
+              },
             ].map((stat) => {
               const playerWins = stat.player > stat.opp;
               const oppWins = stat.opp > stat.player;
@@ -670,7 +677,7 @@ export function PvPMatchmaking({
             <p className="text-gray-500">공속</p>
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-2 text-xs mt-2">
+        <div className="grid grid-cols-4 gap-2 text-xs mt-2">
           <div className="bg-gray-800/50 rounded p-2 text-center">
             <p className="text-yellow-400 font-bold">{playerStats.critRate}%</p>
             <p className="text-gray-500">치명타</p>
@@ -686,6 +693,12 @@ export function PvPMatchmaking({
               {playerStats.penetration}%
             </p>
             <p className="text-gray-500">관통력</p>
+          </div>
+          <div className="bg-gray-800/50 rounded p-2 text-center">
+            <p className="text-emerald-400 font-bold">
+              {playerStats.evasion}%
+            </p>
+            <p className="text-gray-500">회피율</p>
           </div>
         </div>
       </div>
