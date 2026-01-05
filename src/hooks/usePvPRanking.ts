@@ -30,7 +30,6 @@ import {
   canClaimWeeklyReward,
   getWeekStart,
   ELO_CONFIG,
-  LEAGUE_TIERS,
 } from '../types/league'
 
 // =============================================
@@ -105,15 +104,16 @@ export function usePvPRanking(): UsePvPRankingReturn {
       if (fetchError) {
         if (fetchError.code === 'PGRST116') {
           // 랭킹이 없으면 기본값 설정
+          const initialRating = ELO_CONFIG.INITIAL_RATING
           setMyRanking({
             userId: user.id,
-            rating: ELO_CONFIG.INITIAL_RATING,
-            tier: 'silver',
+            rating: initialRating,
+            tier: getTierFromRating(initialRating),
             wins: 0,
             losses: 0,
             draws: 0,
             winStreak: 0,
-            highestRating: ELO_CONFIG.INITIAL_RATING,
+            highestRating: initialRating,
             combatPower: 0,
             weeklyBattles: 0,
             lastWeeklyClaim: null,
@@ -126,10 +126,13 @@ export function usePvPRanking(): UsePvPRankingReturn {
 
       const row = data as PvPRankingRow
 
+      // 레이팅에서 티어 계산 (DB tier와 불일치 방지)
+      const calculatedTier = getTierFromRating(row.rating)
+
       setMyRanking({
         userId: row.user_id,
         rating: row.rating,
-        tier: row.tier as LeagueTier,
+        tier: calculatedTier,
         wins: row.wins,
         losses: row.losses,
         draws: row.draws,
@@ -196,17 +199,15 @@ export function usePvPRanking(): UsePvPRankingReturn {
         win_streak: number
         combat_power: number
       }, index: number) => {
-        // 유효한 티어인지 확인하고, 아니면 레이팅에서 계산
-        const validTier = row.tier && LEAGUE_TIERS.includes(row.tier as LeagueTier)
-          ? row.tier as LeagueTier
-          : getTierFromRating(row.rating || 0)
+        // 항상 레이팅에서 티어 계산 (DB tier와 불일치 방지)
+        const calculatedTier = getTierFromRating(row.rating || 0)
 
         return {
           rank: index + 1,
           userId: row.user_id,
           username: row.username || '플레이어',
           rating: row.rating,
-          tier: validTier,
+          tier: calculatedTier,
           wins: row.wins,
           losses: row.losses,
           winStreak: row.win_streak,
@@ -250,17 +251,15 @@ export function usePvPRanking(): UsePvPRankingReturn {
         const profileData = row.user_profiles as unknown as { username: string } | { username: string }[] | null
         const username = Array.isArray(profileData) ? profileData[0]?.username : profileData?.username
 
-        // 유효한 티어인지 확인하고, 아니면 레이팅에서 계산
-        const validTier = row.tier && LEAGUE_TIERS.includes(row.tier as LeagueTier)
-          ? row.tier as LeagueTier
-          : getTierFromRating(row.rating || 0)
+        // 항상 레이팅에서 티어 계산 (DB tier와 불일치 방지)
+        const calculatedTier = getTierFromRating(row.rating || 0)
 
         return {
           rank: index + 1,
           userId: row.user_id,
           username: username || '플레이어',
           rating: row.rating,
-          tier: validTier,
+          tier: calculatedTier,
           wins: row.wins,
           losses: row.losses,
           winStreak: row.win_streak,

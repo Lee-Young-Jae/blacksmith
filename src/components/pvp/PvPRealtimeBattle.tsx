@@ -426,8 +426,8 @@ export function PvPRealtimeBattle({
         // 회복 피로 10초 설정 (연속 회복 방지)
         setPlayerHealFatigue(10)
       } else if (effect.type === 'first_strike') {
-        // 강타: 즉시 추가 데미지
-        const bonusDamage = effect.value
+        // 번개 일섬: 상대 최대 HP 비례 즉시 데미지
+        const bonusDamage = Math.floor(opponentMaxHp * effect.value / 100)
         setOpponentHp(hp => Math.max(0, hp - bonusDamage))
         addFloatingDamage('opponent', bonusDamage, true, false)
       } else if (effect.type === 'shield_bash') {
@@ -456,24 +456,34 @@ export function PvPRealtimeBattle({
         ? effect.value
         : card.duration
 
+      // 쿨타임 초기화 패시브 체크
+      const cooldownResetChance = getPassiveBonus(newSkills, 'cooldown_reset')
+      const isCooldownReset = cooldownResetChance > 0 && Math.random() * 100 < cooldownResetChance
+      const finalCooldown = isCooldownReset ? 0 : card.cooldown
+
       if (effectDuration > 0) {
         newSkills[skillIndex] = {
           ...skill,
           isActive: true,
           durationRemaining: effectDuration,
-          cooldownRemaining: card.cooldown,
+          cooldownRemaining: finalCooldown,
         }
       } else {
         // 즉시 효과는 바로 쿨다운
         newSkills[skillIndex] = {
           ...skill,
-          cooldownRemaining: card.cooldown,
+          cooldownRemaining: finalCooldown,
         }
+      }
+
+      // 쿨타임 초기화 발동 시 알림
+      if (isCooldownReset) {
+        showSkillNotification('player', '⏰ 쿨타임 초기화!', '⏰')
       }
 
       return newSkills
     })
-  }, [playerMaxHp, addFloatingDamage, showSkillNotification])
+  }, [playerMaxHp, addFloatingDamage, showSkillNotification, getPassiveBonus])
 
   // AI 스킬 사용 로직 (지능적)
   const aiUseSkill = useCallback((currentElapsedTime: number) => {
@@ -547,7 +557,7 @@ export function PvPRealtimeBattle({
             break
           }
         }
-        // 강타, 기타: 항상 사용 가능
+        // 번개 일섬: HP 비례 데미지, 항상 유용
         else if (effectType === 'first_strike') {
           selectedSkill = { skill, index }
         }
@@ -586,7 +596,8 @@ export function PvPRealtimeBattle({
         // 회복 피로 10초 설정 (연속 회복 방지)
         setOpponentHealFatigue(10)
       } else if (effect.type === 'first_strike') {
-        const bonusDamage = effect.value
+        // 번개 일섬: 플레이어 최대 HP 비례 즉시 데미지
+        const bonusDamage = Math.floor(playerMaxHp * effect.value / 100)
         setPlayerHp(hp => Math.max(0, hp - bonusDamage))
         addFloatingDamage('player', bonusDamage, true, false)
       } else if (effect.type === 'shield_bash') {
@@ -615,23 +626,33 @@ export function PvPRealtimeBattle({
         ? effect.value
         : card.duration
 
+      // 쿨타임 초기화 패시브 체크 (AI도 패시브 효과 적용)
+      const cooldownResetChance = getPassiveBonus(newSkills, 'cooldown_reset')
+      const isCooldownReset = cooldownResetChance > 0 && Math.random() * 100 < cooldownResetChance
+      const finalCooldown = isCooldownReset ? 0 : card.cooldown
+
       if (effectDuration > 0) {
         newSkills[index] = {
           ...skill,
           isActive: true,
           durationRemaining: effectDuration,
-          cooldownRemaining: card.cooldown,
+          cooldownRemaining: finalCooldown,
         }
       } else {
         newSkills[index] = {
           ...skill,
-          cooldownRemaining: card.cooldown,
+          cooldownRemaining: finalCooldown,
         }
+      }
+
+      // 쿨타임 초기화 발동 시 알림
+      if (isCooldownReset) {
+        showSkillNotification('opponent', '⏰ 쿨타임 초기화!', '⏰')
       }
 
       return newSkills
     })
-  }, [opponentMaxHp, playerMaxHp, addFloatingDamage, showSkillNotification])
+  }, [opponentMaxHp, playerMaxHp, addFloatingDamage, showSkillNotification, getPassiveBonus])
 
   // 스탯 ref (effect 재시작 방지용) - 안전한 스탯 사용
   const playerStatsRef = useRef(safePlayerStats)

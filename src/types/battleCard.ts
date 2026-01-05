@@ -37,7 +37,7 @@ export type BattleCardEffectType =
   | 'penetration_boost'  // 관통력 증가
   | 'guaranteed_crit'    // 확정 치명타 (지속시간 동안)
   | 'damage_reflect'     // 데미지 반사
-  | 'first_strike'       // 강타 (즉시 데미지)
+  | 'first_strike'       // 번개 일섬 (상대 최대 HP 비례 즉시 데미지)
   | 'gold_bonus'         // 골드 보너스
   // PvP 전용 효과
   | 'hp_recovery'        // HP 회복
@@ -52,6 +52,7 @@ export type BattleCardEffectType =
   | 'berserker'          // 광전사 (체력 낮을수록 공격속도 증가)
   | 'execute'            // 처형 (저체력 상대에게 추가 데미지)
   | 'shield_bash'        // 방패 강타 (방어력 기반 즉시 데미지)
+  | 'cooldown_reset'     // 쿨타임 초기화 (액티브 스킬 사용 시 확률적 쿨타임 초기화)
 
 // 카드 효과 데이터
 export interface BattleCardEffect {
@@ -108,8 +109,8 @@ export const EFFECT_TYPE_INFO: Record<BattleCardEffectType, {
   // 액티브 효과들 (버튼으로 발동)
   // 밸런스: 쿨다운 대비 효과 가치 균등화
   // =============================================
-  // 강타: 즉시 데미지 (CD 6초, 약 5회 사용 가능)
-  first_strike: { name: '강타', emoji: '💨', minTier: 'common', isPvPOnly: false, activationType: 'active', cooldown: 6, duration: 0 },
+  // 번개 일섬: 상대 최대 HP 비례 즉시 데미지 (CD 8초, 약 3-4회 사용)
+  first_strike: { name: '번개 일섬', emoji: '⚡', minTier: 'common', isPvPOnly: false, activationType: 'active', cooldown: 8, duration: 0 },
 
   // 확정 치명타: 4초간 모든 공격 치명타 (CD 10초, 약 3회 사용)
   guaranteed_crit: { name: '확정 치명타', emoji: '⚡', minTier: 'epic', isPvPOnly: false, activationType: 'active', cooldown: 10, duration: 4 },
@@ -129,8 +130,8 @@ export const EFFECT_TYPE_INFO: Record<BattleCardEffectType, {
   // 기절: 1.5초간 상대 행동 불가 (CD 12초, 약 2-3회 사용)
   stun: { name: '기절', emoji: '💫', minTier: 'legendary', isPvPOnly: true, activationType: 'active', cooldown: 12, duration: 1.5 },
 
-  // 침묵: 2.5초간 상대 스킬 사용 불가 (공격은 가능) (CD 10초)
-  silence: { name: '침묵', emoji: '🤐', minTier: 'epic', isPvPOnly: true, activationType: 'active', cooldown: 10, duration: 2.5 },
+  // 침묵: 3~4초간 상대 스킬 사용 불가 (공격은 가능) (CD 10초)
+  silence: { name: '침묵', emoji: '🤐', minTier: 'epic', isPvPOnly: true, activationType: 'active', cooldown: 10, duration: 3 },
 
   // =============================================
   // 회복 카운터 효과들 (패시브)
@@ -146,6 +147,9 @@ export const EFFECT_TYPE_INFO: Record<BattleCardEffectType, {
 
   // 방패 강타: 방어력 기반 즉시 데미지 (CD 8초, 약 3-4회 사용)
   shield_bash: { name: '방패 강타', emoji: '🛡️', minTier: 'common', isPvPOnly: true, activationType: 'active', cooldown: 8, duration: 0 },
+
+  // 쿨타임 초기화: 액티브 스킬 사용 시 확률적으로 쿨타임 초기화 (패시브)
+  cooldown_reset: { name: '시간 왜곡', emoji: '⏰', minTier: 'common', isPvPOnly: true, activationType: 'passive', cooldown: 0, duration: 0 },
 }
 
 // =============================================
@@ -167,8 +171,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     penetration_boost: 3,
     guaranteed_crit: 0,      // common에서는 나오지 않음
     damage_reflect: 0,       // common에서는 나오지 않음
-    // 강타: 15 * 5회 = 75 가치
-    first_strike: 15,
+    // 번개 일섬: 상대 최대 HP의 5% 즉시 데미지
+    first_strike: 5,
     gold_bonus: 20,
     // PvP 전용 (common에서는 나오지 않음)
     hp_recovery: 0,
@@ -184,6 +188,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     execute: 0,
     // 방패 강타: 방어력의 30% 즉시 데미지
     shield_bash: 30,
+    // 쿨타임 초기화: 15% 확률
+    cooldown_reset: 15,
   },
   rare: {
     // 패시브: 10% = +105 가치
@@ -195,8 +201,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     guaranteed_crit: 0,
     // 반사: 8 고정 데미지 반사 (15회 = 120 가치)
     damage_reflect: 8,
-    // 강타: 25 * 5회 = 125 가치
-    first_strike: 25,
+    // 번개 일섬: 상대 최대 HP의 8% 즉시 데미지
+    first_strike: 8,
     gold_bonus: 40,
     // PvP 전용
     // HP 회복: 남은 HP의 15% 회복
@@ -210,13 +216,15 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     stun: 0,
     silence: 0,
     // 회복 카운터
-    // 치유 감소: 상대 회복량 30% 감소
-    anti_heal: 30,
+    // 치유 감소: 상대 회복량 40% 감소 (버프됨)
+    anti_heal: 40,
     // 광전사: 체력 50%→0% 시 공격속도 0%→+20% (선형)
     berserker: 20,
     execute: 0,  // rare에서는 나오지 않음
     // 방패 강타: 방어력의 40% 즉시 데미지
     shield_bash: 40,
+    // 쿨타임 초기화: 20% 확률
+    cooldown_reset: 20,
   },
   epic: {
     // 패시브: 15% = +157.5 가치
@@ -229,8 +237,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     guaranteed_crit: 3,
     // 반사: 12 고정 데미지 반사 (15회 = 180 가치)
     damage_reflect: 12,
-    // 강타: 40 * 5회 = 200 가치
-    first_strike: 40,
+    // 번개 일섬: 상대 최대 HP의 12% 즉시 데미지
+    first_strike: 12,
     gold_bonus: 60,
     // PvP 전용
     // HP 회복: 남은 HP의 20% 회복
@@ -243,22 +251,24 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     lifesteal: 15,
     double_attack: 0,
     stun: 0,
-    // 침묵: 2초간 상대 스킬 사용 불가 (에픽)
-    silence: 2,
+    // 침묵: 3초간 상대 스킬 사용 불가 (에픽)
+    silence: 3,
     // 회복 카운터
-    // 치유 감소: 상대 회복량 50% 감소
-    anti_heal: 50,
+    // 치유 감소: 상대 회복량 70% 감소 (버프됨)
+    anti_heal: 70,
     // 광전사: 체력 50%→0% 시 공격속도 0%→+30% (선형)
     berserker: 30,
     // 처형: 상대 체력 50% 이하일 때 데미지 +30% (버프됨)
     execute: 30,
     // 방패 강타: 방어력의 50% 즉시 데미지
     shield_bash: 50,
+    // 쿨타임 초기화: 25% 확률
+    cooldown_reset: 25,
   },
   legendary: {
     // 패시브: 25% = +262.5 가치
     attack_boost: 25,
-    defense_boost: 25,
+    defense_boost: 40,  // 버프됨 (25% → 40%)
     crit_rate_boost: 15,
     crit_damage_boost: 50,
     penetration_boost: 15,
@@ -266,8 +276,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     guaranteed_crit: 5,
     // 반사: 18 고정 데미지 반사 (15회 = 270 가치)
     damage_reflect: 18,
-    // 강타: 60 * 5회 = 300 가치
-    first_strike: 60,
+    // 번개 일섬: 상대 최대 HP의 15% 즉시 데미지
+    first_strike: 15,
     gold_bonus: 100,
     // PvP 전용
     // HP 회복: 남은 HP의 30% 회복
@@ -282,17 +292,19 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     double_attack: 100,
     // 기절: 1.5초 = 상대 1회 공격+스킬 봉쇄 = 70 가치 + 전략적 가치
     stun: 100,
-    // 침묵: 3초간 상대 스킬 사용 불가 (전설)
-    silence: 3,
+    // 침묵: 4초간 상대 스킬 사용 불가 (전설)
+    silence: 4,
     // 회복 카운터
-    // 치유 감소: 상대 회복량 70% 감소
-    anti_heal: 70,
+    // 치유 감소: 상대 회복량 100% 감소 (완전 봉쇄, 버프됨)
+    anti_heal: 100,
     // 광전사: 체력 50%→0% 시 공격속도 0%→+50% (선형)
     berserker: 50,
     // 처형: 상대 체력 50% 이하일 때 데미지 +50% (버프됨)
     execute: 50,
     // 방패 강타: 방어력의 60% 즉시 데미지
     shield_bash: 60,
+    // 쿨타임 초기화: 30% 확률
+    cooldown_reset: 30,
   },
 }
 
@@ -306,18 +318,18 @@ export const TIER_AVAILABLE_EFFECTS: Record<BattleCardTier, BattleCardEffectType
 
 // 등급별로 나올 수 있는 효과 타입 (PvP용 - 플레이어, 골드 보너스 포함)
 export const TIER_AVAILABLE_EFFECTS_PVP: Record<BattleCardTier, BattleCardEffectType[]> = {
-  common: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'first_strike', 'gold_bonus', 'shield_bash'],
-  rare: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'lifesteal', 'anti_heal', 'berserker', 'shield_bash'],
-  epic: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash'],
-  legendary: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'double_attack', 'stun', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash'],
+  common: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'first_strike', 'gold_bonus', 'shield_bash', 'cooldown_reset'],
+  rare: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'lifesteal', 'anti_heal', 'berserker', 'shield_bash', 'cooldown_reset'],
+  epic: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash', 'cooldown_reset'],
+  legendary: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'double_attack', 'stun', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash', 'cooldown_reset'],
 }
 
 // 등급별로 나올 수 있는 효과 타입 (AI 상대용 - 골드 보너스 제외)
 export const TIER_AVAILABLE_EFFECTS_AI: Record<BattleCardTier, BattleCardEffectType[]> = {
-  common: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'first_strike', 'shield_bash'],
-  rare: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'damage_reflect', 'first_strike', 'hp_recovery', 'speed_boost', 'lifesteal', 'anti_heal', 'berserker', 'shield_bash'],
-  epic: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash'],
-  legendary: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'double_attack', 'stun', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash'],
+  common: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'first_strike', 'shield_bash', 'cooldown_reset'],
+  rare: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'damage_reflect', 'first_strike', 'hp_recovery', 'speed_boost', 'lifesteal', 'anti_heal', 'berserker', 'shield_bash', 'cooldown_reset'],
+  epic: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash', 'cooldown_reset'],
+  legendary: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'double_attack', 'stun', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash', 'cooldown_reset'],
 }
 
 // 카드 이름 생성
@@ -365,9 +377,9 @@ export const CARD_NAMES: Record<BattleCardEffectType, Record<BattleCardTier, str
     legendary: '인과응보',
   },
   first_strike: {
-    common: '선제 타격',
-    rare: '기습',
-    epic: '전격전',
+    common: '전격 타격',
+    rare: '뇌전 일격',
+    epic: '뇌신의 일격',
     legendary: '번개 일섬',
   },
   gold_bonus: {
@@ -443,6 +455,12 @@ export const CARD_NAMES: Record<BattleCardEffectType, Record<BattleCardTier, str
     epic: '철벽 돌진',
     legendary: '불굴의 수호자',
   },
+  cooldown_reset: {
+    common: '시간의 조각',
+    rare: '시간 균열',
+    epic: '시간 왜곡',
+    legendary: '시간의 지배자',
+  },
 }
 
 // 랜덤 등급 롤
@@ -466,8 +484,8 @@ export function generateRandomCard(): BattleCard {
   const value = TIER_EFFECT_VALUES[tier][effectType]
   const info = EFFECT_TYPE_INFO[effectType]
 
-  // 효과가 % 기반인지 결정 (first_strike, guaranteed_crit, double_attack, stun, immunity, silence, shield_bash는 고정값)
-  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
+  // 효과가 % 기반인지 결정 (guaranteed_crit, double_attack, stun, immunity, silence, shield_bash는 고정값)
+  const isPercentage = !['guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
 
   const effect: BattleCardEffect = {
     type: effectType,
@@ -513,7 +531,7 @@ export function formatCardDescription(effect: BattleCardEffect): string {
 
     // 액티브 효과들 (실시간 배틀용 설명)
     case 'first_strike':
-      return `즉시 ${effect.value} 데미지`
+      return `상대 최대 HP의 ${effect.value}% 즉시 데미지`
     case 'guaranteed_crit':
       return `${effect.value}초간 치명타 확정`
     case 'hp_recovery':
@@ -537,6 +555,8 @@ export function formatCardDescription(effect: BattleCardEffect): string {
       return `상대 HP 50% 이하 시 데미지 +${effect.value}%`
     case 'shield_bash':
       return `방어력의 ${effect.value}% 즉시 데미지`
+    case 'cooldown_reset':
+      return `스킬 사용 시 ${effect.value}% 확률로 쿨타임 초기화`
     default:
       return info.name
   }
@@ -576,7 +596,7 @@ export function generateRandomPvPCard(): BattleCard {
   const value = TIER_EFFECT_VALUES[tier][effectType]
   const info = EFFECT_TYPE_INFO[effectType]
 
-  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
+  const isPercentage = !['guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
 
   const effect: BattleCardEffect = {
     type: effectType,
@@ -604,7 +624,7 @@ export function generatePvPCardByTier(tier: BattleCardTier): BattleCard {
   const value = TIER_EFFECT_VALUES[tier][effectType]
   const info = EFFECT_TYPE_INFO[effectType]
 
-  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
+  const isPercentage = !['guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
 
   const effect: BattleCardEffect = {
     type: effectType,
@@ -633,7 +653,7 @@ export function generateAICard(): BattleCard {
   const value = TIER_EFFECT_VALUES[tier][effectType]
   const info = EFFECT_TYPE_INFO[effectType]
 
-  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
+  const isPercentage = !['guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
 
   const effect: BattleCardEffect = {
     type: effectType,
@@ -661,7 +681,7 @@ export function generateAICardByTier(tier: BattleCardTier): BattleCard {
   const value = TIER_EFFECT_VALUES[tier][effectType]
   const info = EFFECT_TYPE_INFO[effectType]
 
-  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
+  const isPercentage = !['guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
 
   const effect: BattleCardEffect = {
     type: effectType,
@@ -691,7 +711,7 @@ export function generateCardByEffect(effectType: BattleCardEffectType, tier: Bat
   if (value === 0) {
     const minTier = info.minTier
     const minValue = TIER_EFFECT_VALUES[minTier][effectType]
-    const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
+    const isPercentage = !['guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
 
     return {
       id: `card-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -706,7 +726,7 @@ export function generateCardByEffect(effectType: BattleCardEffectType, tier: Bat
     }
   }
 
-  const isPercentage = !['first_strike', 'guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
+  const isPercentage = !['guaranteed_crit', 'double_attack', 'stun', 'immunity', 'silence', 'execute', 'shield_bash'].includes(effectType)
 
   return {
     id: `card-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
