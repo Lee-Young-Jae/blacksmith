@@ -16,6 +16,7 @@ import { DefenseDeckSetup } from './DefenseDeckSetup'
 import { PvPLeaderboard } from './PvPLeaderboard'
 import { PvPBattleHistory } from './PvPBattleHistory'
 import { CardGacha } from './CardGacha'
+import { CardFusion } from './CardFusion'
 import { usePvPBattle } from '../../hooks/usePvPBattle'
 import { useCardDeck } from '../../hooks/useCardDeck'
 import { usePvPRanking } from '../../hooks/usePvPRanking'
@@ -48,6 +49,8 @@ const TABS: { id: PvPTab; label: string; emoji: string }[] = [
 // 컴포넌트
 // =============================================
 
+type CardSubTab = 'gacha' | 'fusion'
+
 export function PvPArena({
   playerStats,
   playerName,
@@ -58,6 +61,7 @@ export function PvPArena({
   onGoldUpdate,
 }: PvPArenaProps) {
   const [activeTab, setActiveTab] = useState<PvPTab>('matchmaking')
+  const [cardSubTab, setCardSubTab] = useState<CardSubTab>('gacha')
 
   // Hooks
   const pvpBattle = usePvPBattle()
@@ -211,17 +215,54 @@ export function PvPArena({
         )}
 
         {activeTab === 'cards' && (
-          <CardGacha
-            gold={gold}
-            ownedCardCount={cardDeck.ownedCards.length}
-            onPullSingle={cardDeck.pullCard}
-            onPullMulti={cardDeck.pullMultiCards}
-            onUpdateGold={async (newGold: number) => {
-              if (onGoldUpdate) {
-                onGoldUpdate(newGold - gold)
-              }
-            }}
-          />
+          <div className="space-y-4">
+            {/* 카드 서브탭 */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCardSubTab('gacha')}
+                className={`flex-1 py-2 rounded-lg font-medium transition-all ${
+                  cardSubTab === 'gacha'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                }`}
+              >
+                🎰 뽑기
+              </button>
+              <button
+                onClick={() => setCardSubTab('fusion')}
+                className={`flex-1 py-2 rounded-lg font-medium transition-all ${
+                  cardSubTab === 'fusion'
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                }`}
+              >
+                🔮 합성
+              </button>
+            </div>
+
+            {/* 카드 서브탭 컨텐츠 */}
+            {cardSubTab === 'gacha' && (
+              <CardGacha
+                gold={gold}
+                ownedCardCount={cardDeck.ownedCards.length}
+                onPullSingle={cardDeck.pullCard}
+                onPullMulti={cardDeck.pullMultiCards}
+                onUpdateGold={async (newGold: number) => {
+                  if (onGoldUpdate) {
+                    onGoldUpdate(newGold - gold)
+                  }
+                }}
+              />
+            )}
+
+            {cardSubTab === 'fusion' && (
+              <CardFusion
+                ownedCards={cardDeck.ownedCards}
+                onFuse={cardDeck.fuseCards}
+                getFusableCount={cardDeck.getFusableCount}
+              />
+            )}
+          </div>
         )}
 
         {activeTab === 'history' && (

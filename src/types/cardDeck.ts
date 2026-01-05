@@ -222,6 +222,50 @@ export function getDisenchantValue(card: OwnedCard): number {
 }
 
 // =============================================
+// 카드 합성 시스템
+// =============================================
+
+// 합성 가능한 티어 (전설은 합성 재료로만 사용, 결과물로는 나옴)
+export type FusableTier = 'common' | 'rare' | 'epic'
+
+// 합성에 필요한 카드 수 (급진형)
+export const FUSION_REQUIREMENTS: Record<FusableTier, {
+  required: number
+  resultTier: BattleCardTier
+}> = {
+  common: { required: 5, resultTier: 'rare' },      // 일반 5장 → 레어
+  rare: { required: 6, resultTier: 'epic' },        // 레어 6장 → 에픽
+  epic: { required: 8, resultTier: 'legendary' },   // 에픽 8장 → 전설
+}
+
+// 합성 결과 티어 이름
+export const FUSION_RESULT_NAMES: Record<BattleCardTier, string> = {
+  common: '일반',
+  rare: '레어',
+  epic: '에픽',
+  legendary: '전설',
+}
+
+// 합성 가능 여부 확인
+export function canFuseCards(cards: OwnedCard[], tier: FusableTier): boolean {
+  const requirement = FUSION_REQUIREMENTS[tier]
+  const tierCards = cards.filter(c => c.tier === tier)
+  return tierCards.length >= requirement.required
+}
+
+// 특정 티어의 합성 가능한 카드 수
+export function getFusableCardCount(cards: OwnedCard[], tier: FusableTier): number {
+  return cards.filter(c => c.tier === tier).length
+}
+
+// 합성에 필요한 추가 카드 수
+export function getCardsNeededForFusion(cards: OwnedCard[], tier: FusableTier): number {
+  const requirement = FUSION_REQUIREMENTS[tier]
+  const currentCount = cards.filter(c => c.tier === tier).length
+  return Math.max(0, requirement.required - currentCount)
+}
+
+// =============================================
 // 카드 획득 소스
 // =============================================
 

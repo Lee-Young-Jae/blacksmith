@@ -25,6 +25,7 @@ import type {
   CardFilter,
   CardSortBy,
   CardSortOrder,
+  FusableTier,
 } from '../types/cardDeck'
 import {
   ownedCardToBattleCard,
@@ -32,7 +33,12 @@ import {
   filterCards,
   getDisenchantValue,
   EMPTY_DECK,
+  FUSION_REQUIREMENTS,
+  canFuseCards,
+  getFusableCardCount,
+  getCardsNeededForFusion,
 } from '../types/cardDeck'
+import { generatePvPCardByTier } from '../types/battleCard'
 import type { EquippedItems } from '../types/equipment'
 
 // =============================================
@@ -60,6 +66,12 @@ interface UseCardDeckReturn {
   addCard: (cardType: BattleCardEffectType, tier: BattleCardTier, value: number, isPercentage: boolean) => Promise<OwnedCard | null>
   disenchantCard: (cardId: string) => Promise<number>
   disenchantMultiple: (cardIds: string[]) => Promise<number>
+
+  // 카드 합성
+  fuseCards: (tier: FusableTier, cardIds: string[]) => Promise<OwnedCard | null>
+  canFuse: (tier: FusableTier) => boolean
+  getFusableCount: (tier: FusableTier) => number
+  getCardsNeeded: (tier: FusableTier) => number
 
   // 필터/정렬
   getFilteredCards: (filter: CardFilter) => OwnedCard[]
@@ -321,6 +333,104 @@ export function useCardDeck(): UseCardDeckReturn {
       return 0
     }
   }, [user, ownedCards])
+
+  // =============================================
+  // 카드 합성
+  // =============================================
+
+  const fuseCards = useCallback(async (
+    tier: FusableTier,
+    cardIds: string[]
+  ): Promise<OwnedCard | null> => {
+    if (!user) return null
+
+    const requirement = FUSION_REQUIREMENTS[tier]
+
+    // 필요한 카드 수 확인
+    if (cardIds.length !== requirement.required) {
+      setError(`${tier} 카드 ${requirement.required}장이 필요합니다.`)
+      return null
+    }
+
+    // 선택된 카드들이 모두 해당 티어인지 확인
+    const selectedCards = ownedCards.filter(c => cardIds.includes(c.id))
+    if (selectedCards.length !== requirement.required) {
+      setError('선택된 카드를 찾을 수 없습니다.')
+      return null
+    }
+
+    const allSameTier = selectedCards.every(c => c.tier === tier)
+    if (!allSameTier) {
+      setError(`모든 카드가 ${tier} 등급이어야 합니다.`)
+      return null
+    }
+
+    try {
+      // 1. 재료 카드들 삭제
+      const { error: deleteError } = await supabase
+        .from('user_cards')
+        .delete()
+        .in('id', cardIds)
+
+      if (deleteError) throw deleteError
+
+      // 2. 새 카드 생성 (상위 등급, 랜덤 효과)
+      const newCard = generatePvPCardByTier(requirement.resultTier)
+
+      // 3. DB에 저장
+      const { data, error: insertError } = await supabase
+        .from('user_cards')
+        .insert({
+          user_id: user.id,
+          card_type: newCard.effect.type,
+          tier: newCard.tier,
+          value: newCard.effect.value,
+          is_percentage: newCard.effect.isPercentage,
+        })
+        .select()
+        .single()
+
+      if (insertError) throw insertError
+
+      const row = data as OwnedCardRow
+      const resultCard: OwnedCard = {
+        id: row.id,
+        oderId: row.user_id,
+        cardType: row.card_type as BattleCardEffectType,
+        tier: row.tier as BattleCardTier,
+        value: row.value,
+        isPercentage: row.is_percentage,
+        createdAt: new Date(row.created_at),
+      }
+
+      // 4. 로컬 상태 업데이트 (재료 삭제 + 결과물 추가)
+      setOwnedCards(prev => [
+        resultCard,
+        ...prev.filter(c => !cardIds.includes(c.id))
+      ])
+
+      return resultCard
+    } catch (err) {
+      console.error('Failed to fuse cards:', err)
+      setError('카드 합성에 실패했습니다.')
+      return null
+    }
+  }, [user, ownedCards])
+
+  // 합성 가능 여부
+  const canFuse = useCallback((tier: FusableTier): boolean => {
+    return canFuseCards(ownedCards, tier)
+  }, [ownedCards])
+
+  // 합성 가능한 카드 수
+  const getFusableCount = useCallback((tier: FusableTier): number => {
+    return getFusableCardCount(ownedCards, tier)
+  }, [ownedCards])
+
+  // 합성에 필요한 추가 카드 수
+  const getCardsNeeded = useCallback((tier: FusableTier): number => {
+    return getCardsNeededForFusion(ownedCards, tier)
+  }, [ownedCards])
 
   // =============================================
   // 필터/정렬
@@ -631,6 +741,10 @@ export function useCardDeck(): UseCardDeckReturn {
     addCard,
     disenchantCard,
     disenchantMultiple,
+    fuseCards,
+    canFuse,
+    getFusableCount,
+    getCardsNeeded,
     getFilteredCards,
     getSortedCards,
     loadDefenseDeck,
