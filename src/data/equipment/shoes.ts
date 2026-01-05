@@ -8,11 +8,11 @@ function createLevels(equipmentId: string, levelData: Omit<EquipmentLevel, 'imag
 }
 
 export const SHOES: EquipmentBase[] = [
-  // ===== 가죽 부츠 시리즈 =====
+  // ===== 가죽 부츠 시리즈 (밸런스형) =====
   {
     id: 'shoes-leather-boots',
     slot: 'shoes',
-    baseStats: { defense: 4, hp: 15 },
+    baseStats: { defense: 5, hp: 18 },
     emoji: '👢',
     potentialSlots: 3,
     levels: createLevels('shoes-leather-boots', [
@@ -40,11 +40,11 @@ export const SHOES: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 철제 부츠 시리즈 =====
+  // ===== 철제 부츠 시리즈 (탱커형) =====
   {
     id: 'shoes-iron-boots',
     slot: 'shoes',
-    baseStats: { defense: 10, hp: 30 },
+    baseStats: { defense: 10, hp: 15 },
     emoji: '🦶',
     potentialSlots: 3,
     levels: createLevels('shoes-iron-boots', [
@@ -76,7 +76,7 @@ export const SHOES: EquipmentBase[] = [
   {
     id: 'shoes-mage-sandals',
     slot: 'shoes',
-    baseStats: { defense: 2, hp: 10, critRate: 2, critDamage: 4 },
+    baseStats: { defense: 3, hp: 12, critRate: 3, critDamage: 6 },
     emoji: '🩴',
     potentialSlots: 3,
     levels: createLevels('shoes-mage-sandals', [
@@ -108,7 +108,7 @@ export const SHOES: EquipmentBase[] = [
   {
     id: 'shoes-ninja-tabi',
     slot: 'shoes',
-    baseStats: { defense: 3, hp: 10, critRate: 4, penetration: 3 },
+    baseStats: { defense: 3, hp: 12, critRate: 4, penetration: 4 },
     emoji: '👟',
     potentialSlots: 3,
     levels: createLevels('shoes-ninja-tabi', [
@@ -140,7 +140,7 @@ export const SHOES: EquipmentBase[] = [
   {
     id: 'shoes-knight-sabatons',
     slot: 'shoes',
-    baseStats: { defense: 15, hp: 50 },
+    baseStats: { defense: 12, hp: 30 },
     emoji: '⚔️',
     potentialSlots: 3,
     levels: createLevels('shoes-knight-sabatons', [
@@ -172,7 +172,7 @@ export const SHOES: EquipmentBase[] = [
   {
     id: 'shoes-wind-walkers',
     slot: 'shoes',
-    baseStats: { defense: 8, hp: 30, critRate: 5, penetration: 5 },
+    baseStats: { defense: 5, hp: 18, critRate: 4, penetration: 4 },
     emoji: '💨',
     potentialSlots: 3,
     levels: createLevels('shoes-wind-walkers', [

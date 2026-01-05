@@ -15,7 +15,7 @@ export const EARRINGS: EquipmentBase[] = [
   {
     id: "earring-copper",
     slot: "earring",
-    baseStats: { attack: 3, critRate: 1 },
+    baseStats: { attack: 5, critRate: 2, critDamage: 4 },
     emoji: "💎",
     potentialSlots: 3,
     levels: createLevels("earring-copper", [
@@ -47,7 +47,7 @@ export const EARRINGS: EquipmentBase[] = [
   {
     id: "earring-silver",
     slot: "earring",
-    baseStats: { attack: 6, critRate: 2, critDamage: 3 },
+    baseStats: { attack: 5, critRate: 3, critDamage: 5 },
     emoji: "🔘",
     potentialSlots: 3,
     levels: createLevels("earring-silver", [
@@ -79,7 +79,7 @@ export const EARRINGS: EquipmentBase[] = [
   {
     id: "earring-gold",
     slot: "earring",
-    baseStats: { attack: 10, critRate: 3, critDamage: 5 },
+    baseStats: { attack: 6, critRate: 3, critDamage: 6 },
     emoji: "🟡",
     potentialSlots: 3,
     levels: createLevels("earring-gold", [
@@ -111,7 +111,7 @@ export const EARRINGS: EquipmentBase[] = [
   {
     id: "earring-ruby",
     slot: "earring",
-    baseStats: { attack: 15, critRate: 4, critDamage: 8 },
+    baseStats: { attack: 5, critRate: 4, critDamage: 8 },
     emoji: "🔴",
     potentialSlots: 3,
     levels: createLevels("earring-ruby", [
@@ -143,7 +143,7 @@ export const EARRINGS: EquipmentBase[] = [
   {
     id: "earring-sapphire",
     slot: "earring",
-    baseStats: { defense: 5, hp: 30, critRate: 3 },
+    baseStats: { defense: 4, hp: 20, critRate: 3 },
     emoji: "🔵",
     potentialSlots: 3,
     levels: createLevels("earring-sapphire", [
@@ -175,7 +175,7 @@ export const EARRINGS: EquipmentBase[] = [
   {
     id: "earring-diamond",
     slot: "earring",
-    baseStats: { attack: 12, critRate: 6, critDamage: 12, penetration: 3 },
+    baseStats: { attack: 5, critRate: 4, critDamage: 6, penetration: 3 },
     emoji: "💠",
     potentialSlots: 3,
     levels: createLevels("earring-diamond", [

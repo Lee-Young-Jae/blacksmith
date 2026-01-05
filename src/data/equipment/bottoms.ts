@@ -8,11 +8,11 @@ function createLevels(equipmentId: string, levelData: Omit<EquipmentLevel, 'imag
 }
 
 export const BOTTOMS: EquipmentBase[] = [
-  // ===== 가죽 바지 시리즈 =====
+  // ===== 가죽 바지 시리즈 (밸런스형) =====
   {
     id: 'bottom-leather-pants',
     slot: 'bottom',
-    baseStats: { defense: 6, hp: 25 },
+    baseStats: { defense: 8, hp: 28, attack: 2 },
     emoji: '👖',
     potentialSlots: 3,
     levels: createLevels('bottom-leather-pants', [
@@ -40,11 +40,11 @@ export const BOTTOMS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 사슬 다리보호대 시리즈 =====
+  // ===== 사슬 다리보호대 시리즈 (탱커형) =====
   {
     id: 'bottom-chain-leggings',
     slot: 'bottom',
-    baseStats: { defense: 12, hp: 40 },
+    baseStats: { defense: 14, hp: 35 },
     emoji: '🦿',
     potentialSlots: 3,
     levels: createLevels('bottom-chain-leggings', [
@@ -72,11 +72,11 @@ export const BOTTOMS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 판금 경갑 시리즈 =====
+  // ===== 판금 경갑 시리즈 (중탱커형) =====
   {
     id: 'bottom-plate-greaves',
     slot: 'bottom',
-    baseStats: { defense: 20, hp: 60 },
+    baseStats: { defense: 18, hp: 40 },
     emoji: '🛡️',
     potentialSlots: 3,
     levels: createLevels('bottom-plate-greaves', [
@@ -104,11 +104,11 @@ export const BOTTOMS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 마법사 스커트 시리즈 =====
+  // ===== 마법사 스커트 시리즈 (마법형) =====
   {
     id: 'bottom-mage-skirt',
     slot: 'bottom',
-    baseStats: { defense: 4, hp: 15, critRate: 2, critDamage: 4 },
+    baseStats: { defense: 5, hp: 15, critRate: 4, critDamage: 8 },
     emoji: '👗',
     potentialSlots: 3,
     levels: createLevels('bottom-mage-skirt', [
@@ -136,11 +136,11 @@ export const BOTTOMS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 닌자 바지 시리즈 =====
+  // ===== 닌자 바지 시리즈 (암살형) =====
   {
     id: 'bottom-ninja-pants',
     slot: 'bottom',
-    baseStats: { defense: 5, hp: 10, critRate: 4, penetration: 2 },
+    baseStats: { defense: 4, hp: 12, critRate: 5, penetration: 5 },
     emoji: '🩳',
     potentialSlots: 3,
     levels: createLevels('bottom-ninja-pants', [
@@ -168,11 +168,11 @@ export const BOTTOMS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 타이탄 경갑 시리즈 =====
+  // ===== 타이탄 경갑 시리즈 (공격탱커형) =====
   {
     id: 'bottom-titan-greaves',
     slot: 'bottom',
-    baseStats: { defense: 25, hp: 80, attack: 8 },
+    baseStats: { defense: 10, hp: 25, attack: 8 },
     emoji: '⚙️',
     potentialSlots: 3,
     levels: createLevels('bottom-titan-greaves', [

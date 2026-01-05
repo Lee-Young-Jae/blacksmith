@@ -8,11 +8,11 @@ function createLevels(equipmentId: string, levelData: Omit<EquipmentLevel, 'imag
 }
 
 export const TOPS: EquipmentBase[] = [
-  // ===== 가죽 갑옷 시리즈 =====
+  // ===== 가죽 갑옷 시리즈 (밸런스형) =====
   {
     id: 'top-leather-armor',
     slot: 'top',
-    baseStats: { defense: 8, hp: 30 },
+    baseStats: { defense: 10, hp: 35, attack: 3 },
     emoji: '🥋',
     potentialSlots: 3,
     levels: createLevels('top-leather-armor', [
@@ -40,11 +40,11 @@ export const TOPS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 사슬 갑옷 시리즈 =====
+  // ===== 사슬 갑옷 시리즈 (탱커형) =====
   {
     id: 'top-chainmail',
     slot: 'top',
-    baseStats: { defense: 15, hp: 50 },
+    baseStats: { defense: 18, hp: 45 },
     emoji: '🦺',
     potentialSlots: 3,
     levels: createLevels('top-chainmail', [
@@ -72,11 +72,11 @@ export const TOPS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 판금 갑옷 시리즈 =====
+  // ===== 판금 갑옷 시리즈 (중탱커형) =====
   {
     id: 'top-plate-armor',
     slot: 'top',
-    baseStats: { defense: 25, hp: 80 },
+    baseStats: { defense: 22, hp: 50 },
     emoji: '🛡️',
     potentialSlots: 3,
     levels: createLevels('top-plate-armor', [
@@ -104,11 +104,11 @@ export const TOPS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 마법사 로브 시리즈 =====
+  // ===== 마법사 로브 시리즈 (마법형) =====
   {
     id: 'top-robe',
     slot: 'top',
-    baseStats: { defense: 5, hp: 20, critRate: 3, critDamage: 5 },
+    baseStats: { defense: 6, hp: 20, critRate: 5, critDamage: 10 },
     emoji: '👘',
     potentialSlots: 3,
     levels: createLevels('top-robe', [
@@ -136,11 +136,11 @@ export const TOPS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 암살자 조끼 시리즈 =====
+  // ===== 암살자 조끼 시리즈 (암살형) =====
   {
     id: 'top-assassin-vest',
     slot: 'top',
-    baseStats: { defense: 6, hp: 15, critRate: 5, penetration: 3 },
+    baseStats: { defense: 5, hp: 15, critRate: 6, penetration: 6 },
     emoji: '🧥',
     potentialSlots: 3,
     levels: createLevels('top-assassin-vest', [
@@ -168,11 +168,11 @@ export const TOPS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 용린 갑옷 시리즈 =====
+  // ===== 용린 갑옷 시리즈 (공격탱커형) =====
   {
     id: 'top-dragon-scale',
     slot: 'top',
-    baseStats: { defense: 30, hp: 100, attack: 10 },
+    baseStats: { defense: 12, hp: 30, attack: 10 },
     emoji: '🐉',
     potentialSlots: 3,
     levels: createLevels('top-dragon-scale', [

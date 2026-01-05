@@ -8,11 +8,11 @@ function createLevels(equipmentId: string, levelData: Omit<EquipmentLevel, 'imag
 }
 
 export const HATS: EquipmentBase[] = [
-  // ===== 가죽 모자 시리즈 =====
+  // ===== 가죽 모자 시리즈 (밸런스형) =====
   {
     id: 'hat-leather-cap',
     slot: 'hat',
-    baseStats: { defense: 5, hp: 20 },
+    baseStats: { defense: 6, hp: 25, attack: 2 },
     emoji: '🧢',
     potentialSlots: 3,
     levels: createLevels('hat-leather-cap', [
@@ -40,11 +40,11 @@ export const HATS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 철제 투구 시리즈 =====
+  // ===== 철제 투구 시리즈 (탱커형) =====
   {
     id: 'hat-iron-helm',
     slot: 'hat',
-    baseStats: { defense: 12, hp: 40 },
+    baseStats: { defense: 12, hp: 30 },
     emoji: '🪖',
     potentialSlots: 3,
     levels: createLevels('hat-iron-helm', [
@@ -72,11 +72,11 @@ export const HATS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 마법사 모자 시리즈 =====
+  // ===== 마법사 모자 시리즈 (마법형) =====
   {
     id: 'hat-wizard-hat',
     slot: 'hat',
-    baseStats: { defense: 3, hp: 15, critRate: 2 },
+    baseStats: { defense: 4, hp: 15, critRate: 4, critDamage: 8 },
     emoji: '🎩',
     potentialSlots: 3,
     levels: createLevels('hat-wizard-hat', [
@@ -104,11 +104,11 @@ export const HATS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 황금 왕관 시리즈 =====
+  // ===== 황금 왕관 시리즈 (균형형) =====
   {
     id: 'hat-crown',
     slot: 'hat',
-    baseStats: { defense: 8, hp: 50, critDamage: 5 },
+    baseStats: { defense: 6, hp: 20, attack: 3, critDamage: 6 },
     emoji: '👑',
     potentialSlots: 3,
     levels: createLevels('hat-crown', [
@@ -136,11 +136,11 @@ export const HATS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 닌자 두건 시리즈 =====
+  // ===== 닌자 두건 시리즈 (암살형) =====
   {
     id: 'hat-ninja-hood',
     slot: 'hat',
-    baseStats: { defense: 4, hp: 10, critRate: 4, penetration: 2 },
+    baseStats: { defense: 3, hp: 10, critRate: 6, penetration: 5 },
     emoji: '🥷',
     potentialSlots: 3,
     levels: createLevels('hat-ninja-hood', [
@@ -168,11 +168,11 @@ export const HATS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 바이킹 투구 시리즈 =====
+  // ===== 바이킹 투구 시리즈 (공격형) =====
   {
     id: 'hat-viking-helm',
     slot: 'hat',
-    baseStats: { defense: 15, hp: 60, attack: 5 },
+    baseStats: { defense: 5, hp: 15, attack: 8 },
     emoji: '⛑️',
     potentialSlots: 3,
     levels: createLevels('hat-viking-helm', [

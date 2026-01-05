@@ -11,11 +11,11 @@ function createLevels(
 }
 
 export const GLOVES: EquipmentBase[] = [
-  // ===== 가죽 장갑 시리즈 =====
+  // ===== 가죽 장갑 시리즈 (밸런스형) =====
   {
     id: "gloves-leather",
     slot: "gloves",
-    baseStats: { defense: 3, attack: 5 },
+    baseStats: { defense: 4, attack: 6 },
     emoji: "🧤",
     potentialSlots: 3,
     levels: createLevels("gloves-leather", [
@@ -43,11 +43,11 @@ export const GLOVES: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 철제 건틀릿 시리즈 =====
+  // ===== 철제 건틀릿 시리즈 (탱커형) =====
   {
     id: "gloves-iron-gauntlets",
     slot: "gloves",
-    baseStats: { defense: 8, attack: 10 },
+    baseStats: { defense: 8, attack: 4 },
     emoji: "🤜",
     potentialSlots: 3,
     levels: createLevels("gloves-iron-gauntlets", [
@@ -75,11 +75,11 @@ export const GLOVES: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 마법사 장갑 시리즈 =====
+  // ===== 마법사 장갑 시리즈 (마법형) =====
   {
     id: "gloves-mage",
     slot: "gloves",
-    baseStats: { defense: 2, attack: 3, critRate: 3, critDamage: 6 },
+    baseStats: { defense: 2, attack: 4, critRate: 4, critDamage: 6 },
     emoji: "✋",
     potentialSlots: 3,
     levels: createLevels("gloves-mage", [
@@ -107,11 +107,11 @@ export const GLOVES: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 암살자 장갑 시리즈 =====
+  // ===== 암살자 장갑 시리즈 (암살형) =====
   {
     id: "gloves-assassin",
     slot: "gloves",
-    baseStats: { defense: 2, attack: 8, critRate: 5, penetration: 4 },
+    baseStats: { defense: 2, attack: 6, critRate: 5, penetration: 4 },
     emoji: "🖐️",
     potentialSlots: 3,
     levels: createLevels("gloves-assassin", [
@@ -139,11 +139,11 @@ export const GLOVES: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 광전사 건틀릿 시리즈 =====
+  // ===== 광전사 건틀릿 시리즈 (공격형) =====
   {
     id: "gloves-berserker",
     slot: "gloves",
-    baseStats: { defense: 5, attack: 15, critDamage: 8 },
+    baseStats: { defense: 3, attack: 10, critDamage: 6 },
     emoji: "👊",
     potentialSlots: 3,
     levels: createLevels("gloves-berserker", [
@@ -171,11 +171,11 @@ export const GLOVES: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 용의 발톱 시리즈 =====
+  // ===== 용의 발톱 시리즈 (파워형) =====
   {
     id: "gloves-dragon-claws",
     slot: "gloves",
-    baseStats: { defense: 10, attack: 20, penetration: 5 },
+    baseStats: { defense: 4, attack: 10, penetration: 4 },
     emoji: "🐲",
     potentialSlots: 3,
     levels: createLevels("gloves-dragon-claws", [
