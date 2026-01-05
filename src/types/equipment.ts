@@ -133,7 +133,8 @@ export function getStarForceBonus(
   baseStats: Partial<CharacterStats>,
   starLevel: number
 ): Partial<CharacterStats> {
-  const starMultiplier = 1 + (starLevel * 0.05) + (starLevel * starLevel * 0.002)
+  // 강화 배율: 25성 기준 약 4.5배
+  const starMultiplier = 1 + (starLevel * 0.07) + (starLevel * starLevel * 0.003)
 
   const bonus: Partial<CharacterStats> = {}
 
@@ -159,7 +160,8 @@ const ADDITIVE_PERCENT_STATS: (keyof CharacterStats)[] = ['critRate', 'critDamag
 // 장비의 기본 스탯 계산 (% 공격력/방어력/HP 제외 - 총 스탯 기준으로 별도 계산됨)
 export function calculateEquipmentStats(equipment: UserEquipment): CharacterStats {
   const { equipmentBase, starLevel, potentials } = equipment
-  const starMultiplier = 1 + (starLevel * 0.05) + (starLevel * starLevel * 0.002)
+  // 강화 배율: 25성 기준 약 4.5배
+  const starMultiplier = 1 + (starLevel * 0.07) + (starLevel * starLevel * 0.003)
 
   // 기본 스탯 × 스타포스 배율
   const baseWithMultipliers: CharacterStats = {

@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
-import type { UserEquipment } from '../../types/equipment'
-import { getEquipmentName, EQUIPMENT_SLOT_NAMES } from '../../types/equipment'
+import { useState, useEffect, useMemo } from 'react'
+import type { UserEquipment, EquipmentSlot } from '../../types/equipment'
+import { getEquipmentName, EQUIPMENT_SLOT_NAMES, EQUIPMENT_SLOTS, EQUIPMENT_SLOT_EMOJIS } from '../../types/equipment'
 import type { SendEquipmentRequest, UserSearchResult } from '../../types/gift'
+import EquipmentImage from '../equipment/EquipmentImage'
 
 interface SendEquipmentModalProps {
   inventory: UserEquipment[]
@@ -25,8 +26,21 @@ export function SendEquipmentModal({
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // 미장착 장비만 필터링
-  const giftableEquipment = inventory.filter(eq => !eq.isEquipped)
+  // 장비 필터링 상태
+  const [equipmentSearch, setEquipmentSearch] = useState('')
+  const [slotFilter, setSlotFilter] = useState<EquipmentSlot | 'all'>('all')
+
+  // 미장착 장비만 필터링 + 검색/슬롯 필터 적용
+  const giftableEquipment = useMemo(() => {
+    return inventory
+      .filter(eq => !eq.isEquipped)
+      .filter(eq => slotFilter === 'all' || eq.equipmentBase.slot === slotFilter)
+      .filter(eq => {
+        if (!equipmentSearch.trim()) return true
+        const name = getEquipmentName(eq.equipmentBase, eq.starLevel).toLowerCase()
+        return name.includes(equipmentSearch.toLowerCase())
+      })
+  }, [inventory, slotFilter, equipmentSearch])
 
   // 유저 검색
   useEffect(() => {
@@ -167,10 +181,38 @@ export function SendEquipmentModal({
             <label className="block text-sm text-[var(--color-text-secondary)] mb-2">
               선물할 장비 ({giftableEquipment.length}개 가능)
             </label>
-            {giftableEquipment.length === 0 ? (
+
+            {/* 검색 및 필터 */}
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={equipmentSearch}
+                onChange={(e) => setEquipmentSearch(e.target.value)}
+                placeholder="장비 이름 검색"
+                className="flex-1 bg-[var(--color-bg-elevated-2)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] transition-colors placeholder:text-[var(--color-text-muted)]"
+              />
+              <select
+                value={slotFilter}
+                onChange={(e) => setSlotFilter(e.target.value as EquipmentSlot | 'all')}
+                className="bg-[var(--color-bg-elevated-2)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] transition-colors"
+              >
+                <option value="all">전체</option>
+                {EQUIPMENT_SLOTS.map(slot => (
+                  <option key={slot} value={slot}>
+                    {EQUIPMENT_SLOT_EMOJIS[slot]} {EQUIPMENT_SLOT_NAMES[slot]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {inventory.filter(eq => !eq.isEquipped).length === 0 ? (
               <p className="text-sm text-[var(--color-text-muted)] py-4 text-center">
                 선물 가능한 장비가 없습니다.<br />
                 <span className="text-xs">(미장착 장비만 선물 가능)</span>
+              </p>
+            ) : giftableEquipment.length === 0 ? (
+              <p className="text-sm text-[var(--color-text-muted)] py-4 text-center">
+                검색 결과가 없습니다.
               </p>
             ) : (
               <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
@@ -192,7 +234,7 @@ export function SendEquipmentModal({
                           : 'border-transparent bg-[var(--color-bg-elevated-2)] hover:border-[var(--color-border)]'
                       }`}
                     >
-                      <span className="text-2xl">{eq.equipmentBase.emoji}</span>
+                      <EquipmentImage equipment={eq} size="lg" />
                       <div className="flex-1 text-left">
                         <p className="text-sm font-medium text-[var(--color-text-primary)]">
                           {name}
