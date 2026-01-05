@@ -58,6 +58,7 @@ interface FloatingDamage {
   damage: number
   isCrit: boolean
   isHeal: boolean
+  isMiss: boolean  // 회피 시 MISS 표시
   target: 'player' | 'opponent'
 }
 
@@ -93,6 +94,7 @@ export function PvPRealtimeBattle({
     critDamage: 150,
     attackSpeed: 100,
     penetration: 0,
+    evasion: 0,
   }
 
   // 안전한 스탯 (undefined/0 방지)
@@ -104,6 +106,7 @@ export function PvPRealtimeBattle({
     critDamage: playerStats.critDamage || DEFAULT_STATS.critDamage,
     attackSpeed: playerStats.attackSpeed || DEFAULT_STATS.attackSpeed,
     penetration: playerStats.penetration ?? DEFAULT_STATS.penetration,
+    evasion: playerStats.evasion ?? DEFAULT_STATS.evasion,
   }
 
   const safeOpponentStats: CharacterStats = {
@@ -114,6 +117,7 @@ export function PvPRealtimeBattle({
     critDamage: opponentStats.critDamage || DEFAULT_STATS.critDamage,
     attackSpeed: opponentStats.attackSpeed || DEFAULT_STATS.attackSpeed,
     penetration: opponentStats.penetration ?? DEFAULT_STATS.penetration,
+    evasion: opponentStats.evasion ?? DEFAULT_STATS.evasion,
   }
 
   // 상태
@@ -267,10 +271,11 @@ export function PvPRealtimeBattle({
     target: 'player' | 'opponent',
     damage: number,
     isCrit: boolean,
-    isHeal: boolean = false
+    isHeal: boolean = false,
+    isMiss: boolean = false
   ) => {
     const id = damageIdRef.current++
-    setFloatingDamages(prev => [...prev, { id, damage, isCrit, isHeal, target }])
+    setFloatingDamages(prev => [...prev, { id, damage, isCrit, isHeal, isMiss, target }])
     setTimeout(() => {
       setFloatingDamages(prev => prev.filter(d => d.id !== id))
     }, 800)
@@ -357,9 +362,12 @@ export function PvPRealtimeBattle({
       baseDamage *= (critDamage / 100)
     }
 
-    // 더블 어택
-    if (hasActiveEffect(attackerSkills, 'double_attack')) {
-      baseDamage *= 2
+    // 폭풍 연타: 공격속도 대폭 증가 대신 공격력 감소
+    // value는 공격속도 증가량, 공격력 감소는 value/5로 계산
+    const stormStrikeValue = getActiveEffectValue(attackerSkills, 'double_attack')
+    if (stormStrikeValue > 0) {
+      const atkPenalty = stormStrikeValue / 5  // 150% → -30%, 200% → -40%
+      baseDamage *= (1 - atkPenalty / 100)
     }
 
     // 면역 체크
@@ -543,16 +551,17 @@ export function PvPRealtimeBattle({
             break
           }
         }
-        // 확정 치명타/연속 공격: 상대 체력이 낮을 때 마무리용
-        else if (effectType === 'guaranteed_crit' || effectType === 'double_attack') {
+        // 확정 치명타: 상대 체력이 낮을 때 마무리용
+        else if (effectType === 'guaranteed_crit') {
           if (playerHpRatio < 0.5) {
             selectedSkill = { skill, index }
             break
           }
         }
-        // 광폭화: 초반~중반에 사용
-        else if (effectType === 'speed_boost') {
-          if (battleProgress < 0.5) {
+        // 광폭화/폭풍 연타: 공격속도 증가, 공격적으로 사용
+        else if (effectType === 'speed_boost' || effectType === 'double_attack') {
+          // 상대 HP가 낮거나 중반 이전에 사용
+          if (playerHpRatio < 0.6 || battleProgress < 0.5) {
             selectedSkill = { skill, index }
             break
           }
@@ -729,6 +738,8 @@ export function PvPRealtimeBattle({
         const interval = 2000 / (safeAttackSpeed / 100)
         const speedBoost = getPassiveBonus(currentPlayerSkills, 'speed_boost')
         const activeSpeedBoost = getActiveEffectValue(currentPlayerSkills, 'speed_boost')
+        // 폭풍 연타: 공격속도 대폭 증가 (value는 공격속도 증가량)
+        const stormStrikeSpeedBoost = getActiveEffectValue(currentPlayerSkills, 'double_attack')
         // 광전사: HP 50% 이하일 때 체력에 비례해서 공격속도 증가
         // 50% HP = 0% 보너스, 0% HP = effect.value% 보너스 (선형 스케일링)
         const playerHpRatio = playerHpRef.current / playerMaxHp
@@ -737,35 +748,45 @@ export function PvPRealtimeBattle({
         if (playerHpRatio <= 0.5 && berserkerBaseValue > 0) {
           berserkerBonus = Math.floor((0.5 - playerHpRatio) / 0.5 * berserkerBaseValue)
         }
-        const adjustedInterval = interval / (1 + (speedBoost + activeSpeedBoost + berserkerBonus) / 100)
-        playerNextAttackRef.current = Math.max(500, adjustedInterval)
+        const adjustedInterval = interval / (1 + (speedBoost + activeSpeedBoost + stormStrikeSpeedBoost + berserkerBonus) / 100)
+        playerNextAttackRef.current = Math.max(300, adjustedInterval)  // 폭풍 연타를 위해 최소 간격 500ms → 300ms로 축소
 
         // 데미지 계산 (처형 효과를 위해 상대 HP 비율 전달)
         const opponentHpRatio = opponentHpRef.current / opponentMaxHp
         const { damage, isCrit } = calculateDamage(currentPlayerStats, currentOpponentStats, currentPlayerSkills, currentOpponentSkills, opponentHpRatio)
 
-        if (damage > 0) addFloatingDamage('opponent', damage, isCrit)
+        // 회피 체크 (상대의 evasion 스탯 기준, 최대 40%)
+        const opponentEvasion = Math.min(40, currentOpponentStats.evasion || 0)
+        const isEvaded = Math.random() * 100 < opponentEvasion
 
-        setOpponentHp(prev => {
-          const newHp = Math.max(0, prev - damage)
+        if (isEvaded) {
+          // 회피 성공 - MISS 표시
+          addFloatingDamage('opponent', 0, false, false, true)
+        } else {
+          // 회피 실패 - 데미지 적용
+          if (damage > 0) addFloatingDamage('opponent', damage, isCrit)
 
-          // 영혼 흡수: 치명타 시에만 발동
-          const lifesteal = getPassiveBonus(currentPlayerSkills, 'lifesteal')
-          if (lifesteal > 0 && damage > 0 && isCrit) {
-            const healAmount = Math.floor(damage * lifesteal / 100)
-            setPlayerHp(hp => Math.min(playerMaxHp, hp + healAmount))
-            addFloatingDamage('player', healAmount, false, true)  // 흡혈 회복 표시
-          }
+          setOpponentHp(prev => {
+            const newHp = Math.max(0, prev - damage)
 
-          // 반사 (고정 데미지)
-          const reflect = getPassiveBonus(currentOpponentSkills, 'damage_reflect')
-          if (reflect > 0 && damage > 0) {
-            setPlayerHp(hp => Math.max(0, hp - reflect))
-            addFloatingDamage('player', reflect, false, false)  // 반사 피해 표시
-          }
+            // 영혼 흡수: 치명타 시에만 발동
+            const lifesteal = getPassiveBonus(currentPlayerSkills, 'lifesteal')
+            if (lifesteal > 0 && damage > 0 && isCrit) {
+              const healAmount = Math.floor(damage * lifesteal / 100)
+              setPlayerHp(hp => Math.min(playerMaxHp, hp + healAmount))
+              addFloatingDamage('player', healAmount, false, true)  // 흡혈 회복 표시
+            }
 
-          return newHp
-        })
+            // 반사 (고정 데미지)
+            const reflect = getPassiveBonus(currentOpponentSkills, 'damage_reflect')
+            if (reflect > 0 && damage > 0) {
+              setPlayerHp(hp => Math.max(0, hp - reflect))
+              addFloatingDamage('player', reflect, false, false)  // 반사 피해 표시
+            }
+
+            return newHp
+          })
+        }
       }
 
       // 상대 공격
@@ -775,6 +796,8 @@ export function PvPRealtimeBattle({
         const interval = 2000 / (safeAttackSpeed / 100)
         const speedBoost = getPassiveBonus(currentOpponentSkills, 'speed_boost')
         const activeSpeedBoost = getActiveEffectValue(currentOpponentSkills, 'speed_boost')
+        // 폭풍 연타: 공격속도 대폭 증가 (value는 공격속도 증가량)
+        const stormStrikeSpeedBoost = getActiveEffectValue(currentOpponentSkills, 'double_attack')
         // 광전사: HP 50% 이하일 때 체력에 비례해서 공격속도 증가
         // 50% HP = 0% 보너스, 0% HP = effect.value% 보너스 (선형 스케일링)
         const opponentHpRatio = opponentHpRef.current / opponentMaxHp
@@ -783,35 +806,45 @@ export function PvPRealtimeBattle({
         if (opponentHpRatio <= 0.5 && berserkerBaseValue > 0) {
           berserkerBonus = Math.floor((0.5 - opponentHpRatio) / 0.5 * berserkerBaseValue)
         }
-        const adjustedInterval = interval / (1 + (speedBoost + activeSpeedBoost + berserkerBonus) / 100)
-        opponentNextAttackRef.current = Math.max(500, adjustedInterval)
+        const adjustedInterval = interval / (1 + (speedBoost + activeSpeedBoost + stormStrikeSpeedBoost + berserkerBonus) / 100)
+        opponentNextAttackRef.current = Math.max(300, adjustedInterval)  // 폭풍 연타를 위해 최소 간격 500ms → 300ms로 축소
 
         // 데미지 계산 (처형 효과를 위해 플레이어 HP 비율 전달)
         const playerHpRatio = playerHpRef.current / playerMaxHp
         const { damage, isCrit } = calculateDamage(currentOpponentStats, currentPlayerStats, currentOpponentSkills, currentPlayerSkills, playerHpRatio)
 
-        if (damage > 0) addFloatingDamage('player', damage, isCrit)
+        // 회피 체크 (플레이어의 evasion 스탯 기준, 최대 40%)
+        const playerEvasion = Math.min(40, currentPlayerStats.evasion || 0)
+        const isEvaded = Math.random() * 100 < playerEvasion
 
-        setPlayerHp(prev => {
-          const newHp = Math.max(0, prev - damage)
+        if (isEvaded) {
+          // 회피 성공 - MISS 표시
+          addFloatingDamage('player', 0, false, false, true)
+        } else {
+          // 회피 실패 - 데미지 적용
+          if (damage > 0) addFloatingDamage('player', damage, isCrit)
 
-          // 영혼 흡수: 치명타 시에만 발동
-          const lifesteal = getPassiveBonus(currentOpponentSkills, 'lifesteal')
-          if (lifesteal > 0 && damage > 0 && isCrit) {
-            const healAmount = Math.floor(damage * lifesteal / 100)
-            setOpponentHp(hp => Math.min(opponentMaxHp, hp + healAmount))
-            addFloatingDamage('opponent', healAmount, false, true)  // 흡혈 회복 표시
-          }
+          setPlayerHp(prev => {
+            const newHp = Math.max(0, prev - damage)
 
-          // 반사 (고정 데미지)
-          const reflect = getPassiveBonus(currentPlayerSkills, 'damage_reflect')
-          if (reflect > 0 && damage > 0) {
-            setOpponentHp(hp => Math.max(0, hp - reflect))
-            addFloatingDamage('opponent', reflect, false, false)  // 반사 피해 표시
-          }
+            // 영혼 흡수: 치명타 시에만 발동
+            const lifesteal = getPassiveBonus(currentOpponentSkills, 'lifesteal')
+            if (lifesteal > 0 && damage > 0 && isCrit) {
+              const healAmount = Math.floor(damage * lifesteal / 100)
+              setOpponentHp(hp => Math.min(opponentMaxHp, hp + healAmount))
+              addFloatingDamage('opponent', healAmount, false, true)  // 흡혈 회복 표시
+            }
 
-          return newHp
-        })
+            // 반사 (고정 데미지)
+            const reflect = getPassiveBonus(currentPlayerSkills, 'damage_reflect')
+            if (reflect > 0 && damage > 0) {
+              setOpponentHp(hp => Math.max(0, hp - reflect))
+              addFloatingDamage('opponent', reflect, false, false)  // 반사 피해 표시
+            }
+
+            return newHp
+          })
+        }
 
         // AI 스킬 사용 (공격 시 70% 확률)
         if (opponentIsAI && Math.random() < 0.7) {
@@ -1004,10 +1037,11 @@ export function PvPRealtimeBattle({
               <div
                 key={d.id}
                 className={`absolute left-1/2 -translate-x-1/2 animate-float-up font-bold text-lg ${
+                  d.isMiss ? 'text-cyan-400 italic' :
                   d.isHeal ? 'text-green-400' : d.isCrit ? 'text-orange-400 text-xl' : 'text-white'
                 }`}
               >
-                {d.isHeal ? '+' : '-'}{d.damage}{d.isCrit && ' 💥'}
+                {d.isMiss ? '💨 MISS' : d.isHeal ? `+${d.damage}` : `-${d.damage}`}{d.isCrit && !d.isMiss && ' 💥'}
               </div>
             ))}
           </div>
@@ -1069,10 +1103,11 @@ export function PvPRealtimeBattle({
               <div
                 key={d.id}
                 className={`absolute left-1/2 -translate-x-1/2 animate-float-up font-bold text-lg ${
+                  d.isMiss ? 'text-cyan-400 italic' :
                   d.isHeal ? 'text-green-400' : d.isCrit ? 'text-orange-400 text-xl' : 'text-white'
                 }`}
               >
-                {d.isHeal ? '+' : '-'}{d.damage}{d.isCrit && ' 💥'}
+                {d.isMiss ? '💨 MISS' : d.isHeal ? `+${d.damage}` : `-${d.damage}`}{d.isCrit && !d.isMiss && ' 💥'}
               </div>
             ))}
           </div>

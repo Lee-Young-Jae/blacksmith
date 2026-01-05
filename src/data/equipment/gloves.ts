@@ -15,7 +15,7 @@ export const GLOVES: EquipmentBase[] = [
   {
     id: "gloves-leather",
     slot: "gloves",
-    baseStats: { defense: 4, attack: 6 },
+    baseStats: { defense: 4, attack: 6, evasion: 2 },
     emoji: "🧤",
     potentialSlots: 3,
     levels: createLevels("gloves-leather", [
@@ -43,11 +43,11 @@ export const GLOVES: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 철제 건틀릿 시리즈 (탱커형) =====
+  // ===== 철제 건틀릿 시리즈 (탱커형 - 회피 없음) =====
   {
     id: "gloves-iron-gauntlets",
     slot: "gloves",
-    baseStats: { defense: 8, attack: 4 },
+    baseStats: { defense: 8, attack: 4 },  // 탱커는 회피 대신 방어 특화
     emoji: "🤜",
     potentialSlots: 3,
     levels: createLevels("gloves-iron-gauntlets", [
@@ -79,7 +79,7 @@ export const GLOVES: EquipmentBase[] = [
   {
     id: "gloves-mage",
     slot: "gloves",
-    baseStats: { defense: 2, attack: 4, critRate: 4, critDamage: 6 },
+    baseStats: { defense: 2, attack: 4, critRate: 4, critDamage: 6, evasion: 2 },
     emoji: "✋",
     potentialSlots: 3,
     levels: createLevels("gloves-mage", [
@@ -107,11 +107,11 @@ export const GLOVES: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 암살자 장갑 시리즈 (암살형) =====
+  // ===== 암살자 장갑 시리즈 (암살형 - 높은 회피) =====
   {
     id: "gloves-assassin",
     slot: "gloves",
-    baseStats: { defense: 2, attack: 6, critRate: 5, penetration: 4 },
+    baseStats: { defense: 2, attack: 6, critRate: 5, penetration: 4, evasion: 5 },
     emoji: "🖐️",
     potentialSlots: 3,
     levels: createLevels("gloves-assassin", [
@@ -139,11 +139,11 @@ export const GLOVES: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 광전사 건틀릿 시리즈 (공격형) =====
+  // ===== 광전사 건틀릿 시리즈 (공격형 - 회피 없음) =====
   {
     id: "gloves-berserker",
     slot: "gloves",
-    baseStats: { defense: 3, attack: 10, critDamage: 6 },
+    baseStats: { defense: 3, attack: 10, critDamage: 6 },  // 공격 특화, 회피 없음
     emoji: "👊",
     potentialSlots: 3,
     levels: createLevels("gloves-berserker", [
@@ -171,11 +171,11 @@ export const GLOVES: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 용의 발톱 시리즈 (파워형) =====
+  // ===== 용의 발톱 시리즈 (파워형 - 회피 없음) =====
   {
     id: "gloves-dragon-claws",
     slot: "gloves",
-    baseStats: { defense: 4, attack: 10, penetration: 4 },
+    baseStats: { defense: 4, attack: 10, penetration: 4 },  // 공격 특화, 회피 없음
     emoji: "🐲",
     potentialSlots: 3,
     levels: createLevels("gloves-dragon-claws", [

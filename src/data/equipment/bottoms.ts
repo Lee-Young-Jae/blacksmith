@@ -12,7 +12,7 @@ export const BOTTOMS: EquipmentBase[] = [
   {
     id: 'bottom-leather-pants',
     slot: 'bottom',
-    baseStats: { defense: 8, hp: 28, attack: 2 },
+    baseStats: { defense: 8, hp: 28, attack: 2, evasion: 2 },
     emoji: '👖',
     potentialSlots: 3,
     levels: createLevels('bottom-leather-pants', [
@@ -40,11 +40,11 @@ export const BOTTOMS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 사슬 다리보호대 시리즈 (탱커형) =====
+  // ===== 사슬 다리보호대 시리즈 (탱커형 - 회피 없음) =====
   {
     id: 'bottom-chain-leggings',
     slot: 'bottom',
-    baseStats: { defense: 14, hp: 35 },
+    baseStats: { defense: 14, hp: 35 },  // 탱커는 회피 대신 방어 특화
     emoji: '🦿',
     potentialSlots: 3,
     levels: createLevels('bottom-chain-leggings', [
@@ -72,11 +72,11 @@ export const BOTTOMS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 판금 경갑 시리즈 (중탱커형) =====
+  // ===== 판금 경갑 시리즈 (중탱커형 - 회피 없음) =====
   {
     id: 'bottom-plate-greaves',
     slot: 'bottom',
-    baseStats: { defense: 18, hp: 40 },
+    baseStats: { defense: 18, hp: 40 },  // 탱커는 회피 대신 방어 특화
     emoji: '🛡️',
     potentialSlots: 3,
     levels: createLevels('bottom-plate-greaves', [
@@ -108,7 +108,7 @@ export const BOTTOMS: EquipmentBase[] = [
   {
     id: 'bottom-mage-skirt',
     slot: 'bottom',
-    baseStats: { defense: 5, hp: 15, critRate: 4, critDamage: 8 },
+    baseStats: { defense: 5, hp: 15, critRate: 4, critDamage: 8, evasion: 2 },
     emoji: '👗',
     potentialSlots: 3,
     levels: createLevels('bottom-mage-skirt', [
@@ -136,11 +136,11 @@ export const BOTTOMS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 닌자 바지 시리즈 (암살형) =====
+  // ===== 닌자 바지 시리즈 (암살형 - 높은 회피) =====
   {
     id: 'bottom-ninja-pants',
     slot: 'bottom',
-    baseStats: { defense: 4, hp: 12, critRate: 5, penetration: 5 },
+    baseStats: { defense: 4, hp: 12, critRate: 5, penetration: 5, evasion: 5 },
     emoji: '🩳',
     potentialSlots: 3,
     levels: createLevels('bottom-ninja-pants', [
@@ -168,11 +168,11 @@ export const BOTTOMS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 타이탄 경갑 시리즈 (공격탱커형) =====
+  // ===== 타이탄 경갑 시리즈 (공격탱커형 - 회피 없음) =====
   {
     id: 'bottom-titan-greaves',
     slot: 'bottom',
-    baseStats: { defense: 10, hp: 25, attack: 8 },
+    baseStats: { defense: 10, hp: 25, attack: 8 },  // 공격+방어 특화, 회피 없음
     emoji: '⚙️',
     potentialSlots: 3,
     levels: createLevels('bottom-titan-greaves', [

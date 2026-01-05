@@ -15,7 +15,7 @@ export const HATS: EquipmentBase[] = [
   {
     id: "hat-leather-cap",
     slot: "hat",
-    baseStats: { defense: 6, hp: 25, attack: 2 },
+    baseStats: { defense: 6, hp: 25, attack: 2, evasion: 2 },
     emoji: "🧢",
     potentialSlots: 3,
     levels: createLevels("hat-leather-cap", [
@@ -43,11 +43,11 @@ export const HATS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 철제 투구 시리즈 (탱커형) =====
+  // ===== 철제 투구 시리즈 (탱커형 - 회피 없음) =====
   {
     id: "hat-iron-helm",
     slot: "hat",
-    baseStats: { defense: 12, hp: 30 },
+    baseStats: { defense: 12, hp: 30 },  // 탱커는 회피 대신 방어 특화
     emoji: "🪖",
     potentialSlots: 3,
     levels: createLevels("hat-iron-helm", [
@@ -79,7 +79,7 @@ export const HATS: EquipmentBase[] = [
   {
     id: "hat-wizard-hat",
     slot: "hat",
-    baseStats: { defense: 4, hp: 15, critRate: 4, critDamage: 8 },
+    baseStats: { defense: 4, hp: 15, critRate: 4, critDamage: 8, evasion: 2 },
     emoji: "🎩",
     potentialSlots: 3,
     levels: createLevels("hat-wizard-hat", [
@@ -139,11 +139,11 @@ export const HATS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 닌자 두건 시리즈 (암살형) =====
+  // ===== 닌자 두건 시리즈 (암살형 - 높은 회피) =====
   {
     id: "hat-ninja-hood",
     slot: "hat",
-    baseStats: { defense: 3, hp: 10, critRate: 6, penetration: 5 },
+    baseStats: { defense: 3, hp: 10, critRate: 6, penetration: 5, evasion: 5 },
     emoji: "🥷",
     potentialSlots: 3,
     levels: createLevels("hat-ninja-hood", [
@@ -171,11 +171,11 @@ export const HATS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 바이킹 투구 시리즈 (공격형) =====
+  // ===== 바이킹 투구 시리즈 (공격형 - 회피 없음) =====
   {
     id: "hat-viking-helm",
     slot: "hat",
-    baseStats: { defense: 5, hp: 15, attack: 8 },
+    baseStats: { defense: 5, hp: 15, attack: 8 },  // 공격 특화, 회피 없음
     emoji: "⛑️",
     potentialSlots: 3,
     levels: createLevels("hat-viking-helm", [

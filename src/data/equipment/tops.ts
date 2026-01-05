@@ -12,7 +12,7 @@ export const TOPS: EquipmentBase[] = [
   {
     id: 'top-leather-armor',
     slot: 'top',
-    baseStats: { defense: 10, hp: 35, attack: 3 },
+    baseStats: { defense: 10, hp: 35, attack: 3, evasion: 2 },
     emoji: '🥋',
     potentialSlots: 3,
     levels: createLevels('top-leather-armor', [
@@ -40,11 +40,11 @@ export const TOPS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 사슬 갑옷 시리즈 (탱커형) =====
+  // ===== 사슬 갑옷 시리즈 (탱커형 - 회피 없음) =====
   {
     id: 'top-chainmail',
     slot: 'top',
-    baseStats: { defense: 18, hp: 45 },
+    baseStats: { defense: 18, hp: 45 },  // 탱커는 회피 대신 방어 특화
     emoji: '🦺',
     potentialSlots: 3,
     levels: createLevels('top-chainmail', [
@@ -72,11 +72,11 @@ export const TOPS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 판금 갑옷 시리즈 (중탱커형) =====
+  // ===== 판금 갑옷 시리즈 (중탱커형 - 회피 없음) =====
   {
     id: 'top-plate-armor',
     slot: 'top',
-    baseStats: { defense: 22, hp: 50 },
+    baseStats: { defense: 22, hp: 50 },  // 탱커는 회피 대신 방어 특화
     emoji: '🛡️',
     potentialSlots: 3,
     levels: createLevels('top-plate-armor', [
@@ -108,7 +108,7 @@ export const TOPS: EquipmentBase[] = [
   {
     id: 'top-robe',
     slot: 'top',
-    baseStats: { defense: 6, hp: 20, critRate: 5, critDamage: 10 },
+    baseStats: { defense: 6, hp: 20, critRate: 5, critDamage: 10, evasion: 2 },
     emoji: '👘',
     potentialSlots: 3,
     levels: createLevels('top-robe', [
@@ -136,11 +136,11 @@ export const TOPS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 암살자 조끼 시리즈 (암살형) =====
+  // ===== 암살자 조끼 시리즈 (암살형 - 높은 회피) =====
   {
     id: 'top-assassin-vest',
     slot: 'top',
-    baseStats: { defense: 5, hp: 15, critRate: 6, penetration: 6 },
+    baseStats: { defense: 5, hp: 15, critRate: 6, penetration: 6, evasion: 4 },
     emoji: '🧥',
     potentialSlots: 3,
     levels: createLevels('top-assassin-vest', [
@@ -168,11 +168,11 @@ export const TOPS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 용린 갑옷 시리즈 (공격탱커형) =====
+  // ===== 용린 갑옷 시리즈 (공격탱커형 - 회피 없음) =====
   {
     id: 'top-dragon-scale',
     slot: 'top',
-    baseStats: { defense: 12, hp: 30, attack: 10 },
+    baseStats: { defense: 12, hp: 30, attack: 10 },  // 공격+방어 특화, 회피 없음
     emoji: '🐉',
     potentialSlots: 3,
     levels: createLevels('top-dragon-scale', [

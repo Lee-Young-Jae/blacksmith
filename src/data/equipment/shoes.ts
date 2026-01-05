@@ -12,7 +12,7 @@ export const SHOES: EquipmentBase[] = [
   {
     id: 'shoes-leather-boots',
     slot: 'shoes',
-    baseStats: { defense: 5, hp: 18 },
+    baseStats: { defense: 5, hp: 18, evasion: 3 },
     emoji: '👢',
     potentialSlots: 3,
     levels: createLevels('shoes-leather-boots', [
@@ -40,11 +40,11 @@ export const SHOES: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 철제 부츠 시리즈 (탱커형) =====
+  // ===== 철제 부츠 시리즈 (탱커형 - 회피 없음) =====
   {
     id: 'shoes-iron-boots',
     slot: 'shoes',
-    baseStats: { defense: 10, hp: 15 },
+    baseStats: { defense: 10, hp: 15 },  // 탱커는 회피 대신 방어 특화
     emoji: '🦶',
     potentialSlots: 3,
     levels: createLevels('shoes-iron-boots', [
@@ -76,7 +76,7 @@ export const SHOES: EquipmentBase[] = [
   {
     id: 'shoes-mage-sandals',
     slot: 'shoes',
-    baseStats: { defense: 3, hp: 12, critRate: 3, critDamage: 6 },
+    baseStats: { defense: 3, hp: 12, critRate: 3, critDamage: 6, evasion: 2 },
     emoji: '🩴',
     potentialSlots: 3,
     levels: createLevels('shoes-mage-sandals', [
@@ -104,11 +104,11 @@ export const SHOES: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 닌자 타비 시리즈 =====
+  // ===== 닌자 타비 시리즈 (높은 회피) =====
   {
     id: 'shoes-ninja-tabi',
     slot: 'shoes',
-    baseStats: { defense: 3, hp: 12, critRate: 4, penetration: 4 },
+    baseStats: { defense: 3, hp: 12, critRate: 4, penetration: 4, evasion: 8 },
     emoji: '👟',
     potentialSlots: 3,
     levels: createLevels('shoes-ninja-tabi', [
@@ -136,11 +136,11 @@ export const SHOES: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 기사 신발 시리즈 =====
+  // ===== 기사 신발 시리즈 (탱커형 - 회피 없음) =====
   {
     id: 'shoes-knight-sabatons',
     slot: 'shoes',
-    baseStats: { defense: 12, hp: 30 },
+    baseStats: { defense: 12, hp: 30 },  // 탱커는 회피 대신 방어 특화
     emoji: '⚔️',
     potentialSlots: 3,
     levels: createLevels('shoes-knight-sabatons', [
@@ -168,11 +168,11 @@ export const SHOES: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 바람신 시리즈 =====
+  // ===== 바람신 시리즈 (높은 회피) =====
   {
     id: 'shoes-wind-walkers',
     slot: 'shoes',
-    baseStats: { defense: 5, hp: 18, critRate: 4, penetration: 4 },
+    baseStats: { defense: 5, hp: 18, critRate: 4, penetration: 4, evasion: 7 },
     emoji: '💨',
     potentialSlots: 3,
     levels: createLevels('shoes-wind-walkers', [

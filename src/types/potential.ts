@@ -148,6 +148,7 @@ export const STAT_NAMES: Record<keyof CharacterStats, string> = {
   critDamage: '치명타 데미지',
   penetration: '관통력',
   attackSpeed: '공격속도',
+  evasion: '회피율',
 }
 
 // 잠재옵션 포맷팅 (표시용)

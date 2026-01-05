@@ -254,6 +254,7 @@ function GameContent() {
     critDamage: DEFAULT_CHARACTER_STATS.critDamage + equipmentOnlyStats.critDamage,
     penetration: DEFAULT_CHARACTER_STATS.penetration + equipmentOnlyStats.penetration,
     attackSpeed: DEFAULT_CHARACTER_STATS.attackSpeed + equipmentOnlyStats.attackSpeed,
+    evasion: DEFAULT_CHARACTER_STATS.evasion + equipmentOnlyStats.evasion,
   }
 
   const battleWeapon: UserWeapon | null = createBattleWeaponFromEquipment(

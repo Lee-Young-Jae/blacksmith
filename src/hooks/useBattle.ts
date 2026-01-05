@@ -60,6 +60,7 @@ function generateAIData(difficulty: AIDifficulty, playerStats: CharacterStats): 
     critDamage: DEFAULT_CHARACTER_STATS.critDamage + Math.floor(level * 1),
     penetration: Math.floor(level * 0.2),
     attackSpeed: DEFAULT_CHARACTER_STATS.attackSpeed,
+    evasion: Math.floor(level * 0.1),  // AI도 레벨에 따라 약간의 회피율
   }
 
   return { weapon, stats }

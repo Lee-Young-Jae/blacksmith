@@ -1,4 +1,4 @@
-// 7대 스탯 인터페이스
+// 8대 스탯 인터페이스
 export interface CharacterStats {
   attack: number        // 공격력
   defense: number       // 방어력
@@ -7,6 +7,7 @@ export interface CharacterStats {
   critDamage: number    // 치명타 데미지 (%)
   penetration: number   // 관통력 (%)
   attackSpeed: number   // 공격속도 (%)
+  evasion: number       // 회피율 (%)
 }
 
 export const STAT_NAMES: Record<keyof CharacterStats, string> = {
@@ -17,6 +18,7 @@ export const STAT_NAMES: Record<keyof CharacterStats, string> = {
   critDamage: '치명타 데미지',
   penetration: '관통력',
   attackSpeed: '공격속도',
+  evasion: '회피율',
 }
 
 export const STAT_ICONS: Record<keyof CharacterStats, string> = {
@@ -27,6 +29,7 @@ export const STAT_ICONS: Record<keyof CharacterStats, string> = {
   critDamage: '💥',
   penetration: '🔪',
   attackSpeed: '⚡',
+  evasion: '💨',
 }
 
 export const STAT_COLORS: Record<keyof CharacterStats, string> = {
@@ -37,6 +40,7 @@ export const STAT_COLORS: Record<keyof CharacterStats, string> = {
   critDamage: 'text-orange-400',
   penetration: 'text-purple-400',
   attackSpeed: 'text-cyan-400',
+  evasion: 'text-emerald-400',
 }
 
 // 기본 캐릭터 스탯 (장비 미착용 시)
@@ -48,6 +52,7 @@ export const DEFAULT_CHARACTER_STATS: CharacterStats = {
   critDamage: 150,   // 150% (1.5배)
   penetration: 0,    // 0%
   attackSpeed: 100,  // 100% (기본 속도)
+  evasion: 0,        // 0% (회피율)
 }
 
 // 빈 스탯 (합산용)
@@ -59,6 +64,7 @@ export const EMPTY_STATS: CharacterStats = {
   critDamage: 0,
   penetration: 0,
   attackSpeed: 0,
+  evasion: 0,
 }
 
 // 스탯 합산 헬퍼
@@ -73,6 +79,7 @@ export function mergeStats(...statsList: Partial<CharacterStats>[]): CharacterSt
       critDamage: acc.critDamage + (stats.critDamage || 0),
       penetration: acc.penetration + (stats.penetration || 0),
       attackSpeed: acc.attackSpeed + (stats.attackSpeed || 0),
+      evasion: acc.evasion + (stats.evasion || 0),
     }),
     initial
   )
@@ -88,6 +95,7 @@ export function calculateCombatPower(stats: CharacterStats): number {
     critDamage: 0.5,
     penetration: 3.0,
     attackSpeed: 2.0,  // 공격속도 가중치
+    evasion: 4.0,      // 회피율 가중치 (회피는 강력하므로 높은 가중치)
   }
 
   return Math.floor(
@@ -97,13 +105,14 @@ export function calculateCombatPower(stats: CharacterStats): number {
     stats.critRate * weights.critRate +
     stats.critDamage * weights.critDamage +
     stats.penetration * weights.penetration +
-    stats.attackSpeed * weights.attackSpeed
+    stats.attackSpeed * weights.attackSpeed +
+    stats.evasion * weights.evasion
   )
 }
 
 // 스탯 포맷팅 (표시용)
 export function formatStat(stat: keyof CharacterStats, value: number): string {
-  const isPercentage = ['critRate', 'critDamage', 'penetration', 'attackSpeed'].includes(stat)
+  const isPercentage = ['critRate', 'critDamage', 'penetration', 'attackSpeed', 'evasion'].includes(stat)
   return isPercentage ? `${value}%` : value.toLocaleString()
 }
 
@@ -120,5 +129,6 @@ export function compareStats(
     critDamage: after.critDamage - before.critDamage,
     penetration: after.penetration - before.penetration,
     attackSpeed: after.attackSpeed - before.attackSpeed,
+    evasion: after.evasion - before.evasion,
   }
 }

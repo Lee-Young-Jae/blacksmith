@@ -83,21 +83,14 @@ export function useEquipmentStarForce(options: UseEquipmentStarForceOptions = {}
 
     switch (result) {
       case 'success':
+        // DB 업데이트 - useEffect가 inventory 변경을 감지하여 자동으로 selectedEquipment를 동기화함
+        // 로컬 상태를 수동으로 업데이트하면 race condition으로 인해 레벨이 중복 증가할 수 있음
         await options.onSuccess?.(selectedEquipment, level + 1)
-        // Update local state
-        setSelectedEquipment(prev => prev ? {
-          ...prev,
-          starLevel: prev.starLevel + 1,
-          consecutiveFails: 0,
-        } : null)
         break
       case 'maintain':
         const newFails = consecutiveFails + 1
+        // DB 업데이트 - useEffect가 inventory 변경을 감지하여 자동으로 selectedEquipment를 동기화함
         await options.onMaintain?.(selectedEquipment, newFails)
-        setSelectedEquipment(prev => prev ? {
-          ...prev,
-          consecutiveFails: newFails,
-        } : null)
         break
       case 'destroy':
         await options.onDestroy?.(selectedEquipment)

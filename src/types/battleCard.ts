@@ -124,8 +124,8 @@ export const EFFECT_TYPE_INFO: Record<BattleCardEffectType, {
   // 무적: 2.5초간 피해 무효 (CD 12초, 약 2-3회 사용)
   immunity: { name: '무적', emoji: '✨', minTier: 'epic', isPvPOnly: true, activationType: 'active', cooldown: 12, duration: 2.5 },
 
-  // 폭풍 연타: 4초간 2배 데미지 (CD 12초, 약 2-3회 사용)
-  double_attack: { name: '폭풍 연타', emoji: '🌪️', minTier: 'legendary', isPvPOnly: true, activationType: 'active', cooldown: 12, duration: 4 },
+  // 폭풍 연타: 4초간 공격속도 대폭 증가, 공격력 감소 (CD 12초, 약 2-3회 사용)
+  double_attack: { name: '폭풍 연타', emoji: '🌪️', minTier: 'epic', isPvPOnly: true, activationType: 'active', cooldown: 12, duration: 4 },
 
   // 기절: 1.5초간 상대 행동 불가 (CD 12초, 약 2-3회 사용)
   stun: { name: '기절', emoji: '💫', minTier: 'legendary', isPvPOnly: true, activationType: 'active', cooldown: 12, duration: 1.5 },
@@ -249,7 +249,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     immunity: 2,
     // 영혼 흡수: 치명타 시에만 발동, 15% 흡혈 (너프됨)
     lifesteal: 15,
-    double_attack: 0,
+    // 폭풍 연타 (에픽): 공격속도 +150%, 공격력 -30%
+    double_attack: 150,
     stun: 0,
     // 침묵: 3초간 상대 스킬 사용 불가 (에픽)
     silence: 3,
@@ -288,8 +289,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     immunity: 3,
     // 영혼 흡수: 치명타 시에만 발동, 20% 흡혈 (너프됨)
     lifesteal: 20,
-    // 폭풍 연타: 4초간 2배 = 약 2회 * 70 = +140 가치
-    double_attack: 100,
+    // 폭풍 연타 (전설): 공격속도 +200%, 공격력 -40%
+    double_attack: 200,
     // 기절: 1.5초 = 상대 1회 공격+스킬 봉쇄 = 70 가치 + 전략적 가치
     stun: 100,
     // 침묵: 4초간 상대 스킬 사용 불가 (전설)
@@ -320,7 +321,7 @@ export const TIER_AVAILABLE_EFFECTS: Record<BattleCardTier, BattleCardEffectType
 export const TIER_AVAILABLE_EFFECTS_PVP: Record<BattleCardTier, BattleCardEffectType[]> = {
   common: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'first_strike', 'gold_bonus', 'shield_bash', 'cooldown_reset'],
   rare: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'lifesteal', 'anti_heal', 'berserker', 'shield_bash', 'cooldown_reset'],
-  epic: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash', 'cooldown_reset'],
+  epic: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'double_attack', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash', 'cooldown_reset'],
   legendary: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'gold_bonus', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'double_attack', 'stun', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash', 'cooldown_reset'],
 }
 
@@ -328,7 +329,7 @@ export const TIER_AVAILABLE_EFFECTS_PVP: Record<BattleCardTier, BattleCardEffect
 export const TIER_AVAILABLE_EFFECTS_AI: Record<BattleCardTier, BattleCardEffectType[]> = {
   common: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'first_strike', 'shield_bash', 'cooldown_reset'],
   rare: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'damage_reflect', 'first_strike', 'hp_recovery', 'speed_boost', 'lifesteal', 'anti_heal', 'berserker', 'shield_bash', 'cooldown_reset'],
-  epic: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash', 'cooldown_reset'],
+  epic: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'double_attack', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash', 'cooldown_reset'],
   legendary: ['attack_boost', 'defense_boost', 'crit_rate_boost', 'crit_damage_boost', 'penetration_boost', 'guaranteed_crit', 'damage_reflect', 'first_strike', 'hp_recovery', 'speed_boost', 'immunity', 'lifesteal', 'double_attack', 'stun', 'silence', 'anti_heal', 'berserker', 'execute', 'shield_bash', 'cooldown_reset'],
 }
 
@@ -416,7 +417,7 @@ export const CARD_NAMES: Record<BattleCardEffectType, Record<BattleCardTier, str
   double_attack: {
     common: '',
     rare: '',
-    epic: '',
+    epic: '질풍 연타',
     legendary: '폭풍 연타',
   },
   stun: {
@@ -541,7 +542,9 @@ export function formatCardDescription(effect: BattleCardEffect): string {
     case 'immunity':
       return `${effect.value}초간 피해 무효`
     case 'double_attack':
-      return `${info.duration}초간 2배 데미지`
+      // value는 공격속도 증가량, 공격력 감소는 value/5로 계산
+      const atkPenalty = Math.floor(effect.value / 5)
+      return `${info.duration}초간 공속 +${effect.value}%, 공격력 -${atkPenalty}%`
     case 'stun':
       return `${info.duration}초간 상대 행동 불가`
     case 'silence':

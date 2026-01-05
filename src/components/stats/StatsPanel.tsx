@@ -28,6 +28,7 @@ export default function StatsPanel({
     critDamage: DEFAULT_CHARACTER_STATS.critDamage + equipmentStats.critDamage,
     penetration: DEFAULT_CHARACTER_STATS.penetration + equipmentStats.penetration,
     attackSpeed: DEFAULT_CHARACTER_STATS.attackSpeed + equipmentStats.attackSpeed,
+    evasion: DEFAULT_CHARACTER_STATS.evasion + equipmentStats.evasion,
   }
 
   const totalCombatPower = calculateCombatPower(totalStats)
@@ -79,7 +80,7 @@ export default function StatsPanel({
             const total = totalStats[stat]
             const base = DEFAULT_CHARACTER_STATS[stat]
             const bonus = equipmentStats[stat]
-            const isPercentage = ['critRate', 'critDamage', 'penetration', 'attackSpeed'].includes(stat)
+            const isPercentage = ['critRate', 'critDamage', 'penetration', 'attackSpeed', 'evasion'].includes(stat)
 
             return (
               <div key={stat} className="info-box p-3">
@@ -107,7 +108,7 @@ export default function StatsPanel({
                 )}
 
                 {/* Progress bar for percentage stats */}
-                {isPercentage && stat !== 'critDamage' && stat !== 'attackSpeed' && (
+                {isPercentage && stat !== 'critDamage' && stat !== 'attackSpeed' && stat !== 'evasion' && (
                   <div className="mt-2 h-1.5 bg-[var(--color-bg-elevated-2)] rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${
@@ -129,6 +130,7 @@ export default function StatsPanel({
             <div>• 치명타 데미지: 치명타 발생 시 추가 데미지 (%)</div>
             <div>• 관통력: 적 방어력 무시 비율 (%)</div>
             <div>• 공격속도: 공격 간격 감소 (%)</div>
+            <div>• 회피율: 적 공격을 회피할 확률 (최대 40%)</div>
           </div>
         </div>
       </div>

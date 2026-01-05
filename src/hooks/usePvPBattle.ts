@@ -233,6 +233,7 @@ function generateAIOpponent(playerCombatPower: number): PvPOpponent {
     critDamage: Math.floor(150 + Math.random() * 50 * powerRatio),
     penetration: Math.min(50, Math.floor(Math.random() * 20 * powerRatio)),
     attackSpeed: Math.floor(100 + Math.random() * 30 * powerRatio),
+    evasion: Math.min(30, Math.floor(Math.random() * 15 * powerRatio)),  // AI 회피율 (최대 30%)
   }
 
   // 실제 계산된 전투력 확인
