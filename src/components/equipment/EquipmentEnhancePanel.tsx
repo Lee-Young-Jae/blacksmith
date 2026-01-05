@@ -1,9 +1,16 @@
 import { useState } from 'react'
 import type { UserEquipment } from '../../types/equipment'
-import { getEquipmentDisplayName, getEquipmentComment } from '../../types/equipment'
+import {
+  getEquipmentDisplayName,
+  getEquipmentComment,
+  getMilestoneBonus,
+  getNextMilestone,
+  isMilestoneLevel,
+  STARFORCE_MILESTONES,
+} from '../../types/equipment'
 import type { EnhanceResult } from '../../types/starforce'
 import type { CharacterStats } from '../../types/stats'
-import { GiAnvilImpact } from 'react-icons/gi'
+import { GiAnvilImpact, GiUpgrade } from 'react-icons/gi'
 
 interface StatChanges {
   attack: number
@@ -235,9 +242,14 @@ export default function EquipmentEnhancePanel({
                 <span className="text-xs text-[var(--color-text-primary)]">{currentStats.penetration}%</span>
               </div>
               {/* 공격속도 - 잠재옵션만 */}
-              <div className="flex items-center justify-between col-span-2">
+              <div className="flex items-center justify-between">
                 <span className="text-xs text-[var(--color-text-secondary)]">공격속도</span>
                 <span className="text-xs text-[var(--color-text-primary)]">{currentStats.attackSpeed}%</span>
+              </div>
+              {/* 회피율 - 잠재옵션만 */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[var(--color-text-secondary)]">회피율</span>
+                <span className="text-xs text-[var(--color-text-primary)]">{currentStats.evasion}%</span>
               </div>
             </div>
             {/* 스타포스 안내 */}
@@ -248,6 +260,60 @@ export default function EquipmentEnhancePanel({
                 </span>
               </div>
             )}
+          </div>
+        )}
+
+        {/* 마일스톤 보너스 표시 */}
+        {equipment && (
+          <div className="p-3 rounded-lg bg-gradient-to-r from-purple-900/30 to-indigo-900/30 border border-purple-500/30">
+            <div className="flex items-center gap-2 mb-2">
+              <GiUpgrade className="text-purple-400" />
+              <span className="text-xs font-bold text-purple-300">마일스톤 보너스</span>
+            </div>
+
+            {/* 현재 적용 중인 보너스 */}
+            {getMilestoneBonus(currentLevel) > 0 && (
+              <div className="text-xs text-purple-200 mb-2">
+                현재: <span className="font-bold text-purple-400">+{getMilestoneBonus(currentLevel)}% 올스탯</span>
+              </div>
+            )}
+
+            {/* 다음 마일스톤 안내 */}
+            {getNextMilestone(currentLevel) && (
+              <div className="text-xs text-gray-400">
+                다음 ({getNextMilestone(currentLevel)!.level}성):
+                <span className="text-purple-300 ml-1">+{getNextMilestone(currentLevel)!.bonus}% 올스탯</span>
+              </div>
+            )}
+
+            {/* 다음 강화가 마일스톤인 경우 강조 */}
+            {isMilestoneLevel(currentLevel + 1) && (
+              <div className="mt-2 py-1.5 px-2 bg-purple-600/30 rounded text-center animate-pulse">
+                <span className="text-xs font-bold text-purple-200">
+                  🎉 다음 강화 시 +{STARFORCE_MILESTONES[currentLevel + 1]}% 올스탯 획득!
+                </span>
+              </div>
+            )}
+
+            {/* 마일스톤 진행도 표시 */}
+            <div className="flex gap-1 mt-2">
+              {Object.keys(STARFORCE_MILESTONES).map((level) => {
+                const lvl = parseInt(level);
+                const isAchieved = currentLevel >= lvl;
+                return (
+                  <div
+                    key={level}
+                    className={`flex-1 text-center py-1 rounded text-[10px] ${
+                      isAchieved
+                        ? 'bg-purple-600 text-white font-bold'
+                        : 'bg-gray-700 text-gray-500'
+                    }`}
+                  >
+                    {level}★
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 

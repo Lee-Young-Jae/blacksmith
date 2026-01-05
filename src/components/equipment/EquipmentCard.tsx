@@ -137,6 +137,12 @@ export default function EquipmentCard({
           {stats.penetration > 0 && (
             <div className="text-[var(--color-magic)]">관통력 +{stats.penetration}%</div>
           )}
+          {stats.attackSpeed > 0 && (
+            <div className="text-cyan-400">공격속도 +{stats.attackSpeed}%</div>
+          )}
+          {stats.evasion > 0 && (
+            <div className="text-emerald-400">회피율 +{stats.evasion}%</div>
+          )}
         </div>
       )}
 

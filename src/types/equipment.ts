@@ -154,6 +154,45 @@ export interface EquipmentFilter {
   isEquipped?: boolean;
 }
 
+// =============================================
+// 스타포스 마일스톤 보너스 시스템
+// 10, 15, 20, 25성 달성 시 올스탯 % 보너스
+// =============================================
+
+export const STARFORCE_MILESTONES: Record<number, number> = {
+  10: 3,   // 10성: +3% 올스탯
+  15: 6,   // 15성: +6% 올스탯
+  20: 10,  // 20성: +10% 올스탯
+  25: 15,  // 25성: +15% 올스탯
+};
+
+// 현재 스타 레벨에서 적용되는 마일스톤 보너스 계산
+export function getMilestoneBonus(starLevel: number): number {
+  let totalBonus = 0;
+  for (const [milestone, bonus] of Object.entries(STARFORCE_MILESTONES)) {
+    if (starLevel >= parseInt(milestone)) {
+      totalBonus += bonus;
+    }
+  }
+  return totalBonus;
+}
+
+// 다음 마일스톤 정보 가져오기
+export function getNextMilestone(starLevel: number): { level: number; bonus: number } | null {
+  const milestones = Object.keys(STARFORCE_MILESTONES).map(Number).sort((a, b) => a - b);
+  for (const milestone of milestones) {
+    if (starLevel < milestone) {
+      return { level: milestone, bonus: STARFORCE_MILESTONES[milestone] };
+    }
+  }
+  return null;
+}
+
+// 현재 레벨이 마일스톤인지 확인
+export function isMilestoneLevel(starLevel: number): boolean {
+  return starLevel in STARFORCE_MILESTONES;
+}
+
 // 스타포스 강화 시 스탯 증가량 계산
 export function getStarForceBonus(
   baseStats: Partial<CharacterStats>,
@@ -233,6 +272,21 @@ export function calculateEquipmentStats(
       baseWithMultipliers[line.stat] =
         (baseWithMultipliers[line.stat] || 0) + line.value;
     }
+  }
+
+  // 마일스톤 보너스 적용 (10, 15, 20, 25성)
+  const milestoneBonus = getMilestoneBonus(starLevel);
+  if (milestoneBonus > 0) {
+    const multiplier = 1 + milestoneBonus / 100;
+    baseWithMultipliers.attack = Math.floor(baseWithMultipliers.attack * multiplier);
+    baseWithMultipliers.defense = Math.floor(baseWithMultipliers.defense * multiplier);
+    baseWithMultipliers.hp = Math.floor(baseWithMultipliers.hp * multiplier);
+    // 퍼센트 스탯도 마일스톤 보너스 적용
+    baseWithMultipliers.critRate = Math.floor(baseWithMultipliers.critRate * multiplier * 10) / 10;
+    baseWithMultipliers.critDamage = Math.floor(baseWithMultipliers.critDamage * multiplier * 10) / 10;
+    baseWithMultipliers.penetration = Math.floor(baseWithMultipliers.penetration * multiplier * 10) / 10;
+    baseWithMultipliers.attackSpeed = Math.floor(baseWithMultipliers.attackSpeed * multiplier * 10) / 10;
+    baseWithMultipliers.evasion = Math.floor(baseWithMultipliers.evasion * multiplier * 10) / 10;
   }
 
   return baseWithMultipliers;

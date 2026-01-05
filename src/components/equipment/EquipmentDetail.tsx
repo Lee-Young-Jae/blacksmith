@@ -137,6 +137,8 @@ export default function EquipmentDetail({
                   "critRate",
                   "critDamage",
                   "penetration",
+                  "attackSpeed",
+                  "evasion",
                 ].includes(stat);
                 return (
                   <div key={stat} className="flex items-center gap-2 py-1">
