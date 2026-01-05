@@ -51,9 +51,9 @@ function generateMockFeed(): EnhancementFeedItem {
   }
 }
 
-// 랜덤 딜레이 생성 (2초 ~ 6초)
+// 랜덤 딜레이 생성 (2초 ~ 11초)
 function getRandomDelay(): number {
-  return 2000 + Math.random() * 4000
+  return 2000 + Math.random() * 9000
 }
 
 export function LiveFeed({ items: realItems }: LiveFeedProps) {

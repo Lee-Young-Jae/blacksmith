@@ -2,15 +2,18 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import type { EnhancementFeedItem, EnhanceResult } from '../types/starforce'
 
-interface RecentEnhancementRow {
+interface EnhancementHistoryRow {
   id: string
-  username: string
+  user_id: string
   weapon_name: string
   from_level: number
   to_level: number
   result: string
   was_chance_time: boolean
   created_at: string
+  user_profiles: {
+    username: string
+  } | null
 }
 
 export function useLiveFeed() {
@@ -19,41 +22,33 @@ export function useLiveFeed() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // 초기 데이터 로드 (RPC 함수 사용)
+    // 초기 데이터 로드 (직접 테이블 조회)
     const loadInitialData = async () => {
       try {
         const { data, error } = await supabase
-          .rpc('get_recent_enhancements', { p_limit: 20 })
+          .from('enhancement_history')
+          .select(`
+            id,
+            user_id,
+            weapon_name,
+            from_level,
+            to_level,
+            result,
+            was_chance_time,
+            created_at,
+            user_profiles (username)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(20)
 
-        if (error) {
-          // RPC 함수가 없으면 뷰로 폴백
-          console.warn('RPC not available, falling back to view:', error)
-          const { data: viewData, error: viewError } = await supabase
-            .from('recent_enhancements')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(20)
+        if (error) throw error
 
-          if (viewError) throw viewError
-
-          if (viewData) {
-            const typedData = viewData as unknown as RecentEnhancementRow[]
-            setItems(typedData.map(row => ({
-              id: row.id,
-              username: row.username,
-              weaponName: row.weapon_name,
-              fromLevel: row.from_level,
-              toLevel: row.to_level,
-              result: row.result as EnhanceResult,
-              wasChanceTime: row.was_chance_time,
-              timestamp: new Date(row.created_at),
-            })))
-          }
-        } else if (data) {
-          const typedData = data as unknown as RecentEnhancementRow[]
+        if (data) {
+          const typedData = data as unknown as EnhancementHistoryRow[]
+          console.log('📡 Loaded enhancement history:', typedData.length, 'items')
           setItems(typedData.map(row => ({
             id: row.id,
-            username: row.username,
+            username: row.user_profiles?.username || '알 수 없음',
             weaponName: row.weapon_name,
             fromLevel: row.from_level,
             toLevel: row.to_level,
@@ -82,18 +77,35 @@ export function useLiveFeed() {
           table: 'enhancement_history',
         },
         async (payload) => {
+          console.log('🔔 New enhancement received:', payload.new)
+
           // 새 강화 기록이 추가되면 조인해서 가져오기
-          const { data } = await supabase
-            .from('recent_enhancements')
-            .select('*')
+          const { data, error } = await supabase
+            .from('enhancement_history')
+            .select(`
+              id,
+              user_id,
+              weapon_name,
+              from_level,
+              to_level,
+              result,
+              was_chance_time,
+              created_at,
+              user_profiles (username)
+            `)
             .eq('id', payload.new.id)
             .single()
 
+          if (error) {
+            console.error('Failed to fetch new enhancement:', error)
+            return
+          }
+
           if (data) {
-            const typedData = data as unknown as RecentEnhancementRow
+            const typedData = data as unknown as EnhancementHistoryRow
             const newItem: EnhancementFeedItem = {
               id: typedData.id,
-              username: typedData.username,
+              username: typedData.user_profiles?.username || '알 수 없음',
               weaponName: typedData.weapon_name,
               fromLevel: typedData.from_level,
               toLevel: typedData.to_level,
@@ -102,11 +114,13 @@ export function useLiveFeed() {
               timestamp: new Date(typedData.created_at),
             }
 
+            console.log('📥 Adding to feed:', newItem)
             setItems(prev => [newItem, ...prev.slice(0, 19)])
           }
         }
       )
       .subscribe((status) => {
+        console.log('📡 Realtime subscription status:', status)
         setIsConnected(status === 'SUBSCRIBED')
       })
 
