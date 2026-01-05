@@ -1,4 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { GiExplosiveMaterials, GiStarFormation, GiSparkles, GiCancel } from 'react-icons/gi'
+import { FaPray } from 'react-icons/fa'
 import type { EnhancementFeedItem, EnhanceResult } from '../types/starforce'
 import { getLevelTier, LEVEL_COLORS } from '../types/weapon'
 import { generateNickname } from '../utils/nicknameGenerator'
@@ -7,6 +9,8 @@ import { ALL_EQUIPMENT } from '../data/equipment'
 
 interface LiveFeedProps {
   items: EnhancementFeedItem[]  // 실제 유저 데이터 (DB에서)
+  currentUserId?: string  // 현재 로그인한 유저 ID
+  onSendCondolence?: (userId: string, username: string, historyId: string) => void
 }
 
 // 목 데이터 생성
@@ -51,12 +55,12 @@ function generateMockFeed(): EnhancementFeedItem {
   }
 }
 
-// 랜덤 딜레이 생성 (2초 ~ 11초)
+// 랜덤 딜레이 생성 (10초 ~ 30초)
 function getRandomDelay(): number {
-  return 2000 + Math.random() * 9000
+  return 10000 + Math.random() * 20000
 }
 
-export function LiveFeed({ items: realItems }: LiveFeedProps) {
+export function LiveFeed({ items: realItems, currentUserId, onSendCondolence }: LiveFeedProps) {
   const [displayItems, setDisplayItems] = useState<EnhancementFeedItem[]>([])
   const lastRealItemIdRef = useRef<string | null>(null)
   const timeoutRef = useRef<number | null>(null)
@@ -72,8 +76,8 @@ export function LiveFeed({ items: realItems }: LiveFeedProps) {
 
   // 초기화 및 목 데이터 자동 생성 시작
   useEffect(() => {
-    // 초기 목 데이터 생성
-    const initialItems = Array.from({ length: 6 }, generateMockFeed)
+    // 초기 목 데이터 생성 (3개만)
+    const initialItems = Array.from({ length: 3 }, generateMockFeed)
     setDisplayItems(initialItems)
 
     // 첫 목 데이터 추가 스케줄 (랜덤 딜레이)
@@ -110,14 +114,26 @@ export function LiveFeed({ items: realItems }: LiveFeedProps) {
     return 'text-[var(--color-text-muted)]'
   }
 
-  const getResultText = (item: EnhancementFeedItem) => {
-    if (item.result === 'destroy') return '💥 파괴'
+  const getResultIcon = (item: EnhancementFeedItem) => {
+    if (item.result === 'destroy') {
+      return <GiExplosiveMaterials className="w-4 h-4" />
+    }
     if (item.result === 'success') {
       return item.wasChanceTime
-        ? `🌟 +${item.toLevel} (찬스!)`
-        : `✨ +${item.toLevel} 성공`
+        ? <GiStarFormation className="w-4 h-4" />
+        : <GiSparkles className="w-4 h-4" />
     }
-    return `❌ 유지`
+    return <GiCancel className="w-4 h-4" />
+  }
+
+  const getResultText = (item: EnhancementFeedItem) => {
+    if (item.result === 'destroy') return '파괴'
+    if (item.result === 'success') {
+      return item.wasChanceTime
+        ? `+${item.toLevel} (찬스!)`
+        : `+${item.toLevel} 성공`
+    }
+    return '유지'
   }
 
   return (
@@ -133,6 +149,11 @@ export function LiveFeed({ items: realItems }: LiveFeedProps) {
           {displayItems.map((item, index) => {
             const levelTier = getLevelTier(item.fromLevel)
             const levelColor = LEVEL_COLORS[levelTier]
+            const canSendCondolence = item.result === 'destroy' &&
+              item.userId &&
+              currentUserId &&
+              item.userId !== currentUserId &&
+              onSendCondolence
 
             return (
               <div
@@ -147,9 +168,21 @@ export function LiveFeed({ items: realItems }: LiveFeedProps) {
                     {item.weaponName}
                   </p>
                 </div>
-                <span className={`font-bold text-xs ${getResultColor(item.result)}`}>
-                  {getResultText(item)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`font-bold text-xs flex items-center gap-1 ${getResultColor(item.result)}`}>
+                    {getResultIcon(item)}
+                    {getResultText(item)}
+                  </span>
+                  {canSendCondolence && (
+                    <button
+                      onClick={() => onSendCondolence(item.userId!, item.username, item.id)}
+                      className="p-1 rounded hover:bg-[var(--color-bg-elevated-3)] transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
+                      title="묵념 보내기"
+                    >
+                      <FaPray className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
             )
           })}

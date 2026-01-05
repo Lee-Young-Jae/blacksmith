@@ -31,6 +31,8 @@ import { useEquipmentStarForce } from './hooks/useEquipmentStarForce'
 import { useBattle } from './hooks/useBattle'
 import { useBattleCards } from './hooks/useBattleCards'
 import { useEquipment } from './hooks/useEquipment'
+import { useGift } from './hooks/useGift'
+import { GiftIcon, GiftBoxPanel, SendCondolenceModal, SendEquipmentModal } from './components/gift'
 import { getTotalAttack } from './utils/starforce'
 import type { AIDifficulty } from './types/battle'
 import type { UserWeapon, WeaponType, WeaponLevel } from './types/weapon'
@@ -109,6 +111,7 @@ function GameContent() {
   const dailyBattle = useDailyBattle()
   const equipmentSystem = useEquipment()
   const liveFeed = useLiveFeed()
+  const giftSystem = useGift()
 
   const [view, setView] = useState<GameView>('acquire')
   const [activeTab, setActiveTab] = useState<TabType>('equipment')
@@ -118,6 +121,15 @@ function GameContent() {
   const [inventoryFilterSlot, setInventoryFilterSlot] = useState<EquipmentSlot | null>(null)
   const [selectedPotentialEquipment, setSelectedPotentialEquipment] = useState<UserEquipment | null>(null)
   const [selectedSellEquipment, setSelectedSellEquipment] = useState<UserEquipment | null>(null)
+
+  // 선물함 관련 상태
+  const [showGiftBox, setShowGiftBox] = useState(false)
+  const [showSendEquipment, setShowSendEquipment] = useState(false)
+  const [condolenceTarget, setCondolenceTarget] = useState<{
+    userId: string
+    username: string
+    historyId: string
+  } | null>(null)
 
   // 잠재옵션 훅
   const potentialSystem = usePotential({
@@ -379,14 +391,12 @@ function GameContent() {
             <span>⚒️</span>
             <span className="hidden sm:inline">대장장이</span>
           </h1>
-          {totalCombatPower > 0 && (
-            <div className="info-box warning py-1 px-3 flex items-center gap-2">
-              <span className="text-xs text-[var(--color-accent)]">전투력</span>
-              <span className="font-bold text-[var(--color-accent)]">{totalCombatPower.toLocaleString()}</span>
-            </div>
-          )}
         </div>
         <div className="flex items-center gap-3">
+          <GiftIcon
+            unclaimedCount={giftSystem.unclaimedCount.total}
+            onClick={() => setShowGiftBox(true)}
+          />
           <GoldDisplay
             gold={gold}
             canClaimDaily={canClaimDaily}
@@ -464,7 +474,13 @@ function GameContent() {
                 <StatsPanel equipmentStats={equipmentSystem.getEquippedStats()} />
 
                 {/* 실시간 강화 피드 */}
-                <LiveFeed items={liveFeed.items} />
+                <LiveFeed
+                  items={liveFeed.items}
+                  currentUserId={user?.id}
+                  onSendCondolence={(userId, username, historyId) => {
+                    setCondolenceTarget({ userId, username, historyId })
+                  }}
+                />
               </div>
             )}
 
@@ -863,6 +879,50 @@ function GameContent() {
           onSelect={handleCardSelected}
           onCancel={handleCancelCardSelection}
           canReroll={battleCards.canReroll}
+        />
+      )}
+
+      {/* 선물함 패널 */}
+      {showGiftBox && (
+        <GiftBoxPanel
+          gifts={giftSystem.receivedGifts}
+          unclaimedCount={giftSystem.unclaimedCount}
+          isLoading={giftSystem.isLoading}
+          onClaimCondolence={giftSystem.claimCondolence}
+          onClaimEquipment={giftSystem.claimEquipment}
+          onEquipmentClaimed={() => equipmentSystem.loadEquipment()}
+          onSendEquipment={() => {
+            setShowGiftBox(false)
+            setShowSendEquipment(true)
+          }}
+          onClose={() => setShowGiftBox(false)}
+        />
+      )}
+
+      {/* 묵념 전송 모달 */}
+      {condolenceTarget && (
+        <SendCondolenceModal
+          targetUserId={condolenceTarget.userId}
+          targetUsername={condolenceTarget.username}
+          enhancementHistoryId={condolenceTarget.historyId}
+          onSend={giftSystem.sendCondolence}
+          onClose={() => setCondolenceTarget(null)}
+        />
+      )}
+
+      {/* 장비 선물 모달 */}
+      {showSendEquipment && (
+        <SendEquipmentModal
+          inventory={equipmentSystem.inventory.filter(e => !e.isEquipped)}
+          onSearch={giftSystem.searchUsers}
+          onSend={async (request) => {
+            const success = await giftSystem.sendEquipment(request)
+            if (success) {
+              await equipmentSystem.loadEquipment()
+            }
+            return success
+          }}
+          onClose={() => setShowSendEquipment(false)}
         />
       )}
     </div>

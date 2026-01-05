@@ -48,6 +48,7 @@ export function useLiveFeed() {
           console.log('📡 Loaded enhancement history:', typedData.length, 'items')
           setItems(typedData.map(row => ({
             id: row.id,
+            userId: row.user_id,
             username: row.user_profiles?.username || '알 수 없음',
             weaponName: row.weapon_name,
             fromLevel: row.from_level,
@@ -105,6 +106,7 @@ export function useLiveFeed() {
             const typedData = data as unknown as EnhancementHistoryRow
             const newItem: EnhancementFeedItem = {
               id: typedData.id,
+              userId: typedData.user_id,
               username: typedData.user_profiles?.username || '알 수 없음',
               weaponName: typedData.weapon_name,
               fromLevel: typedData.from_level,

@@ -32,6 +32,7 @@ export interface EnhanceEvent {
 // 실시간 피드 아이템
 export interface EnhancementFeedItem {
   id: string
+  userId?: string  // 묵념 전송을 위한 유저 ID (목 데이터는 없음)
   username: string
   weaponName: string
   fromLevel: number
