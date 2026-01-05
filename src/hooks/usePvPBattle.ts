@@ -56,7 +56,7 @@ interface UsePvPBattleReturn {
   isLoading: boolean
 
   // 액션
-  searchOpponent: (combatPower: number) => Promise<boolean>
+  searchOpponent: (rating: number, combatPower: number) => Promise<boolean>
   selectAttackDeck: (cards: CardSlots) => void
   startBattle: (
     attackerSnapshot: BattleSnapshot,
@@ -285,10 +285,10 @@ export function usePvPBattle(): UsePvPBattleReturn {
   const [savedAttackerSnapshot, setSavedAttackerSnapshot] = useState<BattleSnapshot | null>(null)
 
   // =============================================
-  // 상대 검색
+  // 상대 검색 (레이팅 기반)
   // =============================================
 
-  const searchOpponent = useCallback(async (combatPower: number): Promise<boolean> => {
+  const searchOpponent = useCallback(async (rating: number, combatPower: number): Promise<boolean> => {
     if (!user) {
       setError('로그인이 필요합니다.')
       return false
@@ -299,16 +299,89 @@ export function usePvPBattle(): UsePvPBattleReturn {
     setIsLoading(true)
 
     try {
-      // RPC 함수로 상대 검색
+      // 레이팅 기반 매칭 (최근 상대 자동 제외)
       const { data, error: searchError } = await supabase
-        .rpc('get_pvp_opponents_v2', {
+        .rpc('find_pvp_opponent_by_rating', {
           p_user_id: user.id,
-          p_combat_power: combatPower,
-          p_range: 300,
-          p_limit: 5,
+          p_rating: rating,
         })
 
-      if (searchError) throw searchError
+      if (searchError) {
+        // 새 함수가 없으면 기존 함수로 폴백
+        console.warn('Rating-based matching failed, falling back to combat power:', searchError)
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .rpc('get_pvp_opponents_v2', {
+            p_user_id: user.id,
+            p_combat_power: combatPower,
+            p_range: 300,
+            p_limit: 5,
+          })
+
+        if (fallbackError) throw fallbackError
+
+        const opponents = fallbackData as OpponentRow[]
+
+        if (!opponents || opponents.length === 0) {
+          const aiOpponent = generateAIOpponent(combatPower)
+          setOpponent(aiOpponent)
+          setStatus('preparing')
+          return true
+        }
+
+        const selected = opponents[Math.floor(Math.random() * opponents.length)]
+
+        // 상대의 방어덱 카드 및 장비 스냅샷 가져오기
+        let defenseCards: BattleCard[] = []
+        let equipmentSnapshot: Record<string, unknown> | undefined
+
+        try {
+          const { data: cardsData, error: cardsError } = await supabase
+            .rpc('get_opponent_defense_cards', { p_user_id: selected.user_id })
+
+          if (!cardsError && cardsData && cardsData.length > 0) {
+            defenseCards = cardsData.map((card: { id: string; card_type: string; tier: string; value: number; is_percentage: boolean }) => {
+              const ownedCard: OwnedCard = {
+                id: card.id,
+                oderId: selected.user_id,
+                cardType: card.card_type as BattleCardEffectType,
+                tier: card.tier as BattleCardTier,
+                value: card.value,
+                isPercentage: card.is_percentage,
+                createdAt: new Date(),
+              }
+              return ownedCardToBattleCard(ownedCard)
+            })
+          }
+
+          const { data: defenseData } = await supabase
+            .from('user_defense_deck')
+            .select('equipment_snapshot')
+            .eq('user_id', selected.user_id)
+            .maybeSingle()
+
+          if (defenseData?.equipment_snapshot) {
+            equipmentSnapshot = defenseData.equipment_snapshot as Record<string, unknown>
+          }
+        } catch (err) {
+          console.error('Failed to fetch defense data:', err)
+        }
+
+        setOpponent({
+          userId: selected.user_id,
+          username: selected.username,
+          rating: selected.rating,
+          tier: selected.tier,
+          combatPower: selected.combat_power,
+          stats: selected.total_stats as unknown as CharacterStats,
+          cardCount: selected.card_count,
+          isAI: false,
+          defenseCards,
+          equipmentSnapshot: equipmentSnapshot as PvPOpponent['equipmentSnapshot'],
+        })
+
+        setStatus('preparing')
+        return true
+      }
 
       const opponents = data as OpponentRow[]
 
@@ -320,8 +393,8 @@ export function usePvPBattle(): UsePvPBattleReturn {
         return true
       }
 
-      // 랜덤하게 한 명 선택
-      const selected = opponents[Math.floor(Math.random() * opponents.length)]
+      // 첫 번째 상대 선택 (이미 레이팅 차이가 적은 순으로 정렬됨)
+      const selected = opponents[0]
 
       // 상대의 방어덱 카드 및 장비 스냅샷 가져오기
       let defenseCards: BattleCard[] = []

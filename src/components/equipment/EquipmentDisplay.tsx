@@ -14,7 +14,7 @@ interface EquipmentDisplayProps {
   isEnhancing?: boolean
 }
 
-// 레벨별 배경 그라데이션
+// 레벨별 배경 그라데이션 (WeaponDisplay와 동일)
 const LEVEL_BG_COLORS: Record<string, string> = {
   novice: 'from-gray-600 to-gray-800',
   apprentice: 'from-green-600 to-green-900',
@@ -49,12 +49,9 @@ export default function EquipmentDisplay({
           style={{ transform: 'scale(1.5)' }}
         />
 
-        {/* 장비 이미지/이모지 */}
+        {/* 장비 이미지 */}
         <div className="relative w-44 h-44 flex items-center justify-center transition-all duration-500">
-          <EquipmentImage
-            equipment={equipment}
-            size="2xl"
-          />
+          <EquipmentImage equipment={equipment} size="2xl" />
         </div>
 
         {/* 강화 레벨 뱃지 */}
@@ -87,32 +84,56 @@ export default function EquipmentDisplay({
       {/* 장비 정보 */}
       <div className="text-center">
         {/* 슬롯 태그 */}
-        <div className="inline-block px-3 py-1 bg-[var(--color-bg-elevated-2)] rounded-full mb-2">
-          <span className="text-[var(--color-text-muted)] text-xs">{slotName}</span>
+        <div className="inline-block px-3 py-1 bg-gray-700/50 rounded-full mb-2">
+          <span className="text-gray-400 text-xs">{slotName}</span>
         </div>
 
         <h2 className={`text-2xl font-bold ${levelColor}`}>
           {equipmentName}
         </h2>
 
-        {/* 스탯 표시 */}
+        {/* 스탯 표시 - 값이 있는 스탯만 표시 */}
         <div className="mt-3 flex flex-wrap justify-center gap-2">
           {stats.attack > 0 && (
-            <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-[var(--color-bg-elevated-2)] rounded-lg">
-              <span className="text-[var(--color-text-muted)] text-xs">공격력</span>
-              <span className="text-[var(--color-text-primary)] font-bold">{stats.attack}</span>
+            <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-800/50 rounded-lg">
+              <span className="text-gray-400 text-xs">공격력</span>
+              <span className="text-white font-bold">{stats.attack}</span>
             </div>
           )}
           {stats.defense > 0 && (
-            <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-[var(--color-bg-elevated-2)] rounded-lg">
-              <span className="text-[var(--color-text-muted)] text-xs">방어력</span>
-              <span className="text-[var(--color-text-primary)] font-bold">{stats.defense}</span>
+            <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-800/50 rounded-lg">
+              <span className="text-gray-400 text-xs">방어력</span>
+              <span className="text-white font-bold">{stats.defense}</span>
             </div>
           )}
           {stats.hp > 0 && (
-            <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-[var(--color-bg-elevated-2)] rounded-lg">
-              <span className="text-[var(--color-text-muted)] text-xs">HP</span>
-              <span className="text-[var(--color-text-primary)] font-bold">{stats.hp}</span>
+            <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-800/50 rounded-lg">
+              <span className="text-gray-400 text-xs">HP</span>
+              <span className="text-white font-bold">{stats.hp}</span>
+            </div>
+          )}
+          {stats.critRate > 0 && (
+            <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-900/50 rounded-lg">
+              <span className="text-purple-300 text-xs">치명타</span>
+              <span className="text-purple-200 font-bold">{stats.critRate}%</span>
+            </div>
+          )}
+          {stats.critDamage > 0 && (
+            <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-900/50 rounded-lg">
+              <span className="text-purple-300 text-xs">치명타 피해</span>
+              <span className="text-purple-200 font-bold">{stats.critDamage}%</span>
+            </div>
+          )}
+          {stats.penetration > 0 && (
+            <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-900/50 rounded-lg">
+              <span className="text-purple-300 text-xs">관통력</span>
+              <span className="text-purple-200 font-bold">{stats.penetration}%</span>
+            </div>
+          )}
+          {stats.attackSpeed > 0 && (
+            <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-900/50 rounded-lg">
+              <span className="text-purple-300 text-xs">공격속도</span>
+              <span className="text-purple-200 font-bold">{stats.attackSpeed}%</span>
             </div>
           )}
         </div>

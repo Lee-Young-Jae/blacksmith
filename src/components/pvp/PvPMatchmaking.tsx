@@ -34,7 +34,7 @@ interface PvPMatchmakingProps {
     currentBattle: any
     error: string | null
     isLoading: boolean
-    searchOpponent: (combatPower: number) => Promise<boolean>
+    searchOpponent: (rating: number, combatPower: number) => Promise<boolean>
     startBattle: (snapshot: BattleSnapshot, attackerCards: BattleCard[]) => void
     recordBattleResult: (result: RealtimeBattleResult, attackerCards: BattleCard[], defenderCards: BattleCard[]) => Promise<void>
     cancelSearch: () => void
@@ -194,8 +194,8 @@ export function PvPMatchmaking({
     if (ensureDefenseDeck) {
       await ensureDefenseDeck(playerStats, equipment, combatPower)
     }
-    // 상대 검색
-    await searchOpponent(combatPower)
+    // 상대 검색 (레이팅 기반, 전투력은 AI 폴백용)
+    await searchOpponent(myRating, combatPower)
   }
 
 
@@ -284,7 +284,8 @@ export function PvPMatchmaking({
         {/* 텍스트 */}
         <div className="text-center space-y-2 mb-6">
           <p className="text-white font-bold text-xl">상대를 찾는 중...</p>
-          <p className="text-gray-400 text-sm">전투력 {combatPower.toLocaleString()} ±300 범위</p>
+          <p className="text-gray-400 text-sm">레이팅 {myRating.toLocaleString()} 근처에서 검색</p>
+          <p className="text-gray-500 text-xs">최근 대전 상대 제외</p>
           <div className="flex items-center justify-center gap-1 text-purple-400">
             <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
             <span className="animate-bounce" style={{ animationDelay: '150ms' }}>.</span>
@@ -494,9 +495,15 @@ export function PvPMatchmaking({
   // 대기 상태 - 매칭 시작
   return (
     <div className="space-y-4">
-      {/* 내 스탯 */}
+      {/* 내 정보 */}
       <div className="bg-gray-700/50 rounded-lg p-4">
-        <h4 className="text-white font-bold mb-3">내 스탯</h4>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-white font-bold">내 스탯</h4>
+          <div className="text-sm">
+            <span className="text-gray-400">레이팅 </span>
+            <span className="text-yellow-400 font-bold">{myRating.toLocaleString()}</span>
+          </div>
+        </div>
         <div className="grid grid-cols-4 gap-2 text-xs">
           <div className="bg-gray-800/50 rounded p-2 text-center">
             <p className="text-red-400 font-bold">{playerStats.attack}</p>
@@ -555,7 +562,8 @@ export function PvPMatchmaking({
       </button>
 
       <p className="text-gray-500 text-xs text-center">
-        전투력 ±300 범위에서 상대를 검색합니다<br />
+        비슷한 레이팅의 상대를 검색합니다<br />
+        최근 5경기 상대는 제외됩니다<br />
         상대가 없으면 AI와 대전합니다
       </p>
 
