@@ -207,33 +207,33 @@ export function generateAICardsMatchingPlayer(playerCards: BattleCard[]): Battle
 }
 
 function generateAIOpponent(playerCombatPower: number): PvPOpponent {
-  // 전투력 기반 AI 생성 (90%~110% 범위)
-  const variance = 0.10
+  // 전투력 기반 AI 생성 (85%~120% 범위 - 가끔 더 강한 AI)
+  const variance = 0.15
   const minPower = Math.max(500, Math.floor(playerCombatPower * (1 - variance)))
-  const maxPower = Math.floor(playerCombatPower * (1 + variance))
+  const maxPower = Math.floor(playerCombatPower * (1 + variance + 0.05))  // 최대 120%
   const targetCombatPower = Math.floor(Math.random() * (maxPower - minPower + 1)) + minPower
 
   // 플레이어 스탯 기반으로 비슷한 수준의 AI 생성
   // 전투력이 높을수록 스탯도 비례해서 증가
   const powerRatio = targetCombatPower / Math.max(500, playerCombatPower)
 
-  // 기본 스탯 (플레이어 평균 수준)
-  const baseAttack = 50 + Math.floor(targetCombatPower * 0.05)
-  const baseDefense = 30 + Math.floor(targetCombatPower * 0.03)
-  const baseHp = 500 + Math.floor(targetCombatPower * 0.5)
+  // 기본 스탯 (강화된 공식)
+  const baseAttack = 80 + Math.floor(targetCombatPower * 0.08)
+  const baseDefense = 50 + Math.floor(targetCombatPower * 0.05)
+  const baseHp = 800 + Math.floor(targetCombatPower * 0.8)
 
-  // 랜덤 변동 (-20% ~ +20%)
-  const randomFactor = () => 0.8 + Math.random() * 0.4
+  // 랜덤 변동 (-15% ~ +25%)
+  const randomFactor = () => 0.85 + Math.random() * 0.4
 
   const stats: CharacterStats = {
     attack: Math.floor(baseAttack * randomFactor()),
     defense: Math.floor(baseDefense * randomFactor()),
     hp: Math.floor(baseHp * randomFactor()),
-    critRate: Math.min(80, Math.floor((15 + Math.random() * 20) * powerRatio)),
-    critDamage: Math.floor(150 + Math.random() * 50 * powerRatio),
-    penetration: Math.min(50, Math.floor(Math.random() * 20 * powerRatio)),
-    attackSpeed: Math.floor(100 + Math.random() * 30 * powerRatio),
-    evasion: Math.min(30, Math.floor(Math.random() * 15 * powerRatio)),  // AI 회피율 (최대 30%)
+    critRate: Math.min(80, Math.floor((20 + Math.random() * 25) * powerRatio)),
+    critDamage: Math.floor(160 + Math.random() * 60 * powerRatio),
+    penetration: Math.min(50, Math.floor((5 + Math.random() * 25) * powerRatio)),
+    attackSpeed: Math.floor(105 + Math.random() * 35 * powerRatio),
+    evasion: Math.min(35, Math.floor((5 + Math.random() * 20) * powerRatio)),  // AI 회피율 (최대 35%)
   }
 
   // 실제 계산된 전투력 확인
