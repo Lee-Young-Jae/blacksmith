@@ -219,11 +219,13 @@ function BattleLogItem({
   onRevenge,
   isExpanded,
   onToggle,
+  isRevengeLoading,
 }: {
   log: PvPBattleLog
-  onRevenge: () => void
+  onRevenge: () => Promise<boolean>
   isExpanded: boolean
   onToggle: () => void
+  isRevengeLoading: boolean
 }) {
   const resultColor = log.myResult === 'win'
     ? 'text-green-400'
@@ -308,13 +310,14 @@ function BattleLogItem({
         <span className="text-gray-500 text-xs">{timeAgo}</span>
         {log.canRevenge && (
           <button
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation()
-              onRevenge()
+              await onRevenge()
             }}
-            className="px-3 py-1 bg-orange-600 text-white text-xs font-medium rounded hover:bg-orange-500"
+            disabled={isRevengeLoading}
+            className="px-3 py-1 bg-orange-600 text-white text-xs font-medium rounded hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            복수전
+            {isRevengeLoading ? '로딩...' : '복수전'}
           </button>
         )}
       </div>
@@ -356,6 +359,8 @@ export function PvPBattleHistory({
   onRevenge,
 }: PvPBattleHistoryProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [revengeLoadingId, setRevengeLoadingId] = useState<string | null>(null)
+  const [revengeError, setRevengeError] = useState<string | null>(null)
 
   // 통계 계산
   const stats = {
@@ -373,6 +378,24 @@ export function PvPBattleHistory({
 
   const handleToggle = (id: string) => {
     setExpandedId(prev => prev === id ? null : id)
+  }
+
+  const handleRevenge = async (logId: string, opponentId: string): Promise<boolean> => {
+    setRevengeLoadingId(logId)
+    setRevengeError(null)
+    try {
+      const success = await onRevenge(opponentId)
+      if (!success) {
+        setRevengeError('복수전을 시작할 수 없습니다. 잠시 후 다시 시도해주세요.')
+      }
+      return success
+    } catch (err) {
+      console.error('Revenge failed:', err)
+      setRevengeError('복수전 시작 중 오류가 발생했습니다.')
+      return false
+    } finally {
+      setRevengeLoadingId(null)
+    }
   }
 
   return (
@@ -409,6 +432,13 @@ export function PvPBattleHistory({
         </div>
       </div>
 
+      {/* 에러 메시지 */}
+      {revengeError && (
+        <div className="p-3 bg-red-900/30 border border-red-500/50 rounded-lg">
+          <p className="text-red-400 text-sm text-center">{revengeError}</p>
+        </div>
+      )}
+
       {/* 안내 문구 */}
       <p className="text-gray-500 text-xs text-center">기록을 클릭하면 상대방 정보를 확인할 수 있습니다</p>
 
@@ -434,9 +464,10 @@ export function PvPBattleHistory({
             <BattleLogItem
               key={log.id}
               log={log}
-              onRevenge={() => onRevenge(log.opponentId)}
+              onRevenge={() => handleRevenge(log.id, log.opponentId)}
               isExpanded={expandedId === log.id}
               onToggle={() => handleToggle(log.id)}
+              isRevengeLoading={revengeLoadingId === log.id}
             />
           ))
         ) : (

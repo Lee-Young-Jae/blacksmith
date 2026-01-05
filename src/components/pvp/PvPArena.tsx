@@ -275,7 +275,6 @@ export function PvPArena({
             onRevenge={async (opponentId: string) => {
               const success = await pvpBattle.startRevengeBattle(opponentId)
               if (success) {
-                // 복수전 시작 성공 시 대전 탭으로 전환
                 setActiveTab('matchmaking')
               }
               return success
