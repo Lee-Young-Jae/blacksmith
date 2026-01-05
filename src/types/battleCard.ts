@@ -204,8 +204,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     // 광폭화: 15% 속도 = 5초간 약 +1회 공격 = +70 가치
     speed_boost: 15,
     immunity: 0,
-    // 영혼 흡수: 치명타 시에만 발동, 20% 흡혈
-    lifesteal: 20,
+    // 영혼 흡수: 치명타 시에만 발동, 10% 흡혈 (너프됨)
+    lifesteal: 10,
     double_attack: 0,
     stun: 0,
     silence: 0,
@@ -239,8 +239,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     speed_boost: 20,
     // 무적: 2초간 (에픽)
     immunity: 2,
-    // 영혼 흡수: 치명타 시에만 발동, 30% 흡혈
-    lifesteal: 30,
+    // 영혼 흡수: 치명타 시에만 발동, 15% 흡혈 (너프됨)
+    lifesteal: 15,
     double_attack: 0,
     stun: 0,
     // 침묵: 2초간 상대 스킬 사용 불가 (에픽)
@@ -250,7 +250,7 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     anti_heal: 50,
     // 광전사: 체력 50%→0% 시 공격속도 0%→+30% (선형)
     berserker: 30,
-    // 처형: 상대 체력 30% 이하일 때 데미지 +30%
+    // 처형: 상대 체력 50% 이하일 때 데미지 +30% (버프됨)
     execute: 30,
     // 방패 강타: 방어력의 50% 즉시 데미지
     shield_bash: 50,
@@ -276,8 +276,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     speed_boost: 30,
     // 무적: 3초간 (전설)
     immunity: 3,
-    // 영혼 흡수: 치명타 시에만 발동, 40% 흡혈
-    lifesteal: 40,
+    // 영혼 흡수: 치명타 시에만 발동, 20% 흡혈 (너프됨)
+    lifesteal: 20,
     // 폭풍 연타: 4초간 2배 = 약 2회 * 70 = +140 가치
     double_attack: 100,
     // 기절: 1.5초 = 상대 1회 공격+스킬 봉쇄 = 70 가치 + 전략적 가치
@@ -289,7 +289,7 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     anti_heal: 70,
     // 광전사: 체력 50%→0% 시 공격속도 0%→+50% (선형)
     berserker: 50,
-    // 처형: 상대 체력 30% 이하일 때 데미지 +50%
+    // 처형: 상대 체력 50% 이하일 때 데미지 +50% (버프됨)
     execute: 50,
     // 방패 강타: 방어력의 60% 즉시 데미지
     shield_bash: 60,
@@ -534,7 +534,7 @@ export function formatCardDescription(effect: BattleCardEffect): string {
     case 'berserker':
       return `HP 50% 이하 시 체력 비례 공속 최대 +${effect.value}%`
     case 'execute':
-      return `상대 HP 30% 이하 시 데미지 +${effect.value}%`
+      return `상대 HP 50% 이하 시 데미지 +${effect.value}%`
     case 'shield_bash':
       return `방어력의 ${effect.value}% 즉시 데미지`
     default:

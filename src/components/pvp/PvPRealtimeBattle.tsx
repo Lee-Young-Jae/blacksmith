@@ -339,8 +339,9 @@ export function PvPRealtimeBattle({
     const penetration = Math.min(100, (attackerStats.penetration || 0) + penetrationBonus)
 
     // 방어력 감소율: defense / (defense + 100) → 방어력 100이면 50% 감소
+    // 계수 0.7 적용 → 방어력 100 시 실제 35% 데미지 감소 (버프됨)
     const defenseReductionRate = defense / (defense + 100) * (1 - penetration / 100)
-    let baseDamage = Math.max(1, attack * (1 - defenseReductionRate * 0.5))
+    let baseDamage = Math.max(1, attack * (1 - defenseReductionRate * 0.7))
 
     // 데미지 랜덤 범위
     const variance = PVP_BATTLE_CONFIG.DAMAGE_VARIANCE
@@ -369,9 +370,9 @@ export function PvPRealtimeBattle({
     // 데미지 감소 적용 (최소 1 데미지 보장)
     let finalDamage = Math.max(1, Math.floor(baseDamage * damageReduction))
 
-    // 처형 효과: 상대 HP 30% 이하 시 추가 데미지
+    // 처형 효과: 상대 HP 50% 이하 시 추가 데미지 (버프됨)
     const executeBonus = getPassiveBonus(attackerSkills, 'execute')
-    if (executeBonus > 0 && defenderHpRatio <= 0.3) {
+    if (executeBonus > 0 && defenderHpRatio <= 0.5) {
       finalDamage = Math.floor(finalDamage * (1 + executeBonus / 100))
     }
 
