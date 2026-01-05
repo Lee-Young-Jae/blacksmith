@@ -4,7 +4,7 @@
  * 상대 검색, 공격덱 선택, 배틀 실행을 담당합니다.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { CharacterStats } from "../../types/stats";
 import type { OwnedCard, CardSlots } from "../../types/cardDeck";
 import type { EquippedItems } from "../../types/equipment";
@@ -217,11 +217,30 @@ export function PvPMatchmaking({
   onGoldUpdate,
   ensureDefenseDeck,
 }: PvPMatchmakingProps) {
-  const [selectedCards, setSelectedCards] = useState<CardSlots>([
-    null,
-    null,
-    null,
-  ]);
+  // 이전 공격덱 복원 (localStorage에서)
+  const [selectedCards, setSelectedCards] = useState<CardSlots>(() => {
+    try {
+      const saved = localStorage.getItem('pvp_attack_deck')
+      if (saved) {
+        const savedIds = JSON.parse(saved) as (string | null)[]
+        // 저장된 카드 ID로 현재 보유 카드에서 찾기
+        const restored = savedIds.map(id =>
+          id ? ownedCards.find(c => c.id === id) || null : null
+        ) as CardSlots
+        return restored
+      }
+    } catch {
+      // 무시
+    }
+    return [null, null, null]
+  });
+
+  // 카드 선택 변경 시 localStorage에 저장
+  useEffect(() => {
+    const cardIds = selectedCards.map(c => c?.id || null)
+    localStorage.setItem('pvp_attack_deck', JSON.stringify(cardIds))
+  }, [selectedCards])
+
   // AI 상대일 때, 플레이어 카드에 맞춰 재생성된 AI 카드
   const [matchedAICards, setMatchedAICards] = useState<BattleCard[]>([]);
 
@@ -390,6 +409,7 @@ export function PvPMatchmaking({
         playerStats={playerStats}
         playerCards={playerCards}
         opponentName={opponent.username}
+        opponentAvatarUrl={opponent.avatarUrl}
         opponentStats={opponent.stats}
         opponentCards={opponentCards}
         opponentIsAI={opponent.isAI}
@@ -454,7 +474,7 @@ export function PvPMatchmaking({
             {/* 상대 */}
             <div className="flex-1 text-center">
               <div
-                className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-2 border-2 shadow-lg ${
+                className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-2 border-2 shadow-lg overflow-hidden ${
                   opponent.isAI
                     ? "bg-gradient-to-br from-yellow-500 to-amber-600 border-yellow-400 shadow-yellow-500/30"
                     : "bg-gradient-to-br from-red-500 to-orange-600 border-red-400 shadow-red-500/30"
@@ -462,6 +482,12 @@ export function PvPMatchmaking({
               >
                 {opponent.isAI ? (
                   <FaRobot className="text-3xl text-white" />
+                ) : opponent.avatarUrl ? (
+                  <img
+                    src={opponent.avatarUrl}
+                    alt={opponent.username}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <FaUser className="text-3xl text-white" />
                 )}

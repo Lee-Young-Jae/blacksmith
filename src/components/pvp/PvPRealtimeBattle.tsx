@@ -24,6 +24,7 @@ interface PvPRealtimeBattleProps {
 
   // 상대 정보
   opponentName: string
+  opponentAvatarUrl?: string  // 상대 프로필 이미지
   opponentStats: CharacterStats
   opponentCards: BattleCard[]
   opponentIsAI?: boolean
@@ -70,6 +71,7 @@ export function PvPRealtimeBattle({
   playerStats,
   playerCards,
   opponentName,
+  opponentAvatarUrl,
   opponentStats,
   opponentCards,
   opponentIsAI = true,
@@ -909,7 +911,12 @@ export function PvPRealtimeBattle({
         <div className="space-y-1 bg-red-950/30 rounded-lg p-2 border border-red-900/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-red-400 font-bold text-lg">👤 {opponentName}</span>
+              {opponentAvatarUrl ? (
+                <img src={opponentAvatarUrl} alt={opponentName} className="w-6 h-6 rounded-full object-cover border border-red-400" />
+              ) : (
+                <FaUser className="text-red-400" />
+              )}
+              <span className="text-red-400 font-bold text-lg">{opponentName}</span>
               {opponentStunDuration > 0 && (
                 <span className="text-sm bg-purple-600 px-2 py-0.5 rounded-full animate-pulse">
                   💫 {opponentStunDuration.toFixed(1)}s
@@ -1379,12 +1386,16 @@ export function PvPRealtimeBattle({
 
                   {/* 상대 */}
                   <div className="flex-1 text-center">
-                    <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center ${
+                    <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center overflow-hidden ${
                       isLose ? 'bg-gradient-to-br from-yellow-400 to-amber-500' :
                       isWin ? 'bg-gradient-to-br from-gray-500 to-gray-600' :
                       'bg-gradient-to-br from-gray-400 to-gray-500'
                     }`}>
-                      <span className="text-2xl">{isLose ? '😎' : isWin ? '😢' : '😐'}</span>
+                      {opponentAvatarUrl ? (
+                        <img src={opponentAvatarUrl} alt={opponentName} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-2xl">{isLose ? '😎' : isWin ? '😢' : '😐'}</span>
+                      )}
                     </div>
                     <p className="text-xs text-red-400 font-medium mt-1 truncate">{opponentName}</p>
                   </div>

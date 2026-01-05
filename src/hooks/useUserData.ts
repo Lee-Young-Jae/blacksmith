@@ -10,6 +10,7 @@ interface UserProfileRow {
   username: string
   gold: number
   last_daily_claim: string | null
+  avatar_url: string | null
 }
 
 interface UserWeaponRow {
@@ -26,6 +27,7 @@ interface UserProfile {
   username: string
   gold: number
   lastDailyClaim: string | null
+  avatarUrl: string | null
 }
 
 interface UserDataState {
@@ -55,10 +57,13 @@ export function useUserData() {
       setState(prev => ({ ...prev, isLoading: true, error: null }))
 
       try {
+        // OAuth 아바타 URL 가져오기
+        const oauthAvatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || null
+
         // 프로필 로드
         let { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
-          .select('username, gold, last_daily_claim')
+          .select('username, gold, last_daily_claim, avatar_url')
           .eq('id', user.id)
           .single()
 
@@ -73,8 +78,9 @@ export function useUserData() {
               id: user.id,
               username,
               gold: 10000,
+              avatar_url: oauthAvatarUrl,
             })
-            .select('username, gold, last_daily_claim')
+            .select('username, gold, last_daily_claim, avatar_url')
             .single()
 
           if (createError) {
@@ -137,11 +143,20 @@ export function useUserData() {
           }
         }
 
+        // OAuth 아바타가 변경되었으면 DB 업데이트
+        if (oauthAvatarUrl && oauthAvatarUrl !== typedProfile.avatar_url) {
+          await supabase
+            .from('user_profiles')
+            .update({ avatar_url: oauthAvatarUrl })
+            .eq('id', user.id)
+        }
+
         setState({
           profile: {
             username: typedProfile.username,
             gold: typedProfile.gold,
             lastDailyClaim: typedProfile.last_daily_claim,
+            avatarUrl: oauthAvatarUrl || typedProfile.avatar_url,
           },
           weapon,
           isLoading: false,
