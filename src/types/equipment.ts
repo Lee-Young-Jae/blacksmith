@@ -159,8 +159,8 @@ export function getStarForceBonus(
   baseStats: Partial<CharacterStats>,
   starLevel: number
 ): Partial<CharacterStats> {
-  // 강화 배율: 25성 기준 약 4.5배
-  const starMultiplier = 1 + starLevel * 0.07 + starLevel * starLevel * 0.003;
+  // 강화 배율: 25성 기준 약 6.6배
+  const starMultiplier = 1 + starLevel * 0.10 + starLevel * starLevel * 0.005;
 
   const bonus: Partial<CharacterStats> = {};
 
@@ -200,8 +200,8 @@ export function calculateEquipmentStats(
   equipment: UserEquipment
 ): CharacterStats {
   const { equipmentBase, starLevel, potentials } = equipment;
-  // 강화 배율: 25성 기준 약 4.5배
-  const starMultiplier = 1 + starLevel * 0.07 + starLevel * starLevel * 0.003;
+  // 강화 배율: 25성 기준 약 6.6배
+  const starMultiplier = 1 + starLevel * 0.10 + starLevel * starLevel * 0.005;
 
   // 기본 스탯 × 스타포스 배율
   const baseWithMultipliers: CharacterStats = {
