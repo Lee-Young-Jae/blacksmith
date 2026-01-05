@@ -314,19 +314,19 @@ export interface BattleRewards {
 
 // 승리/패배/무승부별 기본 보상
 export const BASE_REWARDS = {
-  WIN: { gold: 500, cardDropChance: 0.3 },
-  LOSE: { gold: 100, cardDropChance: 0.05 },
-  DRAW: { gold: 250, cardDropChance: 0.15 },
+  WIN: { gold: 750, cardDropChance: 0.3 },
+  LOSE: { gold: 150, cardDropChance: 0.05 },
+  DRAW: { gold: 400, cardDropChance: 0.15 },
 } as const
 
 // 티어별 보상 배율
 export const TIER_REWARD_MULTIPLIERS: Record<LeagueTier, number> = {
-  bronze: 1.0,
-  silver: 1.2,
-  gold: 1.5,
-  platinum: 1.8,
-  diamond: 2.2,
-  master: 3.0,
+  bronze: 1.2,
+  silver: 1.5,
+  gold: 2.0,
+  platinum: 2.5,
+  diamond: 3.0,
+  master: 4.0,
 }
 
 // 배틀 보상 계산
