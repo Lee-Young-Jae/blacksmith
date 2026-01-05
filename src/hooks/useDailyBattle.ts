@@ -4,6 +4,15 @@ import { useAuth } from '../contexts/AuthContext'
 
 const MAX_DAILY_BATTLES = 10
 
+// 한국 시간 (KST) 기준 오늘 날짜 가져오기
+function getKoreanDateString(): string {
+  const now = new Date()
+  // UTC + 9시간 = KST
+  const kstOffset = 9 * 60 * 60 * 1000
+  const kstDate = new Date(now.getTime() + kstOffset)
+  return kstDate.toISOString().split('T')[0]
+}
+
 interface DailyBattleRow {
   id: string
   battle_count: number
@@ -40,7 +49,7 @@ export function useDailyBattle() {
     const loadTodayBattles = async () => {
       setIsLoading(true)
       try {
-        const today = new Date().toISOString().split('T')[0]
+        const today = getKoreanDateString()
 
         const { data, error } = await supabase
           .from('daily_battles')
@@ -80,7 +89,7 @@ export function useDailyBattle() {
     if (state.battleCount >= MAX_DAILY_BATTLES) return false
 
     try {
-      const today = new Date().toISOString().split('T')[0]
+      const today = getKoreanDateString()
 
       const { data: existing } = await supabase
         .from('daily_battles')
