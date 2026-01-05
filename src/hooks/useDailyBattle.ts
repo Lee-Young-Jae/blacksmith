@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
-const MAX_DAILY_BATTLES = 10
+const MAX_DAILY_BATTLES = 15
 
 // 한국 시간 (KST) 기준 오늘 날짜 가져오기
 function getKoreanDateString(): string {
