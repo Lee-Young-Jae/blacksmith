@@ -9,6 +9,7 @@
 
 import { useState, useEffect } from 'react'
 import type { CharacterStats } from '../../types/stats'
+import { formatNumberString } from '../../types/stats'
 import type { OwnedCard, CardSlots, DefenseDeck, AIStrategy } from '../../types/cardDeck'
 import type { EquippedItems } from '../../types/equipment'
 import { ownedCardToBattleCard, AI_STRATEGIES, TIER_ORDER } from '../../types/cardDeck'
@@ -241,7 +242,7 @@ export function DefenseDeckSetup({
             <p className="text-gray-500">HP</p>
           </div>
           <div className="bg-gray-800/50 rounded p-2 text-center">
-            <p className="text-cyan-400 font-bold">{playerStats.attackSpeed}%</p>
+            <p className="text-cyan-400 font-bold">{formatNumberString(playerStats.attackSpeed)}%</p>
             <p className="text-gray-500">공속</p>
           </div>
         </div>

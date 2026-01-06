@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react'
+import { formatNumberString } from '../../types/stats'
 import type { PvPBattleLog, BattleSnapshot } from '../../types/pvpBattle'
 import {
   EQUIPMENT_SLOT_NAMES,
@@ -152,23 +153,23 @@ function OpponentDetails({ snapshot }: { snapshot: BattleSnapshot }) {
       <div className="grid grid-cols-5 gap-1 text-xs">
         <div className="text-center">
           <span className="text-gray-500">크리티컬 </span>
-          <span className="text-yellow-400">{stats.critRate}%</span>
+          <span className="text-yellow-400">{formatNumberString(stats.critRate)}%</span>
         </div>
         <div className="text-center">
           <span className="text-gray-500">크뎀 </span>
-          <span className="text-yellow-400">{stats.critDamage}%</span>
+          <span className="text-yellow-400">{formatNumberString(stats.critDamage)}%</span>
         </div>
         <div className="text-center">
           <span className="text-gray-500">관통력 </span>
-          <span className="text-cyan-400">{stats.penetration}%</span>
+          <span className="text-cyan-400">{formatNumberString(stats.penetration)}%</span>
         </div>
         <div className="text-center">
           <span className="text-gray-500">공속 </span>
-          <span className="text-green-400">{stats.attackSpeed}</span>
+          <span className="text-green-400">{formatNumberString(stats.attackSpeed)}</span>
         </div>
         <div className="text-center">
           <span className="text-gray-500">회피 </span>
-          <span className="text-emerald-400">{stats.evasion || 0}%</span>
+          <span className="text-emerald-400">{formatNumberString(stats.evasion || 0)}%</span>
         </div>
       </div>
 
