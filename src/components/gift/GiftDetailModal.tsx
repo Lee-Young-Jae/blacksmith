@@ -24,6 +24,7 @@ export function GiftDetailModal({ gift, onClaim, onClose }: GiftDetailModalProps
   const isCondolence = gift.giftType === 'condolence'
   const isEquipment = gift.giftType === 'equipment'
   const isGold = gift.giftType === 'gold'
+  const isTicket = gift.giftType === 'ticket'
 
   // 장비 이름 가져오기
   const equipmentName = isEquipment && gift.equipmentBase && gift.equipmentData
@@ -127,6 +128,35 @@ export function GiftDetailModal({ gift, onClaim, onClose }: GiftDetailModalProps
             </div>
           )}
 
+          {/* 강화권 */}
+          {isTicket && (
+            <div className="text-center space-y-3">
+              <div className="w-32 h-32 mx-auto bg-cyan-500/20 rounded-2xl flex items-center justify-center">
+                <img
+                  src={`/images/tickets/${gift.ticketLevel}.png`}
+                  alt=""
+                  className="w-20 h-20 object-contain"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement
+                    target.style.display = 'none'
+                    target.parentElement!.innerHTML = '<span class="text-7xl">🎫</span>'
+                  }}
+                />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-cyan-400">
+                  {gift.ticketLevel}성 강화권
+                </p>
+                <p className="text-lg text-cyan-300">
+                  x{gift.ticketCount || 1}
+                </p>
+              </div>
+              <p className="text-sm text-[var(--color-text-muted)]">
+                장비를 {gift.ticketLevel}성으로 즉시 강화할 수 있습니다
+              </p>
+            </div>
+          )}
+
           {/* 메시지 */}
           {gift.message && (
             <div className="bg-[var(--color-bg-elevated-2)] rounded-lg p-3">
@@ -161,7 +191,7 @@ export function GiftDetailModal({ gift, onClaim, onClose }: GiftDetailModalProps
                   수령 중...
                 </>
               ) : (
-                isEquipment || isGold ? '수령하기' : '확인'
+                isEquipment || isGold || isTicket ? '수령하기' : '확인'
               )}
             </button>
           )}

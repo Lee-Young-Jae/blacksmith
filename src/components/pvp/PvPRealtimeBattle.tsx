@@ -248,6 +248,10 @@ export function PvPRealtimeBattle({
   // 경과 시간 ref (AI 스킬용)
   const elapsedTimeRef = useRef(0)
 
+  // 스킬 중복 실행 방지 ref
+  const skillLastUsedRef = useRef<Record<number, number>>({})
+  const SKILL_DEBOUNCE_MS = 100
+
   // HP ref (게임 루프에서 읽기용)
   const playerHpRef = useRef(playerHp)
   const opponentHpRef = useRef(opponentHp)
@@ -394,6 +398,12 @@ export function PvPRealtimeBattle({
     if (playerStunRef.current > 0) return
     if (playerSilenceRef.current > 0) return
 
+    // 중복 실행 방지 (100ms 이내 재실행 차단)
+    const now = Date.now()
+    const lastUsed = skillLastUsedRef.current[skillIndex] || 0
+    if (now - lastUsed < SKILL_DEBOUNCE_MS) return
+    skillLastUsedRef.current[skillIndex] = now
+
     // 먼저 스킬 정보 확인
     const skillToUse = playerSkillsRef.current[skillIndex]
     if (!skillToUse) return
@@ -403,96 +413,72 @@ export function PvPRealtimeBattle({
     // 회복 피로 상태에서는 회복 스킬 사용 불가
     if (skillToUse.card.effect.type === 'hp_recovery' && playerHealFatigueRef.current > 0) return
 
-    // 스킬 사용 알림 표시
-    showSkillNotification('player', skillToUse.card.name, skillToUse.card.emoji)
+    const card = skillToUse.card
+    const effect = card.effect
 
+    // 스킬 사용 알림 표시
+    showSkillNotification('player', card.name, card.emoji)
+
+    // 즉시 효과 처리 (setState 콜백 바깥에서 실행)
+    if (effect.type === 'hp_recovery') {
+      const antiHealReduction = getPassiveBonus(opponentSkillsRef.current, 'anti_heal')
+      const healMultiplier = Math.max(0, 1 - antiHealReduction / 100)
+      const baseHealAmount = Math.floor(playerHpRef.current * effect.value / 100)
+      const healAmount = Math.floor(baseHealAmount * healMultiplier)
+      const newPlayerHp = Math.min(playerMaxHp, playerHpRef.current + healAmount)
+      playerHpRef.current = newPlayerHp
+      setPlayerHp(newPlayerHp)
+      addFloatingDamage('player', healAmount, false, true)
+      setPlayerHealFatigue(10)
+    } else if (effect.type === 'first_strike') {
+      const bonusDamage = Math.floor(opponentMaxHp * effect.value / 100)
+      const newOpponentHp = Math.max(0, opponentHpRef.current - bonusDamage)
+      opponentHpRef.current = newOpponentHp
+      setOpponentHp(newOpponentHp)
+      addFloatingDamage('opponent', bonusDamage, false, false)
+    } else if (effect.type === 'shield_bash') {
+      const defense = safePlayerStats.defense * (1 + getPassiveBonus(playerSkillsRef.current, 'defense_boost') / 100)
+      const bonusDamage = Math.floor(defense * effect.value / 100)
+      const newOpponentHp = Math.max(0, opponentHpRef.current - bonusDamage)
+      opponentHpRef.current = newOpponentHp
+      setOpponentHp(newOpponentHp)
+      addFloatingDamage('opponent', bonusDamage, false, false)
+    } else if (effect.type === 'stun') {
+      const stunDuration = card.duration > 0 ? card.duration : 2
+      opponentNextAttackRef.current += stunDuration * 1000
+      setOpponentStunDuration(stunDuration)
+    } else if (effect.type === 'silence') {
+      const silenceDuration = effect.value > 0 ? effect.value : 2.5
+      setOpponentSilenceDuration(silenceDuration)
+    }
+
+    // 지속 효과 활성화
+    const durationBasedEffects = ['guaranteed_crit', 'immunity', 'silence']
+    const effectDuration = durationBasedEffects.includes(effect.type)
+      ? effect.value
+      : card.duration
+
+    // 쿨타임 초기화 패시브 체크
+    const cooldownResetChance = getPassiveBonus(playerSkillsRef.current, 'cooldown_reset')
+    const isCooldownReset = cooldownResetChance > 0 && Math.random() * 100 < cooldownResetChance
+    const finalCooldown = isCooldownReset ? 0 : card.cooldown
+
+    if (isCooldownReset) {
+      showSkillNotification('player', '⏰ 쿨타임 초기화!', '⏰')
+    }
+
+    // 스킬 상태 업데이트 (순수 함수)
     setPlayerSkills(prev => {
       const newSkills = [...prev]
-      const skill = newSkills[skillIndex]
-
-      // 쿨다운 중이면 무시
-      if (skill.cooldownRemaining > 0) return prev
-
-      // 패시브는 버튼 클릭 불필요
-      if (skill.card.activationType === 'passive') return prev
-
-      // 스킬 발동
-      const card = skill.card
-      const effect = card.effect
-
-      // 즉시 효과
-      if (effect.type === 'hp_recovery') {
-        // 남은 HP 기준으로 회복 (현재 HP의 X% 회복)
-        // 치유 감소 효과 적용 (상대의 anti_heal 패시브)
-        const antiHealReduction = getPassiveBonus(opponentSkillsRef.current, 'anti_heal')
-        const healMultiplier = Math.max(0, 1 - antiHealReduction / 100)
-        setPlayerHp(hp => {
-          const baseHealAmount = Math.floor(hp * effect.value / 100)
-          const healAmount = Math.floor(baseHealAmount * healMultiplier)
-          addFloatingDamage('player', healAmount, false, true)
-          return Math.min(playerMaxHp, hp + healAmount)
-        })
-        // 회복 피로 10초 설정 (연속 회복 방지)
-        setPlayerHealFatigue(10)
-      } else if (effect.type === 'first_strike') {
-        // 번개 일섬: 상대 최대 HP 비례 즉시 데미지
-        const bonusDamage = Math.floor(opponentMaxHp * effect.value / 100)
-        setOpponentHp(hp => Math.max(0, hp - bonusDamage))
-        addFloatingDamage('opponent', bonusDamage, true, false)
-      } else if (effect.type === 'shield_bash') {
-        // 방패 강타: 방어력 기반 즉시 데미지
-        const defense = safePlayerStats.defense * (1 + getPassiveBonus(playerSkillsRef.current, 'defense_boost') / 100)
-        const bonusDamage = Math.floor(defense * effect.value / 100)
-        setOpponentHp(hp => Math.max(0, hp - bonusDamage))
-        addFloatingDamage('opponent', bonusDamage, true, false)
-      } else if (effect.type === 'stun') {
-        // 스턴: 상대 공격 지연 + 스킬 사용 불가
-        // effect.value는 스턴 확률(100%)이므로, 카드의 duration 또는 고정 2초 사용
-        const stunDuration = card.duration > 0 ? card.duration : 2
-        opponentNextAttackRef.current += stunDuration * 1000
-        setOpponentStunDuration(stunDuration)
-      } else if (effect.type === 'silence') {
-        // 침묵: 상대 스킬 사용 불가 (공격은 가능)
-        // effect.value가 지속시간 (2/3초)
-        const silenceDuration = effect.value > 0 ? effect.value : 2.5
-        setOpponentSilenceDuration(silenceDuration)
+      newSkills[skillIndex] = {
+        ...prev[skillIndex],
+        isActive: effectDuration > 0,
+        durationRemaining: effectDuration,
+        cooldownRemaining: finalCooldown,
       }
-
-      // 지속 효과 활성화
-      // 지속시간 기반 스킬은 effect.value를 duration으로 사용
-      const durationBasedEffects = ['guaranteed_crit', 'immunity', 'silence']
-      const effectDuration = durationBasedEffects.includes(effect.type)
-        ? effect.value
-        : card.duration
-
-      // 쿨타임 초기화 패시브 체크
-      const cooldownResetChance = getPassiveBonus(newSkills, 'cooldown_reset')
-      const isCooldownReset = cooldownResetChance > 0 && Math.random() * 100 < cooldownResetChance
-      const finalCooldown = isCooldownReset ? 0 : card.cooldown
-
-      if (effectDuration > 0) {
-        newSkills[skillIndex] = {
-          ...skill,
-          isActive: true,
-          durationRemaining: effectDuration,
-          cooldownRemaining: finalCooldown,
-        }
-      } else {
-        // 즉시 효과는 바로 쿨다운
-        newSkills[skillIndex] = {
-          ...skill,
-          cooldownRemaining: finalCooldown,
-        }
-      }
-
-      // 쿨타임 초기화 발동 시 알림
-      if (isCooldownReset) {
-        showSkillNotification('player', '⏰ 쿨타임 초기화!', '⏰')
-      }
-
       return newSkills
     })
-  }, [playerMaxHp, addFloatingDamage, showSkillNotification, getPassiveBonus])
+  }, [playerMaxHp, opponentMaxHp, safePlayerStats.defense, addFloatingDamage, showSkillNotification, getPassiveBonus])
 
   // AI 스킬 사용 로직 (지능적)
   const aiUseSkill = useCallback((currentElapsedTime: number) => {
@@ -504,165 +490,151 @@ export function PvPRealtimeBattle({
     const playerHpRatio = playerHpRef.current / playerMaxHp
     const battleProgress = currentElapsedTime / PVP_BATTLE_CONFIG.BATTLE_DURATION // 0~1
 
+    // 현재 스킬 상태에서 사용 가능한 스킬 찾기 (ref 사용)
+    const currentSkills = opponentSkillsRef.current
+    const availableSkills = currentSkills
+      .map((s, i) => ({ skill: s, index: i }))
+      .filter(({ skill }) =>
+        skill.card.activationType === 'active' &&
+        skill.cooldownRemaining <= 0 &&
+        !skill.isActive
+      )
+
+    if (availableSkills.length === 0) return
+
+    // 스킬 우선순위 결정 (상황에 따라)
+    let selectedSkill: { skill: SkillState; index: number } | null = null
+
+    for (const { skill, index } of availableSkills) {
+      const effectType = skill.card.effect.type
+
+      // HP 회복: 체력이 낮을 때 긴급 사용 (15-35% 범위), 회복 피로 시 사용 불가
+      if (effectType === 'hp_recovery') {
+        if (opponentHpRatio < 0.35 && opponentHpRatio > 0.15 && opponentHealFatigueRef.current <= 0) {
+          selectedSkill = { skill, index }
+          break
+        }
+      }
+      // 무적: 체력 40% 이하일 때 긴급 사용
+      else if (effectType === 'immunity') {
+        if (opponentHpRatio < 0.4) {
+          selectedSkill = { skill, index }
+          break
+        }
+      }
+      // 스턴: 상대 체력이 높을 때 또는 초반에 사용
+      else if (effectType === 'stun') {
+        if (playerHpRatio > 0.5 || battleProgress < 0.4) {
+          selectedSkill = { skill, index }
+          break
+        }
+      }
+      // 침묵: 중반~후반에 상대 스킬 차단용으로 사용
+      else if (effectType === 'silence') {
+        if (battleProgress > 0.3 && battleProgress < 0.8) {
+          selectedSkill = { skill, index }
+          break
+        }
+      }
+      // 확정 치명타: 상대 체력이 낮을 때 마무리용
+      else if (effectType === 'guaranteed_crit') {
+        if (playerHpRatio < 0.5) {
+          selectedSkill = { skill, index }
+          break
+        }
+      }
+      // 광폭화/폭풍 연타: 공격속도 증가, 공격적으로 사용
+      else if (effectType === 'speed_boost' || effectType === 'double_attack') {
+        // 상대 HP가 낮거나 중반 이전에 사용
+        if (playerHpRatio < 0.6 || battleProgress < 0.5) {
+          selectedSkill = { skill, index }
+          break
+        }
+      }
+      // 번개 일섬: HP 비례 데미지, 항상 유용
+      else if (effectType === 'first_strike') {
+        selectedSkill = { skill, index }
+      }
+      // 방패 강타: 방어력이 높을 때 더 효과적, 항상 사용 가능
+      else if (effectType === 'shield_bash') {
+        selectedSkill = { skill, index }
+      }
+    }
+
+    // 선택된 스킬이 없으면 아무 스킬이나 사용 (50% 확률)
+    if (!selectedSkill && Math.random() < 0.5) {
+      selectedSkill = availableSkills[0]
+    }
+
+    if (!selectedSkill) return
+
+    const { skill, index } = selectedSkill
+    const card = skill.card
+    const effect = card.effect
+
+    // 스킬 사용 알림 표시
+    showSkillNotification('opponent', card.name, card.emoji)
+
+    // 즉시 효과 처리 (setState 콜백 바깥에서 실행)
+    if (effect.type === 'hp_recovery') {
+      const antiHealReduction = getPassiveBonus(playerSkillsRef.current, 'anti_heal')
+      const healMultiplier = Math.max(0, 1 - antiHealReduction / 100)
+      const baseHealAmount = Math.floor(opponentHpRef.current * effect.value / 100)
+      const healAmount = Math.floor(baseHealAmount * healMultiplier)
+      const newOpponentHp = Math.min(opponentMaxHp, opponentHpRef.current + healAmount)
+      opponentHpRef.current = newOpponentHp
+      setOpponentHp(newOpponentHp)
+      addFloatingDamage('opponent', healAmount, false, true)
+      setOpponentHealFatigue(10)
+    } else if (effect.type === 'first_strike') {
+      const bonusDamage = Math.floor(playerMaxHp * effect.value / 100)
+      const newPlayerHp = Math.max(0, playerHpRef.current - bonusDamage)
+      playerHpRef.current = newPlayerHp
+      setPlayerHp(newPlayerHp)
+      addFloatingDamage('player', bonusDamage, false, false)
+    } else if (effect.type === 'shield_bash') {
+      const defense = safeOpponentStats.defense * (1 + getPassiveBonus(opponentSkillsRef.current, 'defense_boost') / 100)
+      const bonusDamage = Math.floor(defense * effect.value / 100)
+      const newPlayerHp = Math.max(0, playerHpRef.current - bonusDamage)
+      playerHpRef.current = newPlayerHp
+      setPlayerHp(newPlayerHp)
+      addFloatingDamage('player', bonusDamage, false, false)
+    } else if (effect.type === 'stun') {
+      const stunDuration = card.duration > 0 ? card.duration : 2
+      playerNextAttackRef.current += stunDuration * 1000
+      setPlayerStunDuration(stunDuration)
+    } else if (effect.type === 'silence') {
+      const silenceDuration = effect.value > 0 ? effect.value : 2.5
+      setPlayerSilenceDuration(silenceDuration)
+    }
+
+    // 지속 효과 활성화
+    const durationBasedEffects = ['guaranteed_crit', 'immunity', 'silence']
+    const effectDuration = durationBasedEffects.includes(effect.type)
+      ? effect.value
+      : card.duration
+
+    // 쿨타임 초기화 패시브 체크
+    const cooldownResetChance = getPassiveBonus(opponentSkillsRef.current, 'cooldown_reset')
+    const isCooldownReset = cooldownResetChance > 0 && Math.random() * 100 < cooldownResetChance
+    const finalCooldown = isCooldownReset ? 0 : card.cooldown
+
+    if (isCooldownReset) {
+      showSkillNotification('opponent', '⏰ 쿨타임 초기화!', '⏰')
+    }
+
+    // 스킬 상태 업데이트 (순수 함수)
     setOpponentSkills(prev => {
       const newSkills = [...prev]
-
-      // 사용 가능한 액티브 스킬 찾기
-      const availableSkills = newSkills
-        .map((s, i) => ({ skill: s, index: i }))
-        .filter(({ skill }) =>
-          skill.card.activationType === 'active' &&
-          skill.cooldownRemaining <= 0 &&
-          !skill.isActive
-        )
-
-      if (availableSkills.length === 0) return prev
-
-      // 스킬 우선순위 결정 (상황에 따라)
-      let selectedSkill: { skill: SkillState; index: number } | null = null
-
-      for (const { skill, index } of availableSkills) {
-        const effectType = skill.card.effect.type
-
-        // HP 회복: 체력이 낮을 때 긴급 사용 (15-35% 범위), 회복 피로 시 사용 불가
-        if (effectType === 'hp_recovery') {
-          if (opponentHpRatio < 0.35 && opponentHpRatio > 0.15 && opponentHealFatigueRef.current <= 0) {
-            selectedSkill = { skill, index }
-            break
-          }
-        }
-        // 무적: 체력 40% 이하일 때 긴급 사용
-        else if (effectType === 'immunity') {
-          if (opponentHpRatio < 0.4) {
-            selectedSkill = { skill, index }
-            break
-          }
-        }
-        // 스턴: 상대 체력이 높을 때 또는 초반에 사용
-        else if (effectType === 'stun') {
-          if (playerHpRatio > 0.5 || battleProgress < 0.4) {
-            selectedSkill = { skill, index }
-            break
-          }
-        }
-        // 침묵: 중반~후반에 상대 스킬 차단용으로 사용
-        else if (effectType === 'silence') {
-          if (battleProgress > 0.3 && battleProgress < 0.8) {
-            selectedSkill = { skill, index }
-            break
-          }
-        }
-        // 확정 치명타: 상대 체력이 낮을 때 마무리용
-        else if (effectType === 'guaranteed_crit') {
-          if (playerHpRatio < 0.5) {
-            selectedSkill = { skill, index }
-            break
-          }
-        }
-        // 광폭화/폭풍 연타: 공격속도 증가, 공격적으로 사용
-        else if (effectType === 'speed_boost' || effectType === 'double_attack') {
-          // 상대 HP가 낮거나 중반 이전에 사용
-          if (playerHpRatio < 0.6 || battleProgress < 0.5) {
-            selectedSkill = { skill, index }
-            break
-          }
-        }
-        // 번개 일섬: HP 비례 데미지, 항상 유용
-        else if (effectType === 'first_strike') {
-          selectedSkill = { skill, index }
-        }
-        // 방패 강타: 방어력이 높을 때 더 효과적, 항상 사용 가능
-        else if (effectType === 'shield_bash') {
-          selectedSkill = { skill, index }
-        }
+      newSkills[index] = {
+        ...prev[index],
+        isActive: effectDuration > 0,
+        durationRemaining: effectDuration,
+        cooldownRemaining: finalCooldown,
       }
-
-      // 선택된 스킬이 없으면 아무 스킬이나 사용 (50% 확률)
-      if (!selectedSkill && Math.random() < 0.5) {
-        selectedSkill = availableSkills[0]
-      }
-
-      if (!selectedSkill) return prev
-
-      const { skill, index } = selectedSkill
-      const card = skill.card
-      const effect = card.effect
-
-      // 스킬 사용 알림 표시
-      showSkillNotification('opponent', card.name, card.emoji)
-
-      // 즉시 효과
-      if (effect.type === 'hp_recovery') {
-        // 남은 HP 기준으로 회복 (현재 HP의 X% 회복)
-        // 치유 감소 효과 적용 (플레이어의 anti_heal 패시브)
-        const antiHealReduction = getPassiveBonus(playerSkillsRef.current, 'anti_heal')
-        const healMultiplier = Math.max(0, 1 - antiHealReduction / 100)
-        setOpponentHp(hp => {
-          const baseHealAmount = Math.floor(hp * effect.value / 100)
-          const healAmount = Math.floor(baseHealAmount * healMultiplier)
-          addFloatingDamage('opponent', healAmount, false, true)
-          return Math.min(opponentMaxHp, hp + healAmount)
-        })
-        // 회복 피로 10초 설정 (연속 회복 방지)
-        setOpponentHealFatigue(10)
-      } else if (effect.type === 'first_strike') {
-        // 번개 일섬: 플레이어 최대 HP 비례 즉시 데미지
-        const bonusDamage = Math.floor(playerMaxHp * effect.value / 100)
-        setPlayerHp(hp => Math.max(0, hp - bonusDamage))
-        addFloatingDamage('player', bonusDamage, true, false)
-      } else if (effect.type === 'shield_bash') {
-        // 방패 강타: 방어력 기반 즉시 데미지
-        const defense = safeOpponentStats.defense * (1 + getPassiveBonus(opponentSkillsRef.current, 'defense_boost') / 100)
-        const bonusDamage = Math.floor(defense * effect.value / 100)
-        setPlayerHp(hp => Math.max(0, hp - bonusDamage))
-        addFloatingDamage('player', bonusDamage, true, false)
-      } else if (effect.type === 'stun') {
-        // 스턴: 플레이어 공격 지연 + 스킬 사용 불가
-        // effect.value는 스턴 확률(100%)이므로, 카드의 duration 또는 고정 2초 사용
-        const stunDuration = card.duration > 0 ? card.duration : 2
-        playerNextAttackRef.current += stunDuration * 1000
-        setPlayerStunDuration(stunDuration)
-      } else if (effect.type === 'silence') {
-        // 침묵: 플레이어 스킬 사용 불가 (공격은 가능)
-        // effect.value가 지속시간 (2/3초)
-        const silenceDuration = effect.value > 0 ? effect.value : 2.5
-        setPlayerSilenceDuration(silenceDuration)
-      }
-
-      // 지속 효과 활성화
-      // 지속시간 기반 스킬은 effect.value를 duration으로 사용
-      const durationBasedEffects = ['guaranteed_crit', 'immunity', 'silence']
-      const effectDuration = durationBasedEffects.includes(effect.type)
-        ? effect.value
-        : card.duration
-
-      // 쿨타임 초기화 패시브 체크 (AI도 패시브 효과 적용)
-      const cooldownResetChance = getPassiveBonus(newSkills, 'cooldown_reset')
-      const isCooldownReset = cooldownResetChance > 0 && Math.random() * 100 < cooldownResetChance
-      const finalCooldown = isCooldownReset ? 0 : card.cooldown
-
-      if (effectDuration > 0) {
-        newSkills[index] = {
-          ...skill,
-          isActive: true,
-          durationRemaining: effectDuration,
-          cooldownRemaining: finalCooldown,
-        }
-      } else {
-        newSkills[index] = {
-          ...skill,
-          cooldownRemaining: finalCooldown,
-        }
-      }
-
-      // 쿨타임 초기화 발동 시 알림
-      if (isCooldownReset) {
-        showSkillNotification('opponent', '⏰ 쿨타임 초기화!', '⏰')
-      }
-
       return newSkills
     })
-  }, [opponentMaxHp, playerMaxHp, addFloatingDamage, showSkillNotification, getPassiveBonus])
+  }, [opponentMaxHp, playerMaxHp, safeOpponentStats.defense, addFloatingDamage, showSkillNotification, getPassiveBonus])
 
   // 스탯 ref (effect 재시작 방지용) - 안전한 스탯 사용
   const playerStatsRef = useRef(safePlayerStats)

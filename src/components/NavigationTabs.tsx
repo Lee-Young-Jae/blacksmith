@@ -4,11 +4,12 @@ import {
   GiSparkles,
   GiUpgrade,
   GiCrossedSwords,
-  GiTwoCoins
+  GiTwoCoins,
 } from 'react-icons/gi'
 import { FaRobot } from 'react-icons/fa'
 import type { IconType } from 'react-icons'
 
+// 'tower'는 'battle' 탭 내부의 서브 탭으로 통합됨
 export type TabType = 'equipment' | 'gacha' | 'potential' | 'enhance' | 'battle' | 'pvp' | 'sell'
 
 interface NavigationTabsProps {
@@ -23,7 +24,7 @@ const TABS: { id: TabType; label: string; Icon: IconType; requiresWeapon?: boole
   { id: 'gacha', label: '뽑기', Icon: GiPerspectiveDiceSixFacesRandom },
   { id: 'potential', label: '잠재', Icon: GiSparkles, requiresEquipment: true },
   { id: 'enhance', label: '강화', Icon: GiUpgrade, requiresEquipment: true },
-  { id: 'battle', label: 'AI대결', Icon: FaRobot, requiresWeapon: true },
+  { id: 'battle', label: '대결', Icon: FaRobot, requiresEquipment: true },
   { id: 'pvp', label: 'PvP', Icon: GiCrossedSwords, requiresEquipment: true },
   { id: 'sell', label: '판매', Icon: GiTwoCoins, requiresEquipment: true },
 ]

@@ -19,6 +19,11 @@ interface GiftState {
   error: string | null
 }
 
+interface TicketClaimResult {
+  ticketLevel: number
+  ticketCount: number
+}
+
 // GiftRow를 Gift로 변환
 function transformGiftRow(row: GiftRow): Gift {
   const equipmentData = row.equipment_data
@@ -38,6 +43,8 @@ function transformGiftRow(row: GiftRow): Gift {
       ? getEquipmentById(equipmentData.equipment_base_id)
       : undefined,
     goldAmount: row.gold_amount || undefined,
+    ticketLevel: row.ticket_level || undefined,
+    ticketCount: row.ticket_count || undefined,
     message: row.message || undefined,
     enhancementHistoryId: row.enhancement_history_id || undefined,
     isClaimed: row.is_claimed,
@@ -51,7 +58,7 @@ export function useGift() {
   const { user } = useAuth()
   const [state, setState] = useState<GiftState>({
     receivedGifts: [],
-    unclaimedCount: { total: 0, condolence: 0, equipment: 0, gold: 0 },
+    unclaimedCount: { total: 0, condolence: 0, equipment: 0, gold: 0, ticket: 0 },
     isLoading: true,
     error: null,
   })
@@ -89,6 +96,7 @@ export function useGift() {
         condolence: unclaimed.filter(g => g.giftType === 'condolence').length,
         equipment: unclaimed.filter(g => g.giftType === 'equipment').length,
         gold: unclaimed.filter(g => g.giftType === 'gold').length,
+        ticket: unclaimed.filter(g => g.giftType === 'ticket').length,
       }
 
       setState({
@@ -112,7 +120,7 @@ export function useGift() {
     if (!user) {
       setState({
         receivedGifts: [],
-        unclaimedCount: { total: 0, condolence: 0, equipment: 0, gold: 0 },
+        unclaimedCount: { total: 0, condolence: 0, equipment: 0, gold: 0, ticket: 0 },
         isLoading: false,
         error: null,
       })
@@ -224,6 +232,7 @@ export function useGift() {
             condolence: unclaimed.filter(g => g.giftType === 'condolence').length,
             equipment: unclaimed.filter(g => g.giftType === 'equipment').length,
             gold: unclaimed.filter(g => g.giftType === 'gold').length,
+            ticket: unclaimed.filter(g => g.giftType === 'ticket').length,
           },
         }
       })
@@ -263,6 +272,7 @@ export function useGift() {
             condolence: unclaimed.filter(g => g.giftType === 'condolence').length,
             equipment: unclaimed.filter(g => g.giftType === 'equipment').length,
             gold: unclaimed.filter(g => g.giftType === 'gold').length,
+            ticket: unclaimed.filter(g => g.giftType === 'ticket').length,
           },
         }
       })
@@ -325,6 +335,7 @@ export function useGift() {
             condolence: unclaimed.filter(g => g.giftType === 'condolence').length,
             equipment: unclaimed.filter(g => g.giftType === 'equipment').length,
             gold: unclaimed.filter(g => g.giftType === 'gold').length,
+            ticket: unclaimed.filter(g => g.giftType === 'ticket').length,
           },
         }
       })
@@ -360,6 +371,75 @@ export function useGift() {
     }
   }, [user])
 
+  // 강화권 선물 전송 (관리자 전용 - RPC 함수 호출)
+  const sendTicket = useCallback(async (
+    receiverId: string,
+    ticketLevel: number,
+    ticketCount: number,
+    message?: string
+  ): Promise<boolean> => {
+    if (!user) return false
+
+    try {
+      const { data, error } = await supabase.rpc('send_ticket_gift', {
+        p_admin_id: user.id,
+        p_receiver_id: receiverId,
+        p_ticket_level: ticketLevel,
+        p_ticket_count: ticketCount,
+        p_message: message || null,
+      })
+
+      if (error) throw error
+      return !!data
+    } catch (err) {
+      console.error('Failed to send ticket:', err)
+      return false
+    }
+  }, [user])
+
+  // 강화권 선물 수령 (RPC 함수 호출)
+  const claimTicket = useCallback(async (giftId: string): Promise<TicketClaimResult | null> => {
+    if (!user) return null
+
+    try {
+      const { data, error } = await supabase.rpc('claim_ticket_gift', {
+        p_gift_id: giftId,
+        p_user_id: user.id,
+      })
+
+      if (error) throw error
+
+      // 로컬 상태 업데이트
+      setState(prev => {
+        const updated = prev.receivedGifts.map(g =>
+          g.id === giftId ? { ...g, isClaimed: true, claimedAt: new Date() } : g
+        )
+        const unclaimed = updated.filter(g => !g.isClaimed)
+        return {
+          ...prev,
+          receivedGifts: updated,
+          unclaimedCount: {
+            total: unclaimed.length,
+            condolence: unclaimed.filter(g => g.giftType === 'condolence').length,
+            equipment: unclaimed.filter(g => g.giftType === 'equipment').length,
+            gold: unclaimed.filter(g => g.giftType === 'gold').length,
+            ticket: unclaimed.filter(g => g.giftType === 'ticket').length,
+          },
+        }
+      })
+
+      // RPC 함수는 배열을 반환하므로 첫 번째 요소를 사용
+      const result = Array.isArray(data) ? data[0] : data
+      return {
+        ticketLevel: result.ticket_level,
+        ticketCount: result.ticket_count,
+      }
+    } catch (err) {
+      console.error('Failed to claim ticket:', err)
+      return null
+    }
+  }, [user])
+
   // 미수령 선물만 필터링
   const unclaimedGifts = state.receivedGifts.filter(g => !g.isClaimed)
 
@@ -372,19 +452,25 @@ export function useGift() {
   // 미수령 골드만 필터링
   const unclaimedGolds = unclaimedGifts.filter(g => g.giftType === 'gold')
 
+  // 미수령 강화권만 필터링
+  const unclaimedTickets = unclaimedGifts.filter(g => g.giftType === 'ticket')
+
   return {
     ...state,
     unclaimedGifts,
     unclaimedCondolences,
     unclaimedEquipments,
     unclaimedGolds,
+    unclaimedTickets,
     loadGifts,
     sendCondolence,
     sendEquipment,
     sendGold,
+    sendTicket,
     claimCondolence,
     claimEquipment,
     claimGold,
+    claimTicket,
     searchUsers,
   }
 }

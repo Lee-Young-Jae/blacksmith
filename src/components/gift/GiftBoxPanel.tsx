@@ -7,6 +7,11 @@ import { GiftDetailModal } from './GiftDetailModal'
 
 type FilterType = 'all' | GiftType
 
+interface TicketClaimResult {
+  ticketLevel: number
+  ticketCount: number
+}
+
 interface GiftBoxPanelProps {
   gifts: Gift[]
   unclaimedCount: GiftCount
@@ -14,8 +19,10 @@ interface GiftBoxPanelProps {
   onClaimCondolence: (giftId: string) => Promise<boolean>
   onClaimEquipment: (giftId: string) => Promise<string | null>
   onClaimGold: (giftId: string) => Promise<number | null>
+  onClaimTicket: (giftId: string) => Promise<TicketClaimResult | null>
   onEquipmentClaimed?: () => void
   onGoldClaimed?: (amount: number) => void
+  onTicketClaimed?: (level: number, count: number) => void
   onSendEquipment?: () => void
   onClose: () => void
 }
@@ -27,8 +34,10 @@ export function GiftBoxPanel({
   onClaimCondolence,
   onClaimEquipment,
   onClaimGold,
+  onClaimTicket,
   onEquipmentClaimed,
   onGoldClaimed,
+  onTicketClaimed,
   onSendEquipment,
   onClose,
 }: GiftBoxPanelProps) {
@@ -60,6 +69,12 @@ export function GiftBoxPanel({
       success = goldAmount !== null
       if (success && goldAmount && onGoldClaimed) {
         onGoldClaimed(goldAmount)
+      }
+    } else if (selectedGift.giftType === 'ticket') {
+      const result = await onClaimTicket(selectedGift.id)
+      success = result !== null
+      if (success && result && onTicketClaimed) {
+        onTicketClaimed(result.ticketLevel, result.ticketCount)
       }
     }
 
@@ -137,6 +152,12 @@ export function GiftBoxPanel({
               count={unclaimedCount.gold}
               isActive={filter === 'gold'}
               onClick={() => setFilter('gold')}
+            />
+            <FilterTab
+              label="강화권"
+              count={unclaimedCount.ticket}
+              isActive={filter === 'ticket'}
+              onClick={() => setFilter('ticket')}
             />
           </div>
         </div>
@@ -218,6 +239,7 @@ function GiftCard({ gift, onClick }: { gift: Gift; onClick: () => void }) {
   const isCondolence = gift.giftType === 'condolence'
   const isGold = gift.giftType === 'gold'
   const isEquipment = gift.giftType === 'equipment'
+  const isTicket = gift.giftType === 'ticket'
 
   // 장비 이름 가져오기
   const equipmentName = isEquipment && gift.equipmentBase && gift.equipmentData
@@ -246,6 +268,20 @@ function GiftCard({ gift, onClick }: { gift: Gift; onClick: () => void }) {
     if (isGold) {
       return <span className="text-3xl">🪙</span>
     }
+    if (isTicket && gift.ticketLevel) {
+      return (
+        <img
+          src={`/images/tickets/${gift.ticketLevel}.png`}
+          alt=""
+          className="w-10 h-10 object-contain"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement
+            target.style.display = 'none'
+            target.parentElement!.innerHTML = '<span class="text-3xl">🎫</span>'
+          }}
+        />
+      )
+    }
     return <span className="text-3xl">{gift.equipmentBase?.emoji || '🎁'}</span>
   }
 
@@ -257,7 +293,24 @@ function GiftCard({ gift, onClick }: { gift: Gift; onClick: () => void }) {
     if (isGold) {
       return `${gift.goldAmount?.toLocaleString() || 0} 골드`
     }
+    if (isTicket) {
+      return `${gift.ticketLevel}성 강화권 x${gift.ticketCount || 1}`
+    }
     return equipmentName || '장비'
+  }
+
+  // 배경색 결정
+  const getBgColor = () => {
+    if (isGold) return 'bg-amber-500/20'
+    if (isTicket) return 'bg-cyan-500/20'
+    return 'bg-[var(--color-bg-elevated-3)]'
+  }
+
+  // 텍스트 색상 결정
+  const getTextColor = () => {
+    if (isGold) return 'text-[var(--color-accent)]'
+    if (isTicket) return 'text-cyan-400'
+    return 'text-[var(--color-text-primary)]'
   }
 
   return (
@@ -266,9 +319,7 @@ function GiftCard({ gift, onClick }: { gift: Gift; onClick: () => void }) {
       className="w-full p-4 rounded-xl bg-[var(--color-bg-elevated-2)] border border-[var(--color-border)] hover:bg-[var(--color-bg-elevated-3)] hover:border-[var(--color-primary)]/50 transition-all text-left flex items-center gap-4"
     >
       {/* 아이콘 */}
-      <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${
-        isGold ? 'bg-amber-500/20' : 'bg-[var(--color-bg-elevated-3)]'
-      }`}>
+      <div className={`w-14 h-14 rounded-xl flex items-center justify-center shrink-0 ${getBgColor()}`}>
         {getIcon()}
       </div>
 
@@ -279,7 +330,7 @@ function GiftCard({ gift, onClick }: { gift: Gift; onClick: () => void }) {
             {GIFT_TYPE_ICONS[gift.giftType]} {GIFT_TYPE_NAMES[gift.giftType]}
           </span>
         </div>
-        <p className={`font-bold truncate ${isGold ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-primary)]'}`}>
+        <p className={`font-bold truncate ${getTextColor()}`}>
           {getName()}
           {isEquipment && gift.equipmentData && gift.equipmentData.star_level > 0 && (
             <span className="text-yellow-400 ml-1">+{gift.equipmentData.star_level}</span>

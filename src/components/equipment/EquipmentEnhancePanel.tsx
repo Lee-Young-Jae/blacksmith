@@ -11,7 +11,8 @@ import {
 import type { EnhanceResult } from '../../types/starforce'
 import type { CharacterStats } from '../../types/stats'
 import { formatNumberString } from '../../types/stats'
-import { GiAnvilImpact, GiUpgrade } from 'react-icons/gi'
+import type { EnhancementTicket } from '../../hooks/useEnhancementTickets'
+import { GiAnvilImpact, GiUpgrade, GiTicket } from 'react-icons/gi'
 
 interface StatChanges {
   attack: number
@@ -48,6 +49,12 @@ interface EquipmentEnhancePanelProps {
   // Actions
   onEnhance: () => Promise<EnhanceResult | null>
   onResetAfterDestroy: () => void
+
+  // Enhancement tickets (optional)
+  availableTickets?: EnhancementTicket[]
+  allTickets?: EnhancementTicket[]  // 모든 보유 강화권 (요약 표시용)
+  onUseTicket?: (ticketLevel: number) => Promise<void>
+  isUsingTicket?: boolean
 }
 
 export default function EquipmentEnhancePanel({
@@ -73,6 +80,10 @@ export default function EquipmentEnhancePanel({
   canDestroy,
   onEnhance,
   onResetAfterDestroy,
+  availableTickets = [],
+  allTickets = [],
+  onUseTicket,
+  isUsingTicket = false,
 }: EquipmentEnhancePanelProps) {
   const [showDetails, setShowDetails] = useState(false)
 
@@ -85,6 +96,36 @@ export default function EquipmentEnhancePanel({
           </div>
           <h2 className="text-base sm:text-lg font-bold text-[var(--color-text-primary)] mb-2">장비 강화</h2>
           <p className="text-[var(--color-text-secondary)] text-sm">위에서 강화할 장비를 선택하세요</p>
+
+          {/* 보유 강화권 표시 */}
+          {allTickets.length > 0 && (
+            <div className="mt-6 p-3 rounded-lg bg-gradient-to-r from-gray-800/50 to-gray-700/50 border border-gray-600/30 text-left">
+              <div className="flex items-center gap-2 mb-2">
+                <GiTicket className="text-cyan-400" />
+                <span className="text-xs font-bold text-cyan-300">보유 강화권</span>
+              </div>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {allTickets.map((ticket) => (
+                  <div
+                    key={ticket.ticketLevel}
+                    className="flex items-center gap-1.5 px-2 py-1 bg-gray-700/50 rounded-lg"
+                  >
+                    <img
+                      src={`/images/tickets/${ticket.ticketLevel}.png`}
+                      alt={`${ticket.ticketLevel}성 강화권`}
+                      className="w-5 h-5 object-contain"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    />
+                    <span className="text-yellow-300 text-sm font-medium">{ticket.ticketLevel}성</span>
+                    <span className="text-gray-400 text-xs">x{ticket.quantity}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-gray-500 mt-2 text-center">
+                장비를 선택하면 강화권을 사용할 수 있습니다
+              </p>
+            </div>
+          )}
         </div>
       </div>
     )
@@ -459,6 +500,82 @@ export default function EquipmentEnhancePanel({
           </div>
         )}
 
+        {/* 보유 강화권 요약 */}
+        {allTickets.length > 0 && (
+          <div className="p-3 rounded-lg bg-gradient-to-r from-gray-800/50 to-gray-700/50 border border-gray-600/30">
+            <div className="flex items-center gap-2 mb-2">
+              <GiTicket className="text-gray-400" />
+              <span className="text-xs font-bold text-gray-300">보유 강화권</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {allTickets.map((ticket) => (
+                <div
+                  key={ticket.ticketLevel}
+                  className="flex items-center gap-1.5 px-2 py-1 bg-gray-700/50 rounded-lg"
+                >
+                  <img
+                    src={`/images/tickets/${ticket.ticketLevel}.png`}
+                    alt={`${ticket.ticketLevel}성 강화권`}
+                    className="w-5 h-5 object-contain"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                  />
+                  <span className="text-yellow-300 text-sm font-medium">{ticket.ticketLevel}성</span>
+                  <span className="text-gray-400 text-xs">x{ticket.quantity}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 강화권 사용 섹션 */}
+        {availableTickets.length > 0 && onUseTicket && (
+          <div className="p-3 rounded-lg bg-gradient-to-r from-cyan-900/30 to-blue-900/30 border border-cyan-500/30">
+            <div className="flex items-center gap-2 mb-2">
+              <GiTicket className="text-cyan-400" />
+              <span className="text-xs font-bold text-cyan-300">강화권 사용</span>
+            </div>
+            <p className="text-[10px] text-gray-400 mb-2">
+              강화권을 사용하면 해당 성급으로 즉시 강화됩니다 (파괴 없음)
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {availableTickets.map((ticket) => (
+                <button
+                  key={ticket.ticketLevel}
+                  onClick={() => {
+                    const equipName = equipment ? getEquipmentDisplayName(equipment) : '장비'
+                    const confirmed = window.confirm(
+                      `${equipName}에 ${ticket.ticketLevel}성 강화권을 사용하시겠습니까?\n\n` +
+                      `현재: ${currentLevel}성 → ${ticket.ticketLevel}성\n` +
+                      `(파괴 없이 즉시 강화됩니다)`
+                    )
+                    if (confirmed) {
+                      onUseTicket(ticket.ticketLevel)
+                    }
+                  }}
+                  disabled={isEnhancing || isUsingTicket}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg text-white text-sm font-medium transition-all"
+                >
+                  {isUsingTicket ? (
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <img
+                        src={`/images/tickets/${ticket.ticketLevel}.png`}
+                        alt={`${ticket.ticketLevel}성 강화권`}
+                        className="w-5 h-5 object-contain"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                      />
+                      <span className="text-yellow-300">{ticket.ticketLevel}성</span>
+                      <span>강화권</span>
+                      <span className="text-cyan-200 text-xs">x{ticket.quantity}</span>
+                    </>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* 강화 버튼 영역 */}
         <div className="pt-2 space-y-2">
           {/* 비용 표시 */}
@@ -472,13 +589,18 @@ export default function EquipmentEnhancePanel({
           {/* 강화 버튼 - 더 크고 터치 친화적 */}
           <button
             onClick={onEnhance}
-            disabled={!canAfford || isEnhancing}
+            disabled={!canAfford || isEnhancing || isUsingTicket}
             className={`${buttonClass} ${buttonGlow} w-full min-h-[56px] sm:min-h-[52px] text-base font-bold rounded-xl transition-all`}
           >
             {isEnhancing ? (
               <span className="flex items-center justify-center gap-3">
                 <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 <span>강화 중...</span>
+              </span>
+            ) : isUsingTicket ? (
+              <span className="flex items-center justify-center gap-3">
+                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>강화권 적용 중...</span>
               </span>
             ) : (
               <span>
