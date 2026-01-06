@@ -6,6 +6,7 @@
 
 import { useMemo } from 'react'
 import type { CharacterStats } from '../../types/stats'
+import { formatNumberString } from '../../types/stats'
 import { TOWER_CONFIG, getTowerTier, TOWER_TIER_NAMES, TOWER_TIER_COLORS, type TowerTier } from '../../types/tower'
 import { createFloorEnemy, formatLargeNumber } from '../../utils/towerBattle'
 import {
@@ -148,23 +149,23 @@ export function TowerFloorSelect({
         <div className="px-4 pb-4 grid grid-cols-5 gap-2">
           <div className="text-center bg-gray-900/30 rounded-lg py-2">
             <p className="text-[9px] text-gray-400 leading-tight">치명타<br/>확률</p>
-            <p className="text-xs font-medium text-white">{enemy.stats.critRate}%</p>
+            <p className="text-xs font-medium text-white">{formatNumberString(enemy.stats.critRate)}%</p>
           </div>
           <div className="text-center bg-gray-900/30 rounded-lg py-2">
             <p className="text-[9px] text-gray-400 leading-tight">치명타<br/>피해</p>
-            <p className="text-xs font-medium text-white">{enemy.stats.critDamage}%</p>
+            <p className="text-xs font-medium text-white">{formatNumberString(enemy.stats.critDamage)}%</p>
           </div>
           <div className="text-center bg-gray-900/30 rounded-lg py-2">
             <p className="text-[9px] text-gray-400 leading-tight">공격<br/>속도</p>
-            <p className="text-xs font-medium text-white">{enemy.stats.attackSpeed}</p>
+            <p className="text-xs font-medium text-white">{formatNumberString(enemy.stats.attackSpeed)}</p>
           </div>
           <div className="text-center bg-gray-900/30 rounded-lg py-2">
             <p className="text-[9px] text-gray-400 leading-tight">방어<br/>관통</p>
-            <p className="text-xs font-medium text-gray-500">{enemy.stats.penetration}</p>
+            <p className="text-xs font-medium text-gray-500">{formatNumberString(enemy.stats.penetration)}</p>
           </div>
           <div className="text-center bg-gray-900/30 rounded-lg py-2">
             <p className="text-[9px] text-gray-400 leading-tight">회피<br/>확률</p>
-            <p className="text-xs font-medium text-gray-500">{enemy.stats.evasion}</p>
+            <p className="text-xs font-medium text-gray-500">{formatNumberString(enemy.stats.evasion)}</p>
           </div>
         </div>
 

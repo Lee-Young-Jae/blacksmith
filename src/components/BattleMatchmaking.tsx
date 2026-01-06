@@ -1,7 +1,7 @@
 import type { AIDifficulty } from '../types/battle'
 import { AI_DIFFICULTY_CONFIG } from '../types/battle'
 import type { CharacterStats } from '../types/stats'
-import { calculateCombatPower } from '../types/stats'
+import { calculateCombatPower, formatNumberString } from '../types/stats'
 
 interface BattleMatchmakingProps {
   playerStats: CharacterStats
@@ -73,15 +73,15 @@ export function BattleMatchmaking({
           </div>
           <div className="flex items-center justify-between">
             <span className="text-gray-400">🎯 치명타</span>
-            <span className="text-yellow-400 font-medium">{playerStats.critRate}%</span>
+            <span className="text-yellow-400 font-medium">{formatNumberString(playerStats.critRate)}%</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-gray-400">💥 치명뎀</span>
-            <span className="text-orange-400 font-medium">{playerStats.critDamage}%</span>
+            <span className="text-orange-400 font-medium">{formatNumberString(playerStats.critDamage)}%</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-gray-400">🔪 관통력</span>
-            <span className="text-purple-400 font-medium">{playerStats.penetration}%</span>
+            <span className="text-purple-400 font-medium">{formatNumberString(playerStats.penetration)}%</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-gray-400">❤️ HP</span>
