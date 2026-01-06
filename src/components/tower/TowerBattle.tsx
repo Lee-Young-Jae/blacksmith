@@ -191,7 +191,8 @@ export function TowerBattle({
   const calculateDamage = useCallback((
     attackerStats: CharacterStats,
     defenderStats: CharacterStats,
-    isPlayer: boolean
+    isPlayer: boolean,
+    defenderHpRatio: number = 1  // 상대 HP 비율 (처형 효과용)
   ): { damage: number; isCrit: boolean } => {
     let attackBoost = 0
     let defenseBoost = 0
@@ -234,7 +235,16 @@ export function TowerBattle({
       baseDamage *= (critDamage / 100)
     }
 
-    const finalDamage = Math.max(1, Math.floor(baseDamage * DAMAGE_REDUCTION))
+    let finalDamage = Math.max(1, Math.floor(baseDamage * DAMAGE_REDUCTION))
+
+    // 처형 효과: 상대 HP 50% 이하 시 추가 데미지 (플레이어만)
+    if (isPlayer) {
+      const executeBonus = getPassiveBonus('execute')
+      if (executeBonus > 0 && defenderHpRatio <= 0.5) {
+        finalDamage = Math.floor(finalDamage * (1 + executeBonus / 100))
+      }
+    }
+
     return { damage: finalDamage, isCrit }
   }, [getPassiveBonus, getActiveEffectValue, DAMAGE_REDUCTION])
 
@@ -298,6 +308,18 @@ export function TowerBattle({
       ? effect.value
       : skill.card.duration
 
+    // 쿨타임 초기화 패시브 체크
+    const cooldownResetChance = getPassiveBonus('cooldown_reset')
+    const isCooldownReset = cooldownResetChance > 0 && Math.random() * 100 < cooldownResetChance
+    const finalCooldown = isCooldownReset ? 0 : skill.card.cooldown
+
+    // 쿨타임 초기화 시 플로팅 텍스트로 알림
+    if (isCooldownReset) {
+      addFloatingDamage(0, false, false, 'player', false)
+      // 간단한 콘솔 로그 (디버깅용)
+      console.log('⏰ 쿨타임 초기화!')
+    }
+
     // 스킬 상태 업데이트 (순수 함수)
     setPlayerSkills(prev => {
       const newSkills = [...prev]
@@ -305,7 +327,7 @@ export function TowerBattle({
         ...prev[index],
         isActive: effectDuration > 0,
         durationRemaining: effectDuration,
-        cooldownRemaining: skill.card.cooldown,
+        cooldownRemaining: finalCooldown,
       }
 
       return newSkills
@@ -349,12 +371,25 @@ export function TowerBattle({
 
       // 플레이어 공격
       if (playerNextAttackRef.current <= 0 && enemyHpRef.current > 0) {
-        // 공격속도 증가: speed_boost + double_attack (폭풍 연타)
+        // 공격속도 증가: speed_boost + double_attack (폭풍 연타) + berserker (광전사)
         const speedBoost = getPassiveBonus('speed_boost') + getActiveEffectValue('speed_boost') + getActiveEffectValue('double_attack')
-        const speedMultiplier = 1 / (1 + speedBoost / 100)  // 공속 증가는 간격 감소로 적용
+
+        // 광전사: HP 50% 이하일 때 체력에 비례해서 공격속도 증가
+        // 50% HP = 0% 보너스, 0% HP = effect.value% 보너스 (선형 스케일링)
+        const playerHpRatio = playerHpRef.current / playerMaxHp
+        const berserkerBaseValue = getPassiveBonus('berserker')
+        let berserkerBonus = 0
+        if (playerHpRatio <= 0.5 && berserkerBaseValue > 0) {
+          berserkerBonus = Math.floor((0.5 - playerHpRatio) / 0.5 * berserkerBaseValue)
+        }
+
+        const totalSpeedBoost = speedBoost + berserkerBonus
+        const speedMultiplier = 1 / (1 + totalSpeedBoost / 100)  // 공속 증가는 간격 감소로 적용
         playerNextAttackRef.current = playerInterval * speedMultiplier
 
-        const { damage, isCrit } = calculateDamage(safePlayerStats, enemy.stats, true)
+        // 적 HP 비율 계산 (처형 효과용)
+        const enemyHpRatio = enemyHpRef.current / enemyMaxHp
+        const { damage, isCrit } = calculateDamage(safePlayerStats, enemy.stats, true, enemyHpRatio)
         playerDamageRef.current += damage
 
         setEnemyHp(prev => {
