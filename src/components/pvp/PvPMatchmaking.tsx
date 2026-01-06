@@ -4,7 +4,7 @@
  * 상대 검색, 공격덱 선택, 배틀 실행을 담당합니다.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { CharacterStats } from "../../types/stats";
 import { formatNumberString } from "../../types/stats";
 import type { OwnedCard, CardSlots } from "../../types/cardDeck";
@@ -218,26 +218,67 @@ export function PvPMatchmaking({
   onGoldUpdate,
   ensureDefenseDeck,
 }: PvPMatchmakingProps) {
-  // 이전 공격덱 복원 (localStorage에서)
-  const [selectedCards, setSelectedCards] = useState<CardSlots>(() => {
+  // 이전 공격덱 복원을 위한 ref (초기 로드 추적)
+  const initialLoadDone = useRef(false)
+  const lastOwnedCardsLength = useRef(0)
+
+  // localStorage에서 저장된 덱 ID 가져오기
+  const getSavedDeckIds = useCallback((): (string | null)[] => {
     try {
       const saved = localStorage.getItem('pvp_attack_deck')
       if (saved) {
-        const savedIds = JSON.parse(saved) as (string | null)[]
-        // 저장된 카드 ID로 현재 보유 카드에서 찾기
-        const restored = savedIds.map(id =>
-          id ? ownedCards.find(c => c.id === id) || null : null
-        ) as CardSlots
-        return restored
+        return JSON.parse(saved) as (string | null)[]
       }
     } catch {
       // 무시
     }
     return [null, null, null]
-  });
+  }, [])
+
+  // 저장된 ID로 실제 카드 객체 찾기
+  const restoreDeckFromIds = useCallback((savedIds: (string | null)[]): CardSlots => {
+    return savedIds.map(id =>
+      id ? ownedCards.find(c => c.id === id) || null : null
+    ) as CardSlots
+  }, [ownedCards])
+
+  // 이전 공격덱 복원 (localStorage에서)
+  const [selectedCards, setSelectedCards] = useState<CardSlots>([null, null, null]);
+
+  // 초기 로드: ownedCards가 처음 로드될 때 덱 복원
+  useEffect(() => {
+    // ownedCards가 비어있으면 아직 로드 안 됨
+    if (ownedCards.length === 0) return
+
+    // 초기 로드가 아직 안 됐으면 복원
+    if (!initialLoadDone.current) {
+      const savedIds = getSavedDeckIds()
+      const restored = restoreDeckFromIds(savedIds)
+      setSelectedCards(restored)
+      initialLoadDone.current = true
+      lastOwnedCardsLength.current = ownedCards.length
+      return
+    }
+
+    // 카드 수가 줄었을 때만 검증 (합성/판매로 카드가 사라진 경우)
+    if (ownedCards.length < lastOwnedCardsLength.current) {
+      setSelectedCards(prev => {
+        return prev.map(card => {
+          if (!card) return null
+          // 카드가 아직 존재하는지 확인
+          const stillExists = ownedCards.some(c => c.id === card.id)
+          return stillExists ? card : null
+        }) as CardSlots
+      })
+    }
+    lastOwnedCardsLength.current = ownedCards.length
+  }, [ownedCards, getSavedDeckIds, restoreDeckFromIds])
 
   // 카드 선택 변경 시 localStorage에 저장
   useEffect(() => {
+    // 초기 로드 전에는 저장하지 않음 (빈 덱으로 덮어쓰기 방지)
+    if (!initialLoadDone.current) return
+
     const cardIds = selectedCards.map(c => c?.id || null)
     localStorage.setItem('pvp_attack_deck', JSON.stringify(cardIds))
   }, [selectedCards])
