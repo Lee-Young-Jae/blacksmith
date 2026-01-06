@@ -301,8 +301,8 @@ export function usePvPBattle(): UsePvPBattleReturn {
     setIsLoading(true)
 
     try {
-      // 30% 확률로 AI 매칭
-      const AI_MATCH_CHANCE = 0.3
+      // 10% 확률로 AI 매칭
+      const AI_MATCH_CHANCE = 0.1
       if (Math.random() < AI_MATCH_CHANCE) {
         const aiOpponent = generateAIOpponent(combatPower)
         setOpponent(aiOpponent)

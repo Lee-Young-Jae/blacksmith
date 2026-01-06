@@ -108,7 +108,7 @@ export const SHOES: EquipmentBase[] = [
   {
     id: 'shoes-ninja-tabi',
     slot: 'shoes',
-    baseStats: { defense: 3, hp: 12, critRate: 4, penetration: 4, evasion: 8 },
+    baseStats: { defense: 3, hp: 12, critRate: 4, penetration: 5, evasion: 6 },
     emoji: '👟',
     potentialSlots: 3,
     levels: createLevels('shoes-ninja-tabi', [
@@ -172,7 +172,7 @@ export const SHOES: EquipmentBase[] = [
   {
     id: 'shoes-wind-walkers',
     slot: 'shoes',
-    baseStats: { defense: 5, hp: 18, critRate: 4, penetration: 4, evasion: 7 },
+    baseStats: { defense: 5, hp: 18, critRate: 4, penetration: 4, evasion: 5 },
     emoji: '💨',
     potentialSlots: 3,
     levels: createLevels('shoes-wind-walkers', [

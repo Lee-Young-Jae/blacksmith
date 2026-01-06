@@ -205,8 +205,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     first_strike: 8,
     gold_bonus: 40,
     // PvP 전용
-    // HP 회복: 남은 HP의 15% 회복
-    hp_recovery: 15,
+    // HP 회복: 남은 HP의 40% 회복 (버프됨)
+    hp_recovery: 40,
     // 광폭화: 15% 속도 = 5초간 약 +1회 공격 = +70 가치
     speed_boost: 15,
     immunity: 0,
@@ -218,8 +218,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     // 회복 카운터
     // 치유 감소: 상대 회복량 40% 감소 (버프됨)
     anti_heal: 40,
-    // 광전사: 체력 50%→0% 시 공격속도 0%→+20% (선형)
-    berserker: 20,
+    // 광전사: 체력 50%→0% 시 공격속도 0%→+40% (선형)
+    berserker: 40,
     execute: 0,  // rare에서는 나오지 않음
     // 방패 강타: 방어력의 40% 즉시 데미지
     shield_bash: 40,
@@ -241,8 +241,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     first_strike: 12,
     gold_bonus: 60,
     // PvP 전용
-    // HP 회복: 남은 HP의 20% 회복
-    hp_recovery: 20,
+    // HP 회복: 남은 HP의 60% 회복 (버프됨)
+    hp_recovery: 60,
     // 광폭화: 20% = 5초간 약 +1.3회 공격
     speed_boost: 20,
     // 무적: 2초간 (에픽)
@@ -257,8 +257,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     // 회복 카운터
     // 치유 감소: 상대 회복량 70% 감소 (버프됨)
     anti_heal: 70,
-    // 광전사: 체력 50%→0% 시 공격속도 0%→+30% (선형)
-    berserker: 30,
+    // 광전사: 체력 50%→0% 시 공격속도 0%→+60% (선형)
+    berserker: 60,
     // 처형: 상대 체력 50% 이하일 때 데미지 +30% (버프됨)
     execute: 30,
     // 방패 강타: 방어력의 50% 즉시 데미지
@@ -281,8 +281,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     first_strike: 15,
     gold_bonus: 100,
     // PvP 전용
-    // HP 회복: 남은 HP의 30% 회복
-    hp_recovery: 30,
+    // HP 회복: 남은 HP의 80% 회복 (버프됨)
+    hp_recovery: 80,
     // 광폭화: 30% = 5초간 약 +2회 공격 = +140 가치
     speed_boost: 30,
     // 무적: 3초간 (전설)
@@ -298,8 +298,8 @@ export const TIER_EFFECT_VALUES: Record<BattleCardTier, Record<BattleCardEffectT
     // 회복 카운터
     // 치유 감소: 상대 회복량 100% 감소 (완전 봉쇄, 버프됨)
     anti_heal: 100,
-    // 광전사: 체력 50%→0% 시 공격속도 0%→+50% (선형)
-    berserker: 50,
+    // 광전사: 체력 50%→0% 시 공격속도 0%→+80% (선형)
+    berserker: 80,
     // 처형: 상대 체력 50% 이하일 때 데미지 +50% (버프됨)
     execute: 50,
     // 방패 강타: 방어력의 60% 즉시 데미지

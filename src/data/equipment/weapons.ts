@@ -15,7 +15,7 @@ export const WEAPONS: EquipmentBase[] = [
   {
     id: 'weapon-wooden-sword',
     slot: 'weapon',
-    baseStats: { attack: 32, hp: 10 },
+    baseStats: { attack: 31, hp: 10, attackSpeed: 3 },
     emoji: '🗡️',
     potentialSlots: 3,
     levels: createLevels('weapon-wooden-sword', [
@@ -43,11 +43,11 @@ export const WEAPONS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 철 도끼 시리즈 (파워형) =====
+  // ===== 철 도끼 시리즈 (파워형 - 느린 무기) =====
   {
     id: 'weapon-iron-axe',
     slot: 'weapon',
-    baseStats: { attack: 30, critDamage: 12 },
+    baseStats: { attack: 30, critDamage: 12 },  // 공속 없음 (느린 무기)
     emoji: '🪓',
     potentialSlots: 3,
     levels: createLevels('weapon-iron-axe', [
@@ -75,11 +75,11 @@ export const WEAPONS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 단궁 시리즈 (정밀형) =====
+  // ===== 단궁 시리즈 (정밀형 - 빠른 무기) =====
   {
     id: 'weapon-short-bow',
     slot: 'weapon',
-    baseStats: { attack: 28, critRate: 8 },
+    baseStats: { attack: 26, critRate: 8, attackSpeed: 5 },
     emoji: '🏹',
     potentialSlots: 3,
     levels: createLevels('weapon-short-bow', [
@@ -111,7 +111,7 @@ export const WEAPONS: EquipmentBase[] = [
   {
     id: 'weapon-leather-whip',
     slot: 'weapon',
-    baseStats: { attack: 28, critRate: 4, penetration: 4 },
+    baseStats: { attack: 27, critRate: 4, penetration: 4, attackSpeed: 3 },
     emoji: '⛓️',
     potentialSlots: 3,
     levels: createLevels('weapon-leather-whip', [
@@ -143,7 +143,7 @@ export const WEAPONS: EquipmentBase[] = [
   {
     id: 'weapon-bronze-spear',
     slot: 'weapon',
-    baseStats: { attack: 30, penetration: 8 },
+    baseStats: { attack: 29, penetration: 8, attackSpeed: 2 },
     emoji: '🔱',
     potentialSlots: 3,
     levels: createLevels('weapon-bronze-spear', [
@@ -171,11 +171,11 @@ export const WEAPONS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 녹슨 단검 시리즈 (치명형) =====
+  // ===== 녹슨 단검 시리즈 (치명형 - 빠른 무기) =====
   {
     id: 'weapon-rusty-dagger',
     slot: 'weapon',
-    baseStats: { attack: 24, critRate: 8, critDamage: 12 },
+    baseStats: { attack: 22, critRate: 8, critDamage: 12, attackSpeed: 5 },
     emoji: '🔪',
     potentialSlots: 3,
     levels: createLevels('weapon-rusty-dagger', [
@@ -207,7 +207,7 @@ export const WEAPONS: EquipmentBase[] = [
   {
     id: 'weapon-apprentice-staff',
     slot: 'weapon',
-    baseStats: { attack: 28, critRate: 5, critDamage: 8 },
+    baseStats: { attack: 27, critRate: 5, critDamage: 8, attackSpeed: 2 },
     emoji: '🪄',
     potentialSlots: 3,
     levels: createLevels('weapon-apprentice-staff', [
@@ -235,11 +235,11 @@ export const WEAPONS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 돌 해머 시리즈 (파워형) =====
+  // ===== 돌 해머 시리즈 (파워형 - 느린 무기) =====
   {
     id: 'weapon-stone-hammer',
     slot: 'weapon',
-    baseStats: { attack: 32, critDamage: 10 },
+    baseStats: { attack: 32, critDamage: 10 },  // 공속 없음 (느린 무기)
     emoji: '🔨',
     potentialSlots: 3,
     levels: createLevels('weapon-stone-hammer', [
@@ -271,7 +271,7 @@ export const WEAPONS: EquipmentBase[] = [
   {
     id: 'weapon-farmer-scythe',
     slot: 'weapon',
-    baseStats: { attack: 28, critRate: 5, penetration: 5 },
+    baseStats: { attack: 27, critRate: 5, penetration: 5, attackSpeed: 3 },
     emoji: '🌾',
     potentialSlots: 3,
     levels: createLevels('weapon-farmer-scythe', [
@@ -299,11 +299,11 @@ export const WEAPONS: EquipmentBase[] = [
     ]),
   },
 
-  // ===== 나무 몽둥이 시리즈 (브루저형) =====
+  // ===== 나무 몽둥이 시리즈 (브루저형 - 느린 무기) =====
   {
     id: 'weapon-wooden-club',
     slot: 'weapon',
-    baseStats: { attack: 30, hp: 15 },
+    baseStats: { attack: 30, hp: 15 },  // 공속 없음 (느린 무기)
     emoji: '🏏',
     potentialSlots: 3,
     levels: createLevels('weapon-wooden-club', [
