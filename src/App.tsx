@@ -440,7 +440,7 @@ function GameContent() {
   }
 
   // 골드 관련 계산
-  const gold = userData.profile?.gold ?? 10000;
+  const gold = userData.profile?.gold ?? 20000;
   const today = new Date().toISOString().split("T")[0];
   const canClaimDaily = userData.profile?.lastDailyClaim !== today;
 

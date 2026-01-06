@@ -77,7 +77,7 @@ export function useUserData() {
             .insert({
               id: user.id,
               username,
-              gold: 10000,
+              gold: 20000,
               avatar_url: oauthAvatarUrl,
             })
             .select('username, gold, last_daily_claim, avatar_url')
