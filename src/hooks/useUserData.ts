@@ -229,22 +229,40 @@ export function useUserData() {
     }
   }, [user])
 
-  // 일일 보상 수령
+  // 일일 보상 수령 (중복 방지 포함)
   const claimDailyReward = useCallback(async (amount: number) => {
     if (!user || !state.profile) return false
 
-    const today = new Date().toISOString().split('T')[0]
+    // 한국 시간 기준 오늘 날짜
+    const kstOffset = 9 * 60 * 60 * 1000
+    const kstDate = new Date(Date.now() + kstOffset)
+    const today = kstDate.toISOString().split('T')[0]
+
+    // 이미 오늘 수령했는지 체크 (클라이언트 측)
+    if (state.profile.lastDailyClaim === today) {
+      console.log('Already claimed today')
+      return false
+    }
 
     try {
-      const { error } = await supabase
+      // 서버 측에서도 중복 체크 (조건부 업데이트)
+      const { data, error } = await supabase
         .from('user_profiles')
         .update({
           gold: state.profile.gold + amount,
           last_daily_claim: today,
         })
         .eq('id', user.id)
+        .neq('last_daily_claim', today)  // 오늘 이미 수령했으면 업데이트 안 함
+        .select()
 
       if (error) throw error
+
+      // 업데이트된 행이 없으면 이미 수령한 것
+      if (!data || data.length === 0) {
+        console.log('Already claimed (server check)')
+        return false
+      }
 
       setState(prev => ({
         ...prev,

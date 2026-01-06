@@ -126,6 +126,7 @@ export function PvPRealtimeBattle({
   const [elapsedTime, setElapsedTime] = useState(0)
   const [isRunning, setIsRunning] = useState(true)
   const [battleEnded, setBattleEnded] = useState(false)
+  const [resultConfirmed, setResultConfirmed] = useState(false)  // 결과 확인 중복 방지
 
   // 스킬 상태
   const [playerSkills, setPlayerSkills] = useState<SkillState[]>(() =>
@@ -1515,6 +1516,9 @@ export function PvPRealtimeBattle({
                 {/* 확인 버튼 */}
                 <button
                   onClick={() => {
+                    if (resultConfirmed) return  // 중복 클릭 방지
+                    setResultConfirmed(true)
+
                     const winner = isWin ? 'player' : isLose ? 'opponent' : 'draw'
                     onBattleEnd({
                       winner,
@@ -1523,15 +1527,18 @@ export function PvPRealtimeBattle({
                       battleDuration: elapsedTime,
                     })
                   }}
+                  disabled={resultConfirmed}
                   className={`w-full py-3 rounded-xl font-bold text-lg transition-all ${
-                    isWin
-                      ? 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-black'
-                      : isLose
-                        ? 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white'
-                        : 'bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-400 hover:to-gray-500 text-white'
+                    resultConfirmed
+                      ? 'bg-gray-600 cursor-not-allowed opacity-50'
+                      : isWin
+                        ? 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-black'
+                        : isLose
+                          ? 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white'
+                          : 'bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-400 hover:to-gray-500 text-white'
                   }`}
                 >
-                  확인
+                  {resultConfirmed ? '처리 중...' : '확인'}
                 </button>
               </div>
             </div>

@@ -314,8 +314,8 @@ function GameContent() {
   // const handleGetNewWeapon = async () => { ... }
 
   // 일일 보상 수령
-  const handleClaimDaily = async () => {
-    await userData.claimDailyReward(1000)
+  const handleClaimDaily = async (): Promise<boolean> => {
+    return await userData.claimDailyReward(1000)
   }
 
   // 대결 시작 - 카드 선택 화면 표시
