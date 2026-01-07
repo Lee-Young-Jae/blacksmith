@@ -605,12 +605,10 @@ export function PvPRealtimeBattle({
       else if (effectType === 'shield_bash') {
         selectedSkill = { skill, index }
       }
-      // 보호막: 체력이 낮을 때 방어용
+      // 보호막: 쿨다운 돌 때마다 바로 사용
       else if (effectType === 'shield') {
-        if (opponentHpRatio < 0.6) {
-          selectedSkill = { skill, index }
-          break
-        }
+        selectedSkill = { skill, index }
+        break
       }
       // 냉기: 상대 공속 감소, 공격적으로 사용
       else if (effectType === 'freeze') {
@@ -626,12 +624,10 @@ export function PvPRealtimeBattle({
           break
         }
       }
-      // 희생 일격: 마무리용 또는 체력 여유 있을 때
+      // 희생 일격: 쿨다운 돌 때마다 적극적으로 사용
       else if (effectType === 'sacrifice') {
-        if (playerHpRatio < 0.4 || opponentHpRatio > 0.5) {
-          selectedSkill = { skill, index }
-          break
-        }
+        selectedSkill = { skill, index }
+        break
       }
     }
 
