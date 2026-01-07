@@ -59,6 +59,8 @@ import {
 } from "./components/gift";
 import { ReferralPanel } from "./components/referral/ReferralPanel";
 import { WelcomeModal } from "./components/referral/WelcomeModal";
+import { TutorialOverlay } from "./components/tutorial";
+import { TutorialProvider, useTutorial } from "./contexts/TutorialContext";
 import { getTotalAttack } from "./utils/starforce";
 import type { AIDifficulty } from "./types/battle";
 import type { UserWeapon, WeaponType, WeaponLevel } from "./types/weapon";
@@ -150,6 +152,7 @@ function GameContent() {
   const equipmentSystem = useEquipment();
   const liveFeed = useLiveFeed();
   const giftSystem = useGift();
+  const tutorial = useTutorial();
 
   const [view, setView] = useState<GameView>("acquire");
   const [activeTab, setActiveTab] = useState<TabType>("equipment");
@@ -659,7 +662,7 @@ function GameContent() {
                   </div>
 
                   {/* 인벤토리 */}
-                  <div className="flex-1">
+                  <div id="equipment-inventory" className="flex-1">
                     <EquipmentInventory
                       inventory={equipmentSystem.inventory}
                       onEquip={equipmentSystem.equipItem}
@@ -867,7 +870,7 @@ function GameContent() {
                   )}
 
                   {/* 장비 선택 리스트 */}
-                  <div className="card">
+                  <div id="enhance-inventory" className="card">
                     <div className="card-header py-2">
                       <div className="flex items-center justify-between">
                         <h3 className="text-sm font-bold text-[var(--color-text-primary)]">
@@ -1470,9 +1473,16 @@ function GameContent() {
       {userData.isNewUser && userData.profile && (
         <WelcomeModal
           username={userData.profile.username}
-          onComplete={userData.clearNewUserFlag}
+          onComplete={() => {
+            userData.clearNewUserFlag();
+            // 환영 모달 완료 후 튜토리얼 시작
+            tutorial.startTutorial();
+          }}
         />
       )}
+
+      {/* 튜토리얼 오버레이 */}
+      <TutorialOverlay />
     </div>
   );
 }
@@ -1480,7 +1490,9 @@ function GameContent() {
 function App() {
   return (
     <AuthProvider>
-      <GameContent />
+      <TutorialProvider>
+        <GameContent />
+      </TutorialProvider>
     </AuthProvider>
   );
 }

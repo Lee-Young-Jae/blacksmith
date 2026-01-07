@@ -39,6 +39,7 @@ export default function GachaResultDisplay({
 
   return (
     <div
+      id="gacha-result"
       className="fixed inset-0 z-50 bg-black/90 overflow-y-auto"
       onClick={allRevealed ? onClose : undefined}
     >

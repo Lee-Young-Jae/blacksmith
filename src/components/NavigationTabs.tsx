@@ -41,6 +41,7 @@ export function NavigationTabs({ activeTab, onTabChange, hasWeapon, hasEquipment
         return (
           <button
             key={tab.id}
+            id={`nav-tab-${tab.id}`}
             onClick={() => !isDisabled && onTabChange(tab.id)}
             disabled={isDisabled}
             className={`tab-item flex items-center gap-1 px-2.5 py-2 md:px-4 md:py-2.5 md:gap-1.5 shrink-0 ${isActive ? 'active' : ''}`}

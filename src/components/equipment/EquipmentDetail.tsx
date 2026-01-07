@@ -65,6 +65,7 @@ export default function EquipmentDetail({
 
   return (
     <div
+      id="equipment-detail-modal"
       className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 sm:p-4"
       onClick={onClose}
     >
@@ -236,7 +237,11 @@ export default function EquipmentDetail({
               </button>
             )}
             {!isEquipped && onEquip && (
-              <button onClick={() => onEquip(equipment.id)} className="btn btn-primary flex-1">
+              <button
+                id="equip-button"
+                onClick={() => onEquip(equipment.id)}
+                className="btn btn-primary flex-1"
+              >
                 장착
               </button>
             )}

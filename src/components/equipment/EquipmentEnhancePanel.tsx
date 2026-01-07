@@ -588,6 +588,7 @@ export default function EquipmentEnhancePanel({
 
           {/* 강화 버튼 - 더 크고 터치 친화적 */}
           <button
+            id="enhance-button"
             onClick={onEnhance}
             disabled={!canAfford || isEnhancing || isUsingTicket}
             className={`${buttonClass} ${buttonGlow} w-full min-h-[56px] sm:min-h-[52px] text-base font-bold rounded-xl transition-all`}

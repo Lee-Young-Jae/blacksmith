@@ -54,47 +54,45 @@ export default function GachaPanel({
       <div className="grid grid-cols-2 gap-4">
         {/* Single Pull */}
         <button
+          id="gacha-pull-button"
           onClick={() => onPullSingle(gold)}
           disabled={!canAffordSingle || isAnimating}
-          className={`btn py-4 min-h-[80px] flex-col ${canAffordSingle && !isAnimating ? 'btn-primary' : 'btn-ghost opacity-50'}`}
+          className={`btn py-4 min-h-[80px] min-w-[140px] flex-col ${canAffordSingle && !isAnimating ? 'btn-primary' : 'btn-ghost opacity-50'}`}
         >
-          {isAnimating ? (
-            <span className="flex items-center justify-center gap-2">
-              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            </span>
-          ) : (
-            <>
-              <div className="font-bold text-base">1회 뽑기</div>
-              <div className="text-sm opacity-80">
-                {GACHA_SINGLE_COST.toLocaleString()}G
-              </div>
-            </>
-          )}
+          <div className="font-bold text-base">
+            {isAnimating ? (
+              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />
+            ) : (
+              '1회 뽑기'
+            )}
+          </div>
+          <div className={`text-sm opacity-80 ${isAnimating ? 'invisible' : ''}`}>
+            {GACHA_SINGLE_COST.toLocaleString()}G
+          </div>
         </button>
 
         {/* Multi Pull */}
         <button
+          id="gacha-pull-multi-button"
           onClick={() => onPullMulti(gold)}
           disabled={!canAffordMulti || isAnimating}
-          className={`btn py-4 min-h-[80px] flex-col relative overflow-hidden ${canAffordMulti && !isAnimating ? 'btn-magic' : 'btn-ghost opacity-50'}`}
+          className={`btn py-4 min-h-[80px] min-w-[140px] flex-col relative overflow-hidden ${canAffordMulti && !isAnimating ? 'btn-magic' : 'btn-ghost opacity-50'}`}
         >
           {canAffordMulti && !isAnimating && (
             <div className="absolute top-1 right-2 text-xs bg-[var(--color-accent)] text-black px-1.5 py-0.5 rounded font-bold">
               10% 할인
             </div>
           )}
-          {isAnimating ? (
-            <span className="flex items-center justify-center gap-2">
-              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            </span>
-          ) : (
-            <>
-              <div className="font-bold text-base">10회 뽑기</div>
-              <div className="text-sm opacity-80">
-                {GACHA_MULTI_COST.toLocaleString()}G
-              </div>
-            </>
-          )}
+          <div className="font-bold text-base">
+            {isAnimating ? (
+              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />
+            ) : (
+              '10회 뽑기'
+            )}
+          </div>
+          <div className={`text-sm opacity-80 ${isAnimating ? 'invisible' : ''}`}>
+            {GACHA_MULTI_COST.toLocaleString()}G
+          </div>
         </button>
       </div>
 
