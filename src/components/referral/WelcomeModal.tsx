@@ -1,57 +1,61 @@
-import { useState } from 'react'
-import { GiAnvilImpact, GiHammerNails } from 'react-icons/gi'
-import { supabase } from '../../lib/supabase'
-import { useAuth } from '../../contexts/AuthContext'
+import { useState } from "react";
+import { GiAnvilImpact, GiHammerNails } from "react-icons/gi";
+import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface WelcomeModalProps {
-  username: string
-  onComplete: () => void
+  username: string;
+  onComplete: () => void;
 }
 
 export function WelcomeModal({ username, onComplete }: WelcomeModalProps) {
-  const { user } = useAuth()
-  const [step, setStep] = useState<'welcome' | 'referral' | 'complete'>('welcome')
-  const [referralCode, setReferralCode] = useState('')
-  const [isApplying, setIsApplying] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [applied, setApplied] = useState(false)
+  const { user } = useAuth();
+  const [step, setStep] = useState<"welcome" | "referral" | "complete">(
+    "welcome"
+  );
+  const [referralCode, setReferralCode] = useState("");
+  const [isApplying, setIsApplying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [applied, setApplied] = useState(false);
 
   const handleApplyCode = async () => {
-    if (!user || !referralCode.trim()) return
+    if (!user || !referralCode.trim()) return;
 
-    setIsApplying(true)
-    setError(null)
+    setIsApplying(true);
+    setError(null);
 
     try {
-      const { data, error: rpcError } = await supabase
-        .rpc('apply_referral_code', {
+      const { data, error: rpcError } = await supabase.rpc(
+        "apply_referral_code",
+        {
           p_referee_id: user.id,
           p_referral_code: referralCode.trim().toUpperCase(),
-        })
+        }
+      );
 
-      if (rpcError) throw rpcError
+      if (rpcError) throw rpcError;
 
       if (data) {
-        setApplied(true)
-        setTimeout(() => setStep('complete'), 1000)
+        setApplied(true);
+        setTimeout(() => setStep("complete"), 1000);
       } else {
-        setError('유효하지 않은 초대 코드입니다')
+        setError("유효하지 않은 초대 코드입니다");
       }
     } catch (err) {
-      console.error('Failed to apply referral code:', err)
-      setError('코드 적용에 실패했습니다')
+      console.error("Failed to apply referral code:", err);
+      setError("코드 적용에 실패했습니다");
     } finally {
-      setIsApplying(false)
+      setIsApplying(false);
     }
-  }
+  };
 
   const handleSkip = () => {
-    setStep('complete')
-  }
+    setStep("complete");
+  };
 
   const handleStart = () => {
-    onComplete()
-  }
+    onComplete();
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90">
@@ -67,7 +71,7 @@ export function WelcomeModal({ username, onComplete }: WelcomeModalProps) {
 
           <div className="p-8">
             {/* 환영 단계 */}
-            {step === 'welcome' && (
+            {step === "welcome" && (
               <div className="text-center space-y-6 animate-fadeIn">
                 <div className="relative inline-block">
                   <GiAnvilImpact className="text-7xl text-orange-400 drop-shadow-[0_0_20px_rgba(251,146,60,0.5)]" />
@@ -91,7 +95,7 @@ export function WelcomeModal({ username, onComplete }: WelcomeModalProps) {
                 </div>
 
                 <button
-                  onClick={() => setStep('referral')}
+                  onClick={() => setStep("referral")}
                   className="w-full py-4 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 rounded-xl text-white font-bold text-lg shadow-lg shadow-orange-600/30 transition-all hover:scale-[1.02]"
                 >
                   시작하기
@@ -100,7 +104,7 @@ export function WelcomeModal({ username, onComplete }: WelcomeModalProps) {
             )}
 
             {/* 초대 코드 단계 */}
-            {step === 'referral' && (
+            {step === "referral" && (
               <div className="text-center space-y-6 animate-fadeIn">
                 <GiHammerNails className="text-5xl text-yellow-400 mx-auto" />
 
@@ -118,18 +122,16 @@ export function WelcomeModal({ username, onComplete }: WelcomeModalProps) {
                     type="text"
                     value={referralCode}
                     onChange={(e) => {
-                      setReferralCode(e.target.value.toUpperCase())
-                      setError(null)
+                      setReferralCode(e.target.value.toUpperCase());
+                      setError(null);
                     }}
-                    placeholder="초대 코드 8자리"
+                    placeholder="초대코드 8자리"
                     maxLength={8}
                     className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-center text-xl font-mono tracking-widest text-white placeholder:text-gray-500 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
                     disabled={applied}
                   />
 
-                  {error && (
-                    <p className="text-red-400 text-sm">{error}</p>
-                  )}
+                  {error && <p className="text-red-400 text-sm">{error}</p>}
 
                   {applied && (
                     <p className="text-green-400 text-sm flex items-center justify-center gap-2">
@@ -146,7 +148,7 @@ export function WelcomeModal({ username, onComplete }: WelcomeModalProps) {
                       disabled={!referralCode.trim() || isApplying}
                       className="w-full py-3 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed rounded-xl text-white font-bold transition-all"
                     >
-                      {isApplying ? '적용 중...' : '코드 적용하기'}
+                      {isApplying ? "적용 중..." : "코드 적용하기"}
                     </button>
                   )}
 
@@ -154,7 +156,7 @@ export function WelcomeModal({ username, onComplete }: WelcomeModalProps) {
                     onClick={handleSkip}
                     className="w-full py-3 bg-gray-700 hover:bg-gray-600 rounded-xl text-gray-300 font-medium transition-colors"
                   >
-                    {applied ? '다음으로' : '건너뛰기'}
+                    {applied ? "다음으로" : "건너뛰기"}
                   </button>
                 </div>
 
@@ -165,14 +167,12 @@ export function WelcomeModal({ username, onComplete }: WelcomeModalProps) {
             )}
 
             {/* 완료 단계 */}
-            {step === 'complete' && (
+            {step === "complete" && (
               <div className="text-center space-y-6 animate-fadeIn">
                 <div className="text-6xl">🔥</div>
 
                 <div className="space-y-2">
-                  <h2 className="text-xl font-bold text-white">
-                    준비 완료!
-                  </h2>
+                  <h2 className="text-xl font-bold text-white">준비 완료!</h2>
                   <p className="text-gray-400">
                     이제 대장간의 불꽃을 지펴봅시다
                   </p>
@@ -208,5 +208,5 @@ export function WelcomeModal({ username, onComplete }: WelcomeModalProps) {
         }
       `}</style>
     </div>
-  )
+  );
 }

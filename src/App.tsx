@@ -466,8 +466,12 @@ function GameContent() {
 
   // 골드 관련 계산
   const gold = userData.profile?.gold ?? 20000;
-  const today = new Date().toISOString().split("T")[0];
-  const canClaimDaily = userData.profile?.lastDailyClaim !== today;
+  // 한국 시간 기준 오늘 날짜 (useUserData와 동일한 방식)
+  const kstOffset = 9 * 60 * 60 * 1000;
+  const kstDate = new Date(Date.now() + kstOffset);
+  const today = kstDate.toISOString().split("T")[0];
+  // 프로필이 로드된 경우에만 일일보상 버튼 표시
+  const canClaimDaily = userData.profile !== null && userData.profile.lastDailyClaim !== today;
 
   // 무기 획득
   const handleAcquireWeapon = async (): Promise<UserWeapon> => {
