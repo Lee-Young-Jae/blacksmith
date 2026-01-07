@@ -108,6 +108,10 @@ export function TowerBattle({
   const [timeRemaining, setTimeRemaining] = useState<number>(TIME_LIMIT)
   const [battleEnded, setBattleEnded] = useState(false)
 
+  // 보호막 상태
+  const [playerShield, setPlayerShield] = useState(0)
+  const playerShieldRef = useRef(0)
+
   // 플로팅 데미지
   const [floatingDamages, setFloatingDamages] = useState<FloatingDamage[]>([])
   const damageIdRef = useRef(0)
@@ -158,6 +162,7 @@ export function TowerBattle({
   useEffect(() => { playerHpRef.current = playerHp }, [playerHp])
   useEffect(() => { enemyHpRef.current = enemyHp }, [enemyHp])
   useEffect(() => { timeRef.current = timeRemaining }, [timeRemaining])
+  useEffect(() => { playerShieldRef.current = playerShield }, [playerShield])
 
   // 플로팅 데미지 추가
   const addFloatingDamage = useCallback((
@@ -193,11 +198,12 @@ export function TowerBattle({
     attackerStats: CharacterStats,
     defenderStats: CharacterStats,
     isPlayer: boolean,
-    defenderHpRatio: number = 1  // 상대 HP 비율 (처형 효과용)
+    defenderHpRatio: number = 1,  // 상대 HP 비율 (처형 효과용)
+    ignoreEvasion: boolean = false  // 회피 무시 여부 (냉기 효과용)
   ): { damage: number; isCrit: boolean; isMiss: boolean } => {
-    // 회피 판정 (방어자의 evasion으로 판정)
+    // 회피 판정 (방어자의 evasion으로 판정) - ignoreEvasion이면 무시
     const evasion = defenderStats.evasion || 0
-    if (evasion > 0 && Math.random() * 100 < evasion) {
+    if (!ignoreEvasion && evasion > 0 && Math.random() * 100 < evasion) {
       return { damage: 0, isCrit: false, isMiss: true }
     }
     let attackBoost = 0
@@ -222,7 +228,16 @@ export function TowerBattle({
     }
 
     const attack = Math.max(1, attackerStats.attack || 10) * (1 + attackBoost / 100)
-    const defense = Math.max(0, defenderStats.defense || 5) * (1 + defenseBoost / 100)
+    let defense = Math.max(0, defenderStats.defense || 5) * (1 + defenseBoost / 100)
+
+    // 도발 효과: 플레이어가 공격할 때 적의 방어력 30% 감소
+    if (isPlayer) {
+      const tauntActive = getActiveEffectValue('taunt') > 0
+      if (tauntActive) {
+        defense *= 0.7  // 30% 방어력 감소
+      }
+    }
+
     const penetration = Math.min(100, (attackerStats.penetration || 0) + penetrationBoost)
 
     // LoL 스타일 방어력 계산 (K=120)
@@ -279,7 +294,7 @@ export function TowerBattle({
 
     // 즉시 효과 처리 (setState 콜백 바깥에서 실행)
     // 공격 스킬 여부 판단
-    const isAttackSkill = effect.type === 'first_strike' || effect.type === 'shield_bash'
+    const isAttackSkill = effect.type === 'first_strike' || effect.type === 'shield_bash' || effect.type === 'sacrifice'
 
     // 스킬 사용 시각 효과
     setActiveSkillEffect({ index, isAttack: isAttackSkill })
@@ -310,10 +325,44 @@ export function TowerBattle({
       // 적 피격 효과
       setEnemyImageState('hit')
       setTimeout(() => setEnemyImageState(prev => prev === 'death' ? 'death' : 'idle'), 300)
+    } else if (effect.type === 'sacrifice') {
+      // 희생 일격: HP 15% 소모, 소모량의 value% 데미지
+      const hpCost = Math.floor(playerHpRef.current * 0.15)
+      const bonusDamage = Math.floor(hpCost * effect.value / 100)
+      // HP 소모
+      const newPlayerHp = Math.max(1, playerHpRef.current - hpCost) // 최소 1 HP 유지
+      playerHpRef.current = newPlayerHp
+      setPlayerHp(newPlayerHp)
+      addFloatingDamage(hpCost, false, false, 'player') // 플레이어에게 빨간 데미지 표시
+      // 적에게 데미지
+      const newEnemyHp = Math.max(0, enemyHpRef.current - bonusDamage)
+      enemyHpRef.current = newEnemyHp
+      setEnemyHp(newEnemyHp)
+      addFloatingDamage(bonusDamage, true, false, 'enemy') // 크리티컬 표시로 강조
+      // 적 피격 효과
+      setEnemyImageState('hit')
+      setTimeout(() => setEnemyImageState(prev => prev === 'death' ? 'death' : 'idle'), 300)
+    } else if (effect.type === 'shield') {
+      // 보호막: 최대 HP의 value% 만큼 보호막 생성
+      const shieldAmount = Math.floor(playerMaxHp * effect.value / 100)
+      playerShieldRef.current = shieldAmount
+      setPlayerShield(shieldAmount)
+      // 보호막 생성 플로팅 메시지 (회복 스타일로 표시)
+      addFloatingDamage(shieldAmount, false, true, 'player')
+    } else if (effect.type === 'freeze') {
+      // 냉기: 적 공속 감소 + 회피 무시 (지속 효과로 처리)
+      // 적 피격 효과로 냉기 시각 피드백
+      setEnemyImageState('hit')
+      setTimeout(() => setEnemyImageState(prev => prev === 'death' ? 'death' : 'idle'), 300)
+    } else if (effect.type === 'taunt') {
+      // 도발: 적 공속 증가 + 방어력 감소 (지속 효과로 처리)
+      setEnemyImageState('hit')
+      setTimeout(() => setEnemyImageState(prev => prev === 'death' ? 'death' : 'idle'), 300)
     }
 
-    // 지속 효과 활성화
-    const durationBasedEffects = ['guaranteed_crit', 'immunity', 'silence']
+    // 지속 효과 활성화 (taunt은 effect.value가 지속시간)
+    // shield는 effect.value가 HP%, freeze는 effect.value가 공속감소%이므로 card.duration 사용
+    const durationBasedEffects = ['guaranteed_crit', 'immunity', 'silence', 'taunt']
     const effectDuration = durationBasedEffects.includes(effect.type)
       ? effect.value
       : skill.card.duration
@@ -399,7 +448,9 @@ export function TowerBattle({
 
         // 적 HP 비율 계산 (처형 효과용)
         const enemyHpRatio = enemyHpRef.current / enemyMaxHp
-        const { damage, isCrit, isMiss } = calculateDamage(safePlayerStats, enemy.stats, true, enemyHpRatio)
+        // 냉기 효과가 활성화되어 있으면 적의 회피 무시
+        const freezeIgnoreEvasion = getActiveEffectValue('freeze') > 0  // freeze가 활성화되면 회피 무시
+        const { damage, isCrit, isMiss } = calculateDamage(safePlayerStats, enemy.stats, true, enemyHpRatio, freezeIgnoreEvasion)
 
         if (isMiss) {
           // 적이 회피 성공
@@ -439,18 +490,30 @@ export function TowerBattle({
 
       // 적 공격
       if (enemyNextAttackRef.current <= 0 && playerHpRef.current > 0 && enemyHpRef.current > 0) {
-        enemyNextAttackRef.current = enemyInterval
+        // 냉기 효과: 적 공속 감소 (effect.value% 만큼)
+        const freezeValue = getActiveEffectValue('freeze')
+        let enemySpeedModifier = 1
+        if (freezeValue > 0) {
+          // 공속 X% 감소 = 간격 1/(1-X/100) 배
+          enemySpeedModifier = 1 / (1 - freezeValue / 100)
+        }
 
-        const { damage, isCrit, isMiss } = calculateDamage(enemy.stats, safePlayerStats, false)
+        enemyNextAttackRef.current = enemyInterval * enemySpeedModifier
+
+        const { damage: rawDamage, isCrit, isMiss } = calculateDamage(enemy.stats, safePlayerStats, false)
+
+        // 도발 효과: 받는 피해 30% 감소
+        const tauntActive = getActiveEffectValue('taunt') > 0
+        const damage = tauntActive ? Math.floor(rawDamage * 0.7) : rawDamage
 
         if (isMiss) {
           // 플레이어가 회피 성공
           addFloatingDamage(0, false, false, 'player', true)
         } else {
-          // 반사 데미지
+          // 반사 데미지 (감소 전 원본 데미지 기준)
           const reflect = getPassiveBonus('damage_reflect') + getActiveEffectValue('damage_reflect')
           if (reflect > 0) {
-            const reflectDamage = Math.floor(damage * reflect / 100)
+            const reflectDamage = Math.floor(rawDamage * reflect / 100)
             setEnemyHp(prev => {
               const newHp = Math.max(0, prev - reflectDamage)
               enemyHpRef.current = newHp
@@ -460,11 +523,32 @@ export function TowerBattle({
           }
 
           enemyDamageRef.current += damage
-          setPlayerHp(prev => {
-            const newHp = Math.max(0, prev - damage)
-            playerHpRef.current = newHp
-            return newHp
-          })
+
+          // 보호막이 있으면 먼저 흡수
+          let remainingDamage = damage
+          if (playerShieldRef.current > 0) {
+            if (playerShieldRef.current >= remainingDamage) {
+              // 보호막이 데미지를 완전히 흡수
+              const newShield = playerShieldRef.current - remainingDamage
+              playerShieldRef.current = newShield
+              setPlayerShield(newShield)
+              remainingDamage = 0
+            } else {
+              // 보호막이 일부만 흡수
+              remainingDamage -= playerShieldRef.current
+              playerShieldRef.current = 0
+              setPlayerShield(0)
+            }
+          }
+
+          // 남은 데미지를 HP에 적용
+          if (remainingDamage > 0) {
+            setPlayerHp(prev => {
+              const newHp = Math.max(0, prev - remainingDamage)
+              playerHpRef.current = newHp
+              return newHp
+            })
+          }
 
           addFloatingDamage(damage, isCrit, false, 'player')
         }
@@ -716,6 +800,22 @@ export function TowerBattle({
               </div>
             </div>
 
+            {/* 보호막 바 (보호막이 있을 때만 표시) */}
+            {playerShield > 0 && (
+              <div className="w-32 mt-1">
+                <div className="flex justify-between text-xs text-cyan-400 mb-0.5">
+                  <span>🛡️ 보호막</span>
+                  <span>{Math.floor(playerShield).toLocaleString()}</span>
+                </div>
+                <div className="h-2 bg-gray-700 rounded-full overflow-hidden border border-cyan-500/50">
+                  <div
+                    className="h-full bg-gradient-to-r from-cyan-600 via-cyan-400 to-cyan-300 transition-all duration-200"
+                    style={{ width: `${Math.min(100, (playerShield / playerMaxHp) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
             {/* 활성 버프/패시브 표시 */}
             {(playerSkills.some(s => s.isActive) || playerSkills.some(s => s.card.activationType === 'passive')) && (
               <div className="flex gap-1 mt-2 flex-wrap max-w-32">
@@ -757,12 +857,14 @@ export function TowerBattle({
                   <div
                     key={d.id}
                     className={`absolute left-1/2 -top-2 -translate-x-1/2 font-bold animate-float-up whitespace-nowrap ${
+                      d.isMiss ? 'text-cyan-400 italic text-base' :
                       d.isHeal ? 'text-green-400 text-sm' :
                       d.isCrit ? 'text-orange-400 text-base' : 'text-red-400 text-sm'
                     }`}
                     style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}
                   >
-                    {d.isHeal ? `+${d.damage.toLocaleString()}` :
+                    {d.isMiss ? 'MISS' :
+                     d.isHeal ? `+${d.damage.toLocaleString()}` :
                      d.isCrit ? `-${d.damage.toLocaleString()} 치명타!` :
                      `-${d.damage.toLocaleString()}`}
                   </div>

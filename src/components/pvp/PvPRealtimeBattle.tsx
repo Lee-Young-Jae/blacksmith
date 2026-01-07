@@ -177,6 +177,12 @@ export function PvPRealtimeBattle({
   const playerHealFatigueRef = useRef(0)
   const opponentHealFatigueRef = useRef(0)
 
+  // 보호막 상태
+  const [playerShield, setPlayerShield] = useState(0)
+  const [opponentShield, setOpponentShield] = useState(0)
+  const playerShieldRef = useRef(0)
+  const opponentShieldRef = useRef(0)
+
   // 스킬 상태 ref (게임 루프에서 사용)
   const playerSkillsRef = useRef(playerSkills)
   const opponentSkillsRef = useRef(opponentSkills)
@@ -216,6 +222,15 @@ export function PvPRealtimeBattle({
   useEffect(() => {
     opponentHealFatigueRef.current = opponentHealFatigue
   }, [opponentHealFatigue])
+
+  // 보호막 ref 동기화
+  useEffect(() => {
+    playerShieldRef.current = playerShield
+  }, [playerShield])
+
+  useEffect(() => {
+    opponentShieldRef.current = opponentShield
+  }, [opponentShield])
 
   // 플로팅 데미지
   const [floatingDamages, setFloatingDamages] = useState<FloatingDamage[]>([])
@@ -334,7 +349,8 @@ export function PvPRealtimeBattle({
     defenderStats: CharacterStats,
     attackerSkills: SkillState[],
     defenderSkills: SkillState[],
-    defenderHpRatio: number = 1  // 상대 HP 비율 (처형 효과용)
+    defenderHpRatio: number = 1,  // 상대 HP 비율 (처형 효과용)
+    tauntDefenseReduction: boolean = false  // 도발 효과: 방어력 30% 감소
   ): { damage: number; isCrit: boolean } => {
     // 패시브 보너스
     const attackBonus = getPassiveBonus(attackerSkills, 'attack_boost')
@@ -345,7 +361,11 @@ export function PvPRealtimeBattle({
 
     // 기본 데미지 (공격력 기반, 방어력은 감소율로 적용)
     const attack = Math.max(1, attackerStats.attack || 10) * (1 + attackBonus / 100)
-    const defense = Math.max(0, defenderStats.defense || 5) * (1 + defenseBonus / 100)
+    let defense = Math.max(0, defenderStats.defense || 5) * (1 + defenseBonus / 100)
+    // 도발 효과: 방어력 30% 감소
+    if (tauntDefenseReduction) {
+      defense *= 0.7
+    }
     const penetration = Math.min(100, (attackerStats.penetration || 0) + penetrationBonus)
 
     // 방어력 감소율: defense / (defense + 100) → 방어력 100이면 50% 감소
@@ -450,10 +470,36 @@ export function PvPRealtimeBattle({
     } else if (effect.type === 'silence') {
       const silenceDuration = effect.value > 0 ? effect.value : 2.5
       setOpponentSilenceDuration(silenceDuration)
+    } else if (effect.type === 'shield') {
+      // 보호막: 최대 HP의 value% 만큼 보호막 생성
+      const shieldAmount = Math.floor(playerMaxHp * effect.value / 100)
+      playerShieldRef.current = shieldAmount
+      setPlayerShield(shieldAmount)
+      addFloatingDamage('player', shieldAmount, false, true)
+    } else if (effect.type === 'freeze') {
+      // 냉기: 적 공속 감소 + 회피 무시 (지속 효과로 처리)
+      // 즉시 효과 없음, isActive로 관리
+    } else if (effect.type === 'taunt') {
+      // 도발: 받는 피해 감소 + 적 방어력 감소 (지속 효과로 처리)
+      // 즉시 효과 없음, isActive로 관리
+    } else if (effect.type === 'sacrifice') {
+      // 희생 일격: HP 15% 소모, 소모량의 value% 데미지
+      const hpCost = Math.floor(playerHpRef.current * 0.15)
+      const bonusDamage = Math.floor(hpCost * effect.value / 100)
+      // HP 소모
+      const newPlayerHp = Math.max(1, playerHpRef.current - hpCost)
+      playerHpRef.current = newPlayerHp
+      setPlayerHp(newPlayerHp)
+      addFloatingDamage('player', hpCost, false, false)
+      // 적에게 데미지
+      const newOpponentHp = Math.max(0, opponentHpRef.current - bonusDamage)
+      opponentHpRef.current = newOpponentHp
+      setOpponentHp(newOpponentHp)
+      addFloatingDamage('opponent', bonusDamage, true, false)
     }
 
-    // 지속 효과 활성화
-    const durationBasedEffects = ['guaranteed_crit', 'immunity', 'silence']
+    // 지속 효과 활성화 (taunt은 effect.value가 지속시간)
+    const durationBasedEffects = ['guaranteed_crit', 'immunity', 'silence', 'taunt']
     const effectDuration = durationBasedEffects.includes(effect.type)
       ? effect.value
       : card.duration
@@ -606,10 +652,36 @@ export function PvPRealtimeBattle({
     } else if (effect.type === 'silence') {
       const silenceDuration = effect.value > 0 ? effect.value : 2.5
       setPlayerSilenceDuration(silenceDuration)
+    } else if (effect.type === 'shield') {
+      // 보호막: 최대 HP의 value% 만큼 보호막 생성
+      const shieldAmount = Math.floor(opponentMaxHp * effect.value / 100)
+      opponentShieldRef.current = shieldAmount
+      setOpponentShield(shieldAmount)
+      addFloatingDamage('opponent', shieldAmount, false, true)
+    } else if (effect.type === 'freeze') {
+      // 냉기: 플레이어 공속 감소 + 회피 무시 (지속 효과로 처리)
+      // 즉시 효과 없음, isActive로 관리
+    } else if (effect.type === 'taunt') {
+      // 도발: 받는 피해 감소 + 플레이어 방어력 감소 (지속 효과로 처리)
+      // 즉시 효과 없음, isActive로 관리
+    } else if (effect.type === 'sacrifice') {
+      // 희생 일격: HP 15% 소모, 소모량의 value% 데미지
+      const hpCost = Math.floor(opponentHpRef.current * 0.15)
+      const bonusDamage = Math.floor(hpCost * effect.value / 100)
+      // HP 소모
+      const newOpponentHp = Math.max(1, opponentHpRef.current - hpCost)
+      opponentHpRef.current = newOpponentHp
+      setOpponentHp(newOpponentHp)
+      addFloatingDamage('opponent', hpCost, false, false)
+      // 플레이어에게 데미지
+      const newPlayerHp = Math.max(0, playerHpRef.current - bonusDamage)
+      playerHpRef.current = newPlayerHp
+      setPlayerHp(newPlayerHp)
+      addFloatingDamage('player', bonusDamage, true, false)
     }
 
-    // 지속 효과 활성화
-    const durationBasedEffects = ['guaranteed_crit', 'immunity', 'silence']
+    // 지속 효과 활성화 (taunt은 effect.value가 지속시간)
+    const durationBasedEffects = ['guaranteed_crit', 'immunity', 'silence', 'taunt']
     const effectDuration = durationBasedEffects.includes(effect.type)
       ? effect.value
       : card.duration
@@ -714,22 +786,29 @@ export function PvPRealtimeBattle({
         // 폭풍 연타: 공격속도 대폭 증가 (value는 공격속도 증가량)
         const stormStrikeSpeedBoost = getActiveEffectValue(currentPlayerSkills, 'double_attack')
         // 광전사: HP 50% 이하일 때 체력에 비례해서 공격속도 증가
-        // 50% HP = 0% 보너스, 0% HP = effect.value% 보너스 (선형 스케일링)
         const playerHpRatio = playerHpRef.current / playerMaxHp
         const berserkerBaseValue = getPassiveBonus(currentPlayerSkills, 'berserker')
         let berserkerBonus = 0
         if (playerHpRatio <= 0.5 && berserkerBaseValue > 0) {
           berserkerBonus = Math.floor((0.5 - playerHpRatio) / 0.5 * berserkerBaseValue)
         }
-        const adjustedInterval = interval / (1 + (speedBoost + activeSpeedBoost + stormStrikeSpeedBoost + berserkerBonus) / 100)
-        playerNextAttackRef.current = Math.max(300, adjustedInterval)  // 폭풍 연타를 위해 최소 간격 500ms → 300ms로 축소
+        // 상대의 냉기 효과: 플레이어 공속 감소
+        const opponentFreezeValue = getActiveEffectValue(currentOpponentSkills, 'freeze')
+        const freezeSpeedReduction = opponentFreezeValue > 0 ? opponentFreezeValue : 0
+        const totalSpeedBoost = speedBoost + activeSpeedBoost + stormStrikeSpeedBoost + berserkerBonus - freezeSpeedReduction
+        const adjustedInterval = interval / (1 + totalSpeedBoost / 100)
+        playerNextAttackRef.current = Math.max(300, adjustedInterval)
 
         // 데미지 계산 (처형 효과를 위해 상대 HP 비율 전달)
+        // 도발 효과: 상대 방어력 30% 감소
+        const playerTauntActive = getActiveEffectValue(currentPlayerSkills, 'taunt') > 0
         const opponentHpRatio = opponentHpRef.current / opponentMaxHp
-        const { damage, isCrit } = calculateDamage(currentPlayerStats, currentOpponentStats, currentPlayerSkills, currentOpponentSkills, opponentHpRatio)
+        const { damage, isCrit } = calculateDamage(currentPlayerStats, currentOpponentStats, currentPlayerSkills, currentOpponentSkills, opponentHpRatio, playerTauntActive)
 
         // 회피 체크 (상대의 evasion 스탯 기준, 최대 40%)
-        const opponentEvasion = Math.min(40, currentOpponentStats.evasion || 0)
+        // 플레이어의 냉기 효과가 활성화되어 있으면 상대 회피 무시
+        const playerFreezeActive = getActiveEffectValue(currentPlayerSkills, 'freeze') > 0
+        const opponentEvasion = playerFreezeActive ? 0 : Math.min(40, currentOpponentStats.evasion || 0)
         const isEvaded = Math.random() * 100 < opponentEvasion
 
         if (isEvaded) {
@@ -737,28 +816,46 @@ export function PvPRealtimeBattle({
           addFloatingDamage('opponent', 0, false, false, true)
         } else {
           // 회피 실패 - 데미지 적용
+          let actualDamage = damage
+
+          // 상대 보호막이 있으면 먼저 흡수
+          if (opponentShieldRef.current > 0 && actualDamage > 0) {
+            if (opponentShieldRef.current >= actualDamage) {
+              const newShield = opponentShieldRef.current - actualDamage
+              opponentShieldRef.current = newShield
+              setOpponentShield(newShield)
+              actualDamage = 0
+            } else {
+              actualDamage -= opponentShieldRef.current
+              opponentShieldRef.current = 0
+              setOpponentShield(0)
+            }
+          }
+
           if (damage > 0) addFloatingDamage('opponent', damage, isCrit)
 
-          setOpponentHp(prev => {
-            const newHp = Math.max(0, prev - damage)
+          if (actualDamage > 0) {
+            setOpponentHp(prev => {
+              const newHp = Math.max(0, prev - actualDamage)
 
-            // 영혼 흡수: 치명타 시에만 발동
-            const lifesteal = getPassiveBonus(currentPlayerSkills, 'lifesteal')
-            if (lifesteal > 0 && damage > 0 && isCrit) {
-              const healAmount = Math.floor(damage * lifesteal / 100)
-              setPlayerHp(hp => Math.min(playerMaxHp, hp + healAmount))
-              addFloatingDamage('player', healAmount, false, true)  // 흡혈 회복 표시
-            }
+              // 영혼 흡수: 치명타 시에만 발동
+              const lifesteal = getPassiveBonus(currentPlayerSkills, 'lifesteal')
+              if (lifesteal > 0 && damage > 0 && isCrit) {
+                const healAmount = Math.floor(damage * lifesteal / 100)
+                setPlayerHp(hp => Math.min(playerMaxHp, hp + healAmount))
+                addFloatingDamage('player', healAmount, false, true)
+              }
 
-            // 반사 (고정 데미지)
-            const reflect = getPassiveBonus(currentOpponentSkills, 'damage_reflect')
-            if (reflect > 0 && damage > 0) {
-              setPlayerHp(hp => Math.max(0, hp - reflect))
-              addFloatingDamage('player', reflect, false, false)  // 반사 피해 표시
-            }
+              // 반사 (고정 데미지)
+              const reflect = getPassiveBonus(currentOpponentSkills, 'damage_reflect')
+              if (reflect > 0 && damage > 0) {
+                setPlayerHp(hp => Math.max(0, hp - reflect))
+                addFloatingDamage('player', reflect, false, false)
+              }
 
-            return newHp
-          })
+              return newHp
+            })
+          }
         }
       }
 
@@ -772,22 +869,33 @@ export function PvPRealtimeBattle({
         // 폭풍 연타: 공격속도 대폭 증가 (value는 공격속도 증가량)
         const stormStrikeSpeedBoost = getActiveEffectValue(currentOpponentSkills, 'double_attack')
         // 광전사: HP 50% 이하일 때 체력에 비례해서 공격속도 증가
-        // 50% HP = 0% 보너스, 0% HP = effect.value% 보너스 (선형 스케일링)
         const opponentHpRatio = opponentHpRef.current / opponentMaxHp
         const berserkerBaseValue = getPassiveBonus(currentOpponentSkills, 'berserker')
         let berserkerBonus = 0
         if (opponentHpRatio <= 0.5 && berserkerBaseValue > 0) {
           berserkerBonus = Math.floor((0.5 - opponentHpRatio) / 0.5 * berserkerBaseValue)
         }
-        const adjustedInterval = interval / (1 + (speedBoost + activeSpeedBoost + stormStrikeSpeedBoost + berserkerBonus) / 100)
-        opponentNextAttackRef.current = Math.max(300, adjustedInterval)  // 폭풍 연타를 위해 최소 간격 500ms → 300ms로 축소
+        // 플레이어의 냉기 효과: 상대 공속 감소
+        const playerFreezeValue = getActiveEffectValue(currentPlayerSkills, 'freeze')
+        const freezeSpeedReduction = playerFreezeValue > 0 ? playerFreezeValue : 0
+        const totalSpeedBoost = speedBoost + activeSpeedBoost + stormStrikeSpeedBoost + berserkerBonus - freezeSpeedReduction
+        const adjustedInterval = interval / (1 + totalSpeedBoost / 100)
+        opponentNextAttackRef.current = Math.max(300, adjustedInterval)
 
         // 데미지 계산 (처형 효과를 위해 플레이어 HP 비율 전달)
+        // 도발 효과: 플레이어 방어력 30% 감소
+        const opponentTauntActive = getActiveEffectValue(currentOpponentSkills, 'taunt') > 0
         const playerHpRatio = playerHpRef.current / playerMaxHp
-        const { damage, isCrit } = calculateDamage(currentOpponentStats, currentPlayerStats, currentOpponentSkills, currentPlayerSkills, playerHpRatio)
+        const { damage: rawDamage, isCrit } = calculateDamage(currentOpponentStats, currentPlayerStats, currentOpponentSkills, currentPlayerSkills, playerHpRatio, opponentTauntActive)
+
+        // 플레이어 도발 효과: 받는 피해 30% 감소
+        const playerTauntActive = getActiveEffectValue(currentPlayerSkills, 'taunt') > 0
+        const damage = playerTauntActive ? Math.floor(rawDamage * 0.7) : rawDamage
 
         // 회피 체크 (플레이어의 evasion 스탯 기준, 최대 40%)
-        const playerEvasion = Math.min(40, currentPlayerStats.evasion || 0)
+        // 상대의 냉기 효과가 활성화되어 있으면 플레이어 회피 무시
+        const opponentFreezeActive = getActiveEffectValue(currentOpponentSkills, 'freeze') > 0
+        const playerEvasion = opponentFreezeActive ? 0 : Math.min(40, currentPlayerStats.evasion || 0)
         const isEvaded = Math.random() * 100 < playerEvasion
 
         if (isEvaded) {
@@ -795,28 +903,46 @@ export function PvPRealtimeBattle({
           addFloatingDamage('player', 0, false, false, true)
         } else {
           // 회피 실패 - 데미지 적용
+          let actualDamage = damage
+
+          // 플레이어 보호막이 있으면 먼저 흡수
+          if (playerShieldRef.current > 0 && actualDamage > 0) {
+            if (playerShieldRef.current >= actualDamage) {
+              const newShield = playerShieldRef.current - actualDamage
+              playerShieldRef.current = newShield
+              setPlayerShield(newShield)
+              actualDamage = 0
+            } else {
+              actualDamage -= playerShieldRef.current
+              playerShieldRef.current = 0
+              setPlayerShield(0)
+            }
+          }
+
           if (damage > 0) addFloatingDamage('player', damage, isCrit)
 
-          setPlayerHp(prev => {
-            const newHp = Math.max(0, prev - damage)
+          if (actualDamage > 0) {
+            setPlayerHp(prev => {
+              const newHp = Math.max(0, prev - actualDamage)
 
-            // 영혼 흡수: 치명타 시에만 발동
-            const lifesteal = getPassiveBonus(currentOpponentSkills, 'lifesteal')
-            if (lifesteal > 0 && damage > 0 && isCrit) {
-              const healAmount = Math.floor(damage * lifesteal / 100)
-              setOpponentHp(hp => Math.min(opponentMaxHp, hp + healAmount))
-              addFloatingDamage('opponent', healAmount, false, true)  // 흡혈 회복 표시
-            }
+              // 영혼 흡수: 치명타 시에만 발동
+              const lifesteal = getPassiveBonus(currentOpponentSkills, 'lifesteal')
+              if (lifesteal > 0 && rawDamage > 0 && isCrit) {
+                const healAmount = Math.floor(rawDamage * lifesteal / 100)
+                setOpponentHp(hp => Math.min(opponentMaxHp, hp + healAmount))
+                addFloatingDamage('opponent', healAmount, false, true)
+              }
 
-            // 반사 (고정 데미지)
-            const reflect = getPassiveBonus(currentPlayerSkills, 'damage_reflect')
-            if (reflect > 0 && damage > 0) {
-              setOpponentHp(hp => Math.max(0, hp - reflect))
-              addFloatingDamage('opponent', reflect, false, false)  // 반사 피해 표시
-            }
+              // 반사 (고정 데미지) - 원본 데미지 기준
+              const reflect = getPassiveBonus(currentPlayerSkills, 'damage_reflect')
+              if (reflect > 0 && rawDamage > 0) {
+                setOpponentHp(hp => Math.max(0, hp - reflect))
+                addFloatingDamage('opponent', reflect, false, false)
+              }
 
-            return newHp
-          })
+              return newHp
+            })
+          }
         }
 
         // AI 스킬 사용 (공격 시 70% 확률)
@@ -1004,6 +1130,22 @@ export function PvPRealtimeBattle({
               </span>
             </div>
           </div>
+          {/* 상대 보호막 바 */}
+          {opponentShield > 0 && (
+            <div className="mt-1">
+              <div className="relative h-3 bg-gray-700 rounded-full overflow-hidden border border-cyan-500/50">
+                <div
+                  className="h-full bg-gradient-to-r from-cyan-600 via-cyan-400 to-cyan-300 transition-all duration-200"
+                  style={{ width: `${Math.min(100, (opponentShield / opponentMaxHp) * 100)}%` }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-white drop-shadow-lg">
+                    🛡️ {Math.floor(opponentShield)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
           {/* 상대 플로팅 데미지 */}
           <div className="relative h-6">
             {floatingDamages.filter(d => d.target === 'opponent').map(d => (
@@ -1100,6 +1242,22 @@ export function PvPRealtimeBattle({
               </span>
             </div>
           </div>
+          {/* 플레이어 보호막 바 */}
+          {playerShield > 0 && (
+            <div className="mt-1">
+              <div className="relative h-3 bg-gray-700 rounded-full overflow-hidden border border-cyan-500/50">
+                <div
+                  className="h-full bg-gradient-to-r from-cyan-600 via-cyan-400 to-cyan-300 transition-all duration-200"
+                  style={{ width: `${Math.min(100, (playerShield / playerMaxHp) * 100)}%` }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-white drop-shadow-lg">
+                    🛡️ {Math.floor(playerShield)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {playerAvatarUrl ? (

@@ -265,7 +265,7 @@ export function canClaimWeeklyReward(lastClaim: Date | null): boolean {
 export const ELO_CONFIG = {
   K_FACTOR: 32,           // K-factor
   MIN_RATING: 0,          // 최소 레이팅
-  INITIAL_RATING: 1000,   // 초기 레이팅
+  INITIAL_RATING: 400,    // 초기 레이팅 (브론즈 시작)
 } as const
 
 // 예상 승률 계산

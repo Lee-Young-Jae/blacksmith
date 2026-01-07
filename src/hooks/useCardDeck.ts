@@ -662,7 +662,7 @@ export function useCardDeck(): UseCardDeckReturn {
             .from('pvp_rankings')
             .insert({
               user_id: user.id,
-              rating: 1000,
+              rating: 400,
               tier: 'bronze',
               wins: 0,
               losses: 0,

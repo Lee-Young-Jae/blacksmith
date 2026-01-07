@@ -903,7 +903,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
           ...aiOpponent,
           userId: opponentId,
           username: profileData.username,
-          rating: rankingData?.rating || 1000,
+          rating: rankingData?.rating || 400,
           tier: rankingData?.tier || 'bronze',
           isAI: false, // 실제 유저이므로 false
           defenseCards: [],
@@ -913,7 +913,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
         setOpponent({
           userId: opponentId,
           username: profileData.username,
-          rating: rankingData?.rating || 1000,
+          rating: rankingData?.rating || 400,
           tier: rankingData?.tier || 'bronze',
           combatPower: defense.combat_power,
           stats: defense.total_stats as unknown as CharacterStats,
