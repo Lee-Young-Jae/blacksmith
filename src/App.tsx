@@ -57,6 +57,8 @@ import {
   AdminGoldPanel,
   AdminTicketPanel,
 } from "./components/gift";
+import { ReferralPanel } from "./components/referral/ReferralPanel";
+import { WelcomeModal } from "./components/referral/WelcomeModal";
 import { getTotalAttack } from "./utils/starforce";
 import type { AIDifficulty } from "./types/battle";
 import type { UserWeapon, WeaponType, WeaponLevel } from "./types/weapon";
@@ -167,6 +169,7 @@ function GameContent() {
   const [showAdminGold, setShowAdminGold] = useState(false);
   const [showAdminTicket, setShowAdminTicket] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showReferral, setShowReferral] = useState(false);
   const [condolenceTarget, setCondolenceTarget] = useState<{
     userId: string;
     username: string;
@@ -605,6 +608,7 @@ function GameContent() {
             battlesRemaining={dailyBattle.battlesRemaining}
             maxBattles={dailyBattle.maxBattles}
             onUpdateUsername={userData.updateUsername}
+            onOpenReferral={() => setShowReferral(true)}
           />
         </div>
       </header>
@@ -1267,6 +1271,11 @@ function GameContent() {
         />
       )}
 
+      {/* 친구 초대 패널 */}
+      {showReferral && (
+        <ReferralPanel onClose={() => setShowReferral(false)} />
+      )}
+
       {/* 선물함 패널 */}
       {showGiftBox && (
         <GiftBoxPanel
@@ -1451,6 +1460,14 @@ function GameContent() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 신규 유저 환영 모달 */}
+      {userData.isNewUser && userData.profile && (
+        <WelcomeModal
+          username={userData.profile.username}
+          onComplete={userData.clearNewUserFlag}
+        />
       )}
     </div>
   );

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { FiUsers } from 'react-icons/fi'
 import { useAuth } from '../contexts/AuthContext'
 import { NicknameEditModal } from './NicknameEditModal'
 
@@ -7,9 +8,10 @@ interface UserProfileProps {
   battlesRemaining: number
   maxBattles: number
   onUpdateUsername?: (newUsername: string) => Promise<boolean>
+  onOpenReferral?: () => void
 }
 
-export function UserProfile({ username, battlesRemaining, maxBattles, onUpdateUsername }: UserProfileProps) {
+export function UserProfile({ username, battlesRemaining, maxBattles, onUpdateUsername, onOpenReferral }: UserProfileProps) {
   const { user, signOut } = useAuth()
   const [showMenu, setShowMenu] = useState(false)
   const [showNicknameModal, setShowNicknameModal] = useState(false)
@@ -125,6 +127,20 @@ export function UserProfile({ username, battlesRemaining, maxBattles, onUpdateUs
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
                   닉네임 변경
+                </button>
+              )}
+
+              {/* 친구 초대 버튼 */}
+              {onOpenReferral && (
+                <button
+                  onClick={() => {
+                    setShowMenu(false)
+                    onOpenReferral()
+                  }}
+                  className="w-full p-4 text-left text-purple-400 hover:bg-purple-900/20 transition-colors flex items-center gap-2 border-b border-gray-700"
+                >
+                  <FiUsers className="w-5 h-5" />
+                  친구 초대
                 </button>
               )}
 

@@ -35,6 +35,7 @@ interface UserDataState {
   weapon: UserWeapon | null
   isLoading: boolean
   error: string | null
+  isNewUser: boolean
 }
 
 export function useUserData() {
@@ -44,17 +45,20 @@ export function useUserData() {
     weapon: null,
     isLoading: true,
     error: null,
+    isNewUser: false,
   })
 
   // 유저 데이터 로드
   useEffect(() => {
     if (!user) {
-      setState({ profile: null, weapon: null, isLoading: false, error: null })
+      setState({ profile: null, weapon: null, isLoading: false, error: null, isNewUser: false })
       return
     }
 
     const loadUserData = async () => {
       setState(prev => ({ ...prev, isLoading: true, error: null }))
+
+      let isNewUser = false
 
       try {
         // OAuth 아바타 URL 가져오기
@@ -69,6 +73,8 @@ export function useUserData() {
 
         // 프로필이 없으면 생성 (최초 로그인)
         if (profileError && profileError.code === 'PGRST116') {
+          isNewUser = true // 신규 유저 표시
+
           // 게임 스타일의 랜덤 닉네임 생성
           const username = generateNickname()
 
@@ -161,6 +167,7 @@ export function useUserData() {
           weapon,
           isLoading: false,
           error: null,
+          isNewUser,
         })
       } catch (err) {
         console.error('Failed to load user data:', err)
@@ -477,6 +484,11 @@ export function useUserData() {
     }
   }, [user])
 
+  // 신규 유저 플래그 리셋 (오프닝 완료 후)
+  const clearNewUserFlag = useCallback(() => {
+    setState(prev => ({ ...prev, isNewUser: false }))
+  }, [])
+
   return {
     ...state,
     updateGold,
@@ -487,5 +499,6 @@ export function useUserData() {
     removeWeapon,
     recordEnhancement,
     recordEquipmentEnhancement,
+    clearNewUserFlag,
   }
 }
