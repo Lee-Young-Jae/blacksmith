@@ -258,13 +258,13 @@ export function AdminTicketPanel({
             <label className="block text-sm text-[var(--color-text-secondary)] mb-2">
               메시지 (선택사항)
             </label>
-            <input
-              type="text"
+            <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              maxLength={100}
-              placeholder="예: 이벤트 보상, 버그 보상 등"
-              className="w-full bg-[var(--color-bg-elevated-2)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] transition-colors placeholder:text-[var(--color-text-muted)]"
+              maxLength={200}
+              rows={3}
+              placeholder="예: 이벤트 보상, 버그 보상 등&#10;(여러 줄 입력 가능)"
+              className="w-full bg-[var(--color-bg-elevated-2)] border border-[var(--color-border)] rounded-lg px-4 py-3 text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] transition-colors placeholder:text-[var(--color-text-muted)] resize-none"
             />
           </div>
 

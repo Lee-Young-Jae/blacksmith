@@ -161,7 +161,7 @@ export function GiftDetailModal({ gift, onClaim, onClose }: GiftDetailModalProps
           {gift.message && (
             <div className="bg-[var(--color-bg-elevated-2)] rounded-lg p-3">
               <p className="text-xs text-[var(--color-text-muted)] mb-1">메시지</p>
-              <p className="text-sm text-[var(--color-text-primary)]">"{gift.message}"</p>
+              <p className="text-sm text-[var(--color-text-primary)] whitespace-pre-wrap">{gift.message}</p>
             </div>
           )}
 
