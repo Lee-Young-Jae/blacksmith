@@ -160,11 +160,34 @@ function generateAICards(cardCount: number): BattleCard[] {
     cards.push(generateAICard(tier))
   }
 
-  return cards
+  // 침묵/스턴 카드를 앞으로 배치 (초반 사용)
+  return sortAICardsForBattle(cards)
 }
 
 // 티어 순서 (낮은 것부터 높은 것 순)
 const TIER_ORDER: BattleCardTier[] = ['common', 'rare', 'epic', 'legendary']
+
+// AI 카드 전략적 정렬: 침묵/스턴 계열을 앞으로 배치
+// 플레이어가 초반에 버프를 사용하는 경향이 있으므로 AI도 침묵을 초반에 사용
+function sortAICardsForBattle(cards: BattleCard[]): BattleCard[] {
+  // 우선순위가 높은 효과 (초반에 사용해야 효과적인 것들)
+  const PRIORITY_EFFECTS = ['silence', 'stun', 'anti_heal'] as const
+
+  return [...cards].sort((a, b) => {
+    const aPriority = PRIORITY_EFFECTS.indexOf(a.effect.type as typeof PRIORITY_EFFECTS[number])
+    const bPriority = PRIORITY_EFFECTS.indexOf(b.effect.type as typeof PRIORITY_EFFECTS[number])
+
+    // 우선순위 효과가 있으면 앞으로
+    const aHasPriority = aPriority !== -1
+    const bHasPriority = bPriority !== -1
+
+    if (aHasPriority && !bHasPriority) return -1
+    if (!aHasPriority && bHasPriority) return 1
+    if (aHasPriority && bHasPriority) return aPriority - bPriority
+
+    return 0
+  })
+}
 
 // 플레이어 카드 등급에 맞춰 AI 카드 생성
 // 30%: 더 높은 등급, 60%: 비슷한 등급, 10%: 더 낮은 등급
@@ -203,7 +226,8 @@ export function generateAICardsMatchingPlayer(playerCards: BattleCard[]): Battle
     aiCards.push(generateAICard(targetTier))
   }
 
-  return aiCards
+  // 침묵/스턴 카드를 앞으로 배치 (초반 사용)
+  return sortAICardsForBattle(aiCards)
 }
 
 function generateAIOpponent(playerCombatPower: number): PvPOpponent {

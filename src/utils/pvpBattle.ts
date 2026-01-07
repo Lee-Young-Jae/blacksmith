@@ -643,18 +643,19 @@ export function calculatePvPBattle(input: BattleSimulationInput): PvPBattle {
   // 초기 HP (PvP 밸런스 적용)
   const hpMultiplier = PVP_BATTLE_CONFIG.HP_MULTIPLIER
   const damageReduction = PVP_BATTLE_CONFIG.DAMAGE_REDUCTION
+  const defenderHpBonus = PVP_BATTLE_CONFIG.DEFENDER_HP_BONUS  // 방어자 HP +15% (AI 조작 보정)
   let attackerHp = attackerStats.hp * hpMultiplier
-  let defenderHp = defenderStats.hp * hpMultiplier
+  let defenderHp = defenderStats.hp * hpMultiplier * defenderHpBonus
   const attackerMaxHp = attackerStats.hp * hpMultiplier
-  const defenderMaxHp = defenderStats.hp * hpMultiplier
+  const defenderMaxHp = defenderStats.hp * hpMultiplier * defenderHpBonus
 
   // 공격 간격 계산
   const attackerInterval = calculateAttackInterval(attackerStats.attackSpeed)
   const defenderInterval = calculateAttackInterval(defenderStats.attackSpeed)
 
-  // 다음 공격 시간
-  let attackerNextAttack = attackerInterval / 2  // 공격자가 약간 먼저 시작
-  let defenderNextAttack = defenderInterval / 2 + 100
+  // 다음 공격 시간 (공정하게 동일 시작, 공속으로만 선공 결정)
+  let attackerNextAttack = attackerInterval / 2
+  let defenderNextAttack = defenderInterval / 2
 
   // 다음 카드 발동 시간 (카드가 없으면 Infinity로 설정하여 이벤트에서 제외)
   let attackerNextCard = attackerCards.length > 0

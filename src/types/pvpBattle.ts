@@ -226,6 +226,7 @@ export const PVP_BATTLE_CONFIG = {
   // PvP 밸런스 조정
   HP_MULTIPLIER: 2,            // HP 배율 (2배)
   DAMAGE_REDUCTION: 0.7,       // 데미지 감소 (30%) - 적당한 길이
+  DEFENDER_HP_BONUS: 1.15,     // 방어자 HP 보너스 (+15%) - AI 조작 보정
 
   // 카드 발동 주기 (5초마다)
   CARD_TRIGGER_INTERVAL: 5000,
