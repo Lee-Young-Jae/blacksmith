@@ -37,11 +37,12 @@ interface TowerBattleProps {
   playerStats: CharacterStats
   playerCards: BattleCard[]
   enemy: TowerEnemy
-  onVictory: (result: BattleResult & { skillCooldowns: SkillCooldownState[] }) => void
+  onVictory: (result: BattleResult & { skillCooldowns: SkillCooldownState[], playerShield: number }) => void
   onDefeat: (result: BattleResult) => void
   // 층간 상태 유지를 위한 초기값
   initialPlayerHp?: number  // 이전 층에서의 남은 HP
   initialSkillCooldowns?: SkillCooldownState[]  // 이전 층에서의 스킬 쿨다운 상태
+  initialPlayerShield?: number  // 이전 층에서의 보호막
 }
 
 interface SkillState {
@@ -74,6 +75,7 @@ export function TowerBattle({
   onDefeat,
   initialPlayerHp,
   initialSkillCooldowns,
+  initialPlayerShield,
 }: TowerBattleProps) {
   const { TIME_LIMIT, PLAYER_HP_MULTIPLIER, DAMAGE_REDUCTION } = TOWER_CONFIG
 
@@ -108,9 +110,9 @@ export function TowerBattle({
   const [timeRemaining, setTimeRemaining] = useState<number>(TIME_LIMIT)
   const [battleEnded, setBattleEnded] = useState(false)
 
-  // 보호막 상태
-  const [playerShield, setPlayerShield] = useState(0)
-  const playerShieldRef = useRef(0)
+  // 보호막 상태 - 이전 층에서의 보호막이 있으면 그것을 사용
+  const [playerShield, setPlayerShield] = useState(initialPlayerShield ?? 0)
+  const playerShieldRef = useRef(initialPlayerShield ?? 0)
 
   // 플로팅 데미지
   const [floatingDamages, setFloatingDamages] = useState<FloatingDamage[]>([])
@@ -601,6 +603,8 @@ export function TowerBattle({
           durationRemaining: s.durationRemaining,
           isActive: s.isActive,
         })),
+        // 다음 층으로 전달할 보호막
+        playerShield: playerShieldRef.current,
       })
     } else if (playerDead || timeUp) {
       // 패배

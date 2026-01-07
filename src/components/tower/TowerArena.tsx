@@ -260,9 +260,10 @@ export function TowerArena({
   // 배틀 키 - 층이 바뀔 때마다 변경하여 TowerBattle 리마운트
   const [battleKey, setBattleKey] = useState(0)
 
-  // 층간 유지 상태 (플레이어 HP, 스킬 쿨다운)
+  // 층간 유지 상태 (플레이어 HP, 스킬 쿨다운, 보호막)
   const [persistentPlayerHp, setPersistentPlayerHp] = useState<number | undefined>(undefined)
   const [persistentSkillCooldowns, setPersistentSkillCooldowns] = useState<SkillCooldownState[] | undefined>(undefined)
+  const [persistentPlayerShield, setPersistentPlayerShield] = useState<number | undefined>(undefined)
 
   // 리더보드 상태
   const [leaderboard, setLeaderboard] = useState<TowerLeaderboardEntry[]>([])
@@ -439,9 +440,10 @@ export function TowerArena({
       isNewRecord: false,
     })
     setView('climbing')
-    // 새 등반 시작 시 유지 상태 초기화 (풀 HP, 쿨다운 없음)
+    // 새 등반 시작 시 유지 상태 초기화 (풀 HP, 쿨다운 없음, 보호막 없음)
     setPersistentPlayerHp(undefined)
     setPersistentSkillCooldowns(undefined)
+    setPersistentPlayerShield(undefined)
     setBattleKey(prev => prev + 1)  // 배틀 리셋
   }, [])
 
@@ -453,6 +455,7 @@ export function TowerArena({
     playerFinalHp: number
     enemyFinalHp: number
     skillCooldowns: SkillCooldownState[]
+    playerShield: number
   }) => {
     if (!currentEnemy || !tower.progress || !session) return
 
@@ -481,9 +484,10 @@ export function TowerArena({
       result.enemyFinalHp
     )
 
-    // 층간 유지 상태 저장 (플레이어 HP, 스킬 쿨다운)
+    // 층간 유지 상태 저장 (플레이어 HP, 스킬 쿨다운, 보호막)
     setPersistentPlayerHp(result.playerFinalHp)
     setPersistentSkillCooldowns(result.skillCooldowns)
+    setPersistentPlayerShield(result.playerShield)
 
     // 자동 다음 층 진행 (허수아비 사망 모션 후 1초 대기)
     autoProgressTimerRef.current = setTimeout(() => {
@@ -1539,6 +1543,7 @@ export function TowerArena({
             onDefeat={handleDefeat}
             initialPlayerHp={persistentPlayerHp}
             initialSkillCooldowns={persistentSkillCooldowns}
+            initialPlayerShield={persistentPlayerShield}
           />
 
           {/* 등반 종료 버튼 */}

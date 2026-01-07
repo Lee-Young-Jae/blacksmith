@@ -605,6 +605,34 @@ export function PvPRealtimeBattle({
       else if (effectType === 'shield_bash') {
         selectedSkill = { skill, index }
       }
+      // 보호막: 체력이 낮을 때 방어용
+      else if (effectType === 'shield') {
+        if (opponentHpRatio < 0.6) {
+          selectedSkill = { skill, index }
+          break
+        }
+      }
+      // 냉기: 상대 공속 감소, 공격적으로 사용
+      else if (effectType === 'freeze') {
+        if (playerHpRatio > 0.4 || battleProgress < 0.6) {
+          selectedSkill = { skill, index }
+          break
+        }
+      }
+      // 도발: 체력이 낮을 때 피해 감소 + 상대 방어 감소
+      else if (effectType === 'taunt') {
+        if (opponentHpRatio < 0.5) {
+          selectedSkill = { skill, index }
+          break
+        }
+      }
+      // 희생 일격: 마무리용 또는 체력 여유 있을 때
+      else if (effectType === 'sacrifice') {
+        if (playerHpRatio < 0.4 || opponentHpRatio > 0.5) {
+          selectedSkill = { skill, index }
+          break
+        }
+      }
     }
 
     // 선택된 스킬이 없으면 아무 스킬이나 사용 (50% 확률)
