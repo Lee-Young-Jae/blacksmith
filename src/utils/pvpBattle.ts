@@ -9,6 +9,7 @@
  */
 
 import type { CharacterStats } from '../types/stats'
+import { getEffectiveCritDamage, getDamageMultiplier } from '../types/stats'
 import type {
   BattleRound,
   RoundEvent,
@@ -81,11 +82,13 @@ export function determineTurnOrder(
 /**
  * 공격자의 스탯과 방어자의 스탯을 기반으로 데미지를 계산합니다.
  *
- * 데미지 공식:
+ * 데미지 공식 (LoL 스타일):
  * 1. 기본 데미지 = 공격력
- * 2. 관통력 적용 = 기본 데미지 * (1 + 관통력/100) - 방어력 * (1 - 관통력/100)
- * 3. 치명타 판정 = critRate% 확률로 critDamage% 배율
- * 4. 랜덤 변동 = ±15%
+ * 2. 방어력 감소율 = 방어력 / (방어력 + 120)
+ * 3. 관통력 적용 = 감소율 × (1 - 관통력/100)
+ * 4. 최종 데미지 = 공격력 × (1 - 감소율)
+ * 5. 치명타 판정 = critRate% 확률로 critDamage% 배율
+ * 6. 랜덤 변동 = ±15%
  */
 export function calculateDamage(
   attacker: CharacterStats,
@@ -104,25 +107,20 @@ export function calculateDamage(
   const effectiveAttack = attacker.attack * (1 + (cardBonuses.attackBoost || 0) / 100)
   const effectiveDefense = defender.defense * (1 + (cardBonuses.defenseBoost || 0) / 100)
   const effectiveCritRate = Math.min(100, attacker.critRate + (cardBonuses.critRateBoost || 0))
-  const effectiveCritDamage = attacker.critDamage + (cardBonuses.critDamageBoost || 0)
+  // 크뎀 체감 효과 적용 (200% 초과분은 50%만 적용)
+  const rawCritDamage = attacker.critDamage + (cardBonuses.critDamageBoost || 0)
+  const effectiveCritDamage = getEffectiveCritDamage(rawCritDamage)
   const effectivePenetration = Math.min(100, attacker.penetration + (cardBonuses.penetrationBoost || 0))
 
   // 기본 데미지 계산
   const baseDamage = effectiveAttack
 
-  // 방어력 감소 계산 (관통력이 방어력을 무시하는 비율)
-  // 관통력 100%면 방어력 완전 무시, 0%면 방어력 전부 적용
-  const penetrationMultiplier = effectivePenetration / 100
-  const effectiveDefenseValue = effectiveDefense * (1 - penetrationMultiplier)
+  // LoL 스타일 방어력 계산
+  // 데미지 배율 = 1 - (방어력 / (방어력 + K)) × (1 - 관통력/100)
+  const damageMultiplier = getDamageMultiplier(effectiveDefense, effectivePenetration)
 
-  // 방어력으로 인한 데미지 감소 (최소 10%는 들어감)
-  const defenseReduction = Math.min(effectiveDefenseValue, baseDamage * 0.9)
-
-  // 관통력 보너스 (방어력이 높을수록 관통력이 더 효과적)
-  const penetrationBonus = effectiveDefense * penetrationMultiplier * 0.3
-
-  // 중간 데미지
-  let damage = Math.max(1, baseDamage - defenseReduction + penetrationBonus)
+  // 방어력 적용 후 데미지
+  let damage = Math.max(1, baseDamage * damageMultiplier)
 
   // 치명타 판정
   const isCrit = cardBonuses.guaranteedCrit || Math.random() * 100 < effectiveCritRate
@@ -144,13 +142,16 @@ export function calculateDamage(
   // 최종 데미지 (정수로 반올림)
   const finalDamage = Math.round(Math.max(1, damage))
 
+  // 감소된 데미지량 계산 (표시용)
+  const defenseReduction = Math.round(baseDamage * (1 - damageMultiplier))
+
   return {
     baseDamage: Math.round(baseDamage),
     finalDamage,
     isCrit,
     critMultiplier,
-    defenseReduction: Math.round(defenseReduction),
-    penetrationBonus: Math.round(penetrationBonus),
+    defenseReduction,
+    penetrationBonus: 0, // LoL 공식에서는 관통력 보너스가 별도로 없음
     cardBonus: (cardBonuses.attackBoost || 0) + (cardBonuses.firstStrikeDamage || 0),
     reflectedDamage: 0, // 반사 데미지는 별도 처리
   }

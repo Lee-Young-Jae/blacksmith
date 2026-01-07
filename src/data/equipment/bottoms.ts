@@ -44,7 +44,7 @@ export const BOTTOMS: EquipmentBase[] = [
   {
     id: 'bottom-chain-leggings',
     slot: 'bottom',
-    baseStats: { defense: 14, hp: 35 },  // 탱커는 회피 대신 방어 특화
+    baseStats: { defense: 20, hp: 40 },  // 탱커는 회피 대신 방어 특화 (버프됨)
     emoji: '🦿',
     potentialSlots: 3,
     levels: createLevels('bottom-chain-leggings', [
@@ -76,7 +76,7 @@ export const BOTTOMS: EquipmentBase[] = [
   {
     id: 'bottom-plate-greaves',
     slot: 'bottom',
-    baseStats: { defense: 18, hp: 40 },  // 탱커는 회피 대신 방어 특화
+    baseStats: { defense: 25, hp: 45 },  // 탱커는 회피 대신 방어 특화 (버프됨)
     emoji: '🛡️',
     potentialSlots: 3,
     levels: createLevels('bottom-plate-greaves', [

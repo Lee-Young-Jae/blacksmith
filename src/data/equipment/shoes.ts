@@ -44,7 +44,7 @@ export const SHOES: EquipmentBase[] = [
   {
     id: 'shoes-iron-boots',
     slot: 'shoes',
-    baseStats: { defense: 10, hp: 15 },  // 탱커는 회피 대신 방어 특화
+    baseStats: { defense: 15, hp: 20 },  // 탱커는 회피 대신 방어 특화 (버프됨)
     emoji: '🦶',
     potentialSlots: 3,
     levels: createLevels('shoes-iron-boots', [
@@ -140,7 +140,7 @@ export const SHOES: EquipmentBase[] = [
   {
     id: 'shoes-knight-sabatons',
     slot: 'shoes',
-    baseStats: { defense: 12, hp: 30 },  // 탱커는 회피 대신 방어 특화
+    baseStats: { defense: 18, hp: 35 },  // 탱커는 회피 대신 방어 특화 (버프됨)
     emoji: '⚔️',
     potentialSlots: 3,
     levels: createLevels('shoes-knight-sabatons', [

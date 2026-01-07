@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import type { CharacterStats } from '../../types/stats'
+import { getEffectiveCritDamage, getDamageMultiplier } from '../../types/stats'
 import type { BattleCard } from '../../types/battleCard'
 import type { TowerEnemy } from '../../types/tower'
 import { TOWER_CONFIG } from '../../types/tower'
@@ -219,8 +220,10 @@ export function TowerBattle({
     const defense = Math.max(0, defenderStats.defense || 5) * (1 + defenseBoost / 100)
     const penetration = Math.min(100, (attackerStats.penetration || 0) + penetrationBoost)
 
-    const defenseReductionRate = defense / (defense + 100) * (1 - penetration / 100)
-    let baseDamage = Math.max(1, attack * (1 - defenseReductionRate * 0.7))
+    // LoL 스타일 방어력 계산 (K=120)
+    // 데미지 배율 = 1 - (방어력 / (방어력 + K)) × (1 - 관통력/100)
+    const damageMultiplier = getDamageMultiplier(defense, penetration)
+    let baseDamage = Math.max(1, attack * damageMultiplier)
 
     // 데미지 랜덤 범위
     baseDamage *= (0.9 + Math.random() * 0.2)
@@ -231,7 +234,9 @@ export function TowerBattle({
     const isCrit = guaranteedCrit || Math.random() * 100 < critRate
 
     if (isCrit) {
-      const critDamage = (attackerStats.critDamage || 150) + critDamageBoost
+      // 크뎀 체감 효과 적용 (200% 초과분은 50%만 적용)
+      const rawCritDamage = (attackerStats.critDamage || 150) + critDamageBoost
+      const critDamage = getEffectiveCritDamage(rawCritDamage)
       baseDamage *= (critDamage / 100)
     }
 

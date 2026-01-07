@@ -143,7 +143,7 @@ export const EARRINGS: EquipmentBase[] = [
   {
     id: "earring-sapphire",
     slot: "earring",
-    baseStats: { defense: 5, hp: 25, critRate: 4, evasion: 2 },
+    baseStats: { defense: 8, hp: 30, critRate: 4, evasion: 2 },  // 방어 버프됨
     emoji: "🔵",
     potentialSlots: 3,
     levels: createLevels("earring-sapphire", [

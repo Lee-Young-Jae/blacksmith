@@ -47,7 +47,7 @@ export const HATS: EquipmentBase[] = [
   {
     id: "hat-iron-helm",
     slot: "hat",
-    baseStats: { defense: 12, hp: 30 },  // 탱커는 회피 대신 방어 특화
+    baseStats: { defense: 18, hp: 35 },  // 탱커는 회피 대신 방어 특화 (버프됨)
     emoji: "🪖",
     potentialSlots: 3,
     levels: createLevels("hat-iron-helm", [

@@ -154,3 +154,88 @@ export function compareStats(
     evasion: after.evasion - before.evasion,
   }
 }
+
+// =============================================
+// 크리티컬 데미지 체감 효과 (Diminishing Returns)
+// =============================================
+
+// 크뎀 체감 효과 설정
+export const CRIT_DAMAGE_CONFIG = {
+  SOFT_CAP: 200,           // 체감 시작 기준점 (200%)
+  DIMINISHING_RATE: 0.5,   // 체감 비율 (50%)
+}
+
+/**
+ * 크리티컬 데미지 체감 효과 적용
+ * - 200% 이하: 그대로 적용
+ * - 200% 초과: 200% + (초과분 × 50%)
+ *
+ * 예시:
+ * - 200% → 200%
+ * - 270% → 200% + (70% × 0.5) = 235%
+ * - 300% → 200% + (100% × 0.5) = 250%
+ */
+export function getEffectiveCritDamage(rawCritDamage: number): number {
+  const { SOFT_CAP, DIMINISHING_RATE } = CRIT_DAMAGE_CONFIG
+
+  if (rawCritDamage <= SOFT_CAP) {
+    return rawCritDamage
+  }
+
+  const excess = rawCritDamage - SOFT_CAP
+  return SOFT_CAP + (excess * DIMINISHING_RATE)
+}
+
+// =============================================
+// 방어력 데미지 감소 공식 (LoL 스타일)
+// =============================================
+
+// 방어력 공식 설정
+export const DEFENSE_CONFIG = {
+  K: 120,  // 방어력 120 = 50% 감소
+}
+
+/**
+ * 방어력 기반 데미지 감소율 계산 (LoL 공식)
+ *
+ * 공식: reduction = defense / (defense + K)
+ * - K=120: 방어력 120일 때 50% 감소
+ * - 방어력이 높아질수록 감소율 증가 (체감 효과)
+ *
+ * 예시 (K=120):
+ * - 60 방어 = 33% 감소
+ * - 120 방어 = 50% 감소
+ * - 240 방어 = 67% 감소
+ * - 360 방어 = 75% 감소
+ */
+export function getDefenseReduction(defense: number): number {
+  const { K } = DEFENSE_CONFIG
+  return defense / (defense + K)
+}
+
+/**
+ * 관통력 적용 후 실제 데미지 감소율 계산
+ *
+ * 공식: effectiveReduction = baseReduction × (1 - penetration/100)
+ * - 관통력이 방어력의 효과를 직접 감소시킴
+ *
+ * 예시:
+ * - 50% 감소, 0% 관통 = 50% 감소
+ * - 50% 감소, 50% 관통 = 25% 감소
+ * - 50% 감소, 100% 관통 = 0% 감소
+ */
+export function getEffectiveDefenseReduction(defense: number, penetration: number): number {
+  const baseReduction = getDefenseReduction(defense)
+  const penetrationMultiplier = 1 - Math.min(100, penetration) / 100
+  return baseReduction * penetrationMultiplier
+}
+
+/**
+ * 최종 데미지 배율 계산 (1 - 감소율)
+ *
+ * 이 값을 공격력에 곱하면 방어력 적용 후 데미지가 됨
+ */
+export function getDamageMultiplier(defense: number, penetration: number): number {
+  const reduction = getEffectiveDefenseReduction(defense, penetration)
+  return 1 - reduction
+}

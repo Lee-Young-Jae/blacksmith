@@ -44,7 +44,7 @@ export const TOPS: EquipmentBase[] = [
   {
     id: 'top-chainmail',
     slot: 'top',
-    baseStats: { defense: 18, hp: 45 },  // 탱커는 회피 대신 방어 특화
+    baseStats: { defense: 24, hp: 50 },  // 탱커는 회피 대신 방어 특화 (버프됨)
     emoji: '🦺',
     potentialSlots: 3,
     levels: createLevels('top-chainmail', [
@@ -76,7 +76,7 @@ export const TOPS: EquipmentBase[] = [
   {
     id: 'top-plate-armor',
     slot: 'top',
-    baseStats: { defense: 22, hp: 50 },  // 탱커는 회피 대신 방어 특화
+    baseStats: { defense: 30, hp: 55 },  // 탱커는 회피 대신 방어 특화 (버프됨)
     emoji: '🛡️',
     potentialSlots: 3,
     levels: createLevels('top-plate-armor', [
