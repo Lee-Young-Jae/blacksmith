@@ -194,7 +194,12 @@ export function TowerBattle({
     defenderStats: CharacterStats,
     isPlayer: boolean,
     defenderHpRatio: number = 1  // 상대 HP 비율 (처형 효과용)
-  ): { damage: number; isCrit: boolean } => {
+  ): { damage: number; isCrit: boolean; isMiss: boolean } => {
+    // 회피 판정 (방어자의 evasion으로 판정)
+    const evasion = defenderStats.evasion || 0
+    if (evasion > 0 && Math.random() * 100 < evasion) {
+      return { damage: 0, isCrit: false, isMiss: true }
+    }
     let attackBoost = 0
     let defenseBoost = 0
     let critRateBoost = 0
@@ -250,7 +255,7 @@ export function TowerBattle({
       }
     }
 
-    return { damage: finalDamage, isCrit }
+    return { damage: finalDamage, isCrit, isMiss: false }
   }, [getPassiveBonus, getActiveEffectValue, DAMAGE_REDUCTION])
 
   // 스킬 사용
@@ -394,28 +399,34 @@ export function TowerBattle({
 
         // 적 HP 비율 계산 (처형 효과용)
         const enemyHpRatio = enemyHpRef.current / enemyMaxHp
-        const { damage, isCrit } = calculateDamage(safePlayerStats, enemy.stats, true, enemyHpRatio)
-        playerDamageRef.current += damage
+        const { damage, isCrit, isMiss } = calculateDamage(safePlayerStats, enemy.stats, true, enemyHpRatio)
 
-        setEnemyHp(prev => {
-          const newHp = Math.max(0, prev - damage)
-          enemyHpRef.current = newHp
-          return newHp
-        })
+        if (isMiss) {
+          // 적이 회피 성공
+          addFloatingDamage(0, false, false, 'enemy', true)
+        } else {
+          playerDamageRef.current += damage
 
-        // 흡혈
-        const lifesteal = getPassiveBonus('lifesteal') + getActiveEffectValue('lifesteal')
-        if (lifesteal > 0 && isCrit) {
-          const healAmount = Math.floor(damage * lifesteal / 100)
-          setPlayerHp(hp => {
-            const newHp = Math.min(playerMaxHp, hp + healAmount)
-            playerHpRef.current = newHp
+          setEnemyHp(prev => {
+            const newHp = Math.max(0, prev - damage)
+            enemyHpRef.current = newHp
             return newHp
           })
-          addFloatingDamage(healAmount, false, true, 'player')
-        }
 
-        addFloatingDamage(damage, isCrit, false, 'enemy')
+          // 흡혈
+          const lifesteal = getPassiveBonus('lifesteal') + getActiveEffectValue('lifesteal')
+          if (lifesteal > 0 && isCrit) {
+            const healAmount = Math.floor(damage * lifesteal / 100)
+            setPlayerHp(hp => {
+              const newHp = Math.min(playerMaxHp, hp + healAmount)
+              playerHpRef.current = newHp
+              return newHp
+            })
+            addFloatingDamage(healAmount, false, true, 'player')
+          }
+
+          addFloatingDamage(damage, isCrit, false, 'enemy')
+        }
 
         // 공격 애니메이션
         setIsPlayerAttacking(true)
@@ -430,28 +441,33 @@ export function TowerBattle({
       if (enemyNextAttackRef.current <= 0 && playerHpRef.current > 0 && enemyHpRef.current > 0) {
         enemyNextAttackRef.current = enemyInterval
 
-        const { damage, isCrit } = calculateDamage(enemy.stats, safePlayerStats, false)
+        const { damage, isCrit, isMiss } = calculateDamage(enemy.stats, safePlayerStats, false)
 
-        // 반사 데미지
-        const reflect = getPassiveBonus('damage_reflect') + getActiveEffectValue('damage_reflect')
-        if (reflect > 0) {
-          const reflectDamage = Math.floor(damage * reflect / 100)
-          setEnemyHp(prev => {
-            const newHp = Math.max(0, prev - reflectDamage)
-            enemyHpRef.current = newHp
+        if (isMiss) {
+          // 플레이어가 회피 성공
+          addFloatingDamage(0, false, false, 'player', true)
+        } else {
+          // 반사 데미지
+          const reflect = getPassiveBonus('damage_reflect') + getActiveEffectValue('damage_reflect')
+          if (reflect > 0) {
+            const reflectDamage = Math.floor(damage * reflect / 100)
+            setEnemyHp(prev => {
+              const newHp = Math.max(0, prev - reflectDamage)
+              enemyHpRef.current = newHp
+              return newHp
+            })
+            addFloatingDamage(reflectDamage, false, false, 'enemy')
+          }
+
+          enemyDamageRef.current += damage
+          setPlayerHp(prev => {
+            const newHp = Math.max(0, prev - damage)
+            playerHpRef.current = newHp
             return newHp
           })
-          addFloatingDamage(reflectDamage, false, false, 'enemy')
+
+          addFloatingDamage(damage, isCrit, false, 'player')
         }
-
-        enemyDamageRef.current += damage
-        setPlayerHp(prev => {
-          const newHp = Math.max(0, prev - damage)
-          playerHpRef.current = newHp
-          return newHp
-        })
-
-        addFloatingDamage(damage, isCrit, false, 'player')
 
         // 적 공격 애니메이션
         setEnemyImageState('attack')
