@@ -25,6 +25,10 @@ interface GiftBoxPanelProps {
   onTicketClaimed?: (level: number, count: number) => void
   onSendEquipment?: () => void
   onClose: () => void
+  // 관리자 기능 (모바일 지원)
+  isAdmin?: boolean
+  onAdminGold?: () => void
+  onAdminTicket?: () => void
 }
 
 export function GiftBoxPanel({
@@ -40,6 +44,9 @@ export function GiftBoxPanel({
   onTicketClaimed,
   onSendEquipment,
   onClose,
+  isAdmin,
+  onAdminGold,
+  onAdminTicket,
 }: GiftBoxPanelProps) {
   const [filter, setFilter] = useState<FilterType>('all')
   const [selectedGift, setSelectedGift] = useState<Gift | null>(null)
@@ -113,6 +120,23 @@ export function GiftBoxPanel({
                 className="px-3 py-1.5 text-sm font-medium rounded-lg bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/80 text-white transition-colors"
               >
                 장비 선물하기
+              </button>
+            )}
+            {/* 관리자 버튼 (모바일 지원) */}
+            {isAdmin && onAdminGold && (
+              <button
+                onClick={onAdminGold}
+                className="px-3 py-1.5 text-sm font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white transition-colors"
+              >
+                골드 지급
+              </button>
+            )}
+            {isAdmin && onAdminTicket && (
+              <button
+                onClick={onAdminTicket}
+                className="px-3 py-1.5 text-sm font-medium rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white transition-colors"
+              >
+                강화권 지급
               </button>
             )}
             <button

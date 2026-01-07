@@ -7,6 +7,7 @@ import {
 } from "react-icons/gi";
 import { FaRobot } from "react-icons/fa";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { supabase } from "./lib/supabase";
 import { LoginScreen } from "./components/LoginScreen";
 import { UserProfile } from "./components/UserProfile";
 import { WeaponDisplay } from "./components/WeaponDisplay";
@@ -165,11 +166,32 @@ function GameContent() {
   const [showSendEquipment, setShowSendEquipment] = useState(false);
   const [showAdminGold, setShowAdminGold] = useState(false);
   const [showAdminTicket, setShowAdminTicket] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [condolenceTarget, setCondolenceTarget] = useState<{
     userId: string;
     username: string;
     historyId: string;
   } | null>(null);
+
+  // 관리자 여부 확인
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+
+    const checkAdmin = async () => {
+      const { data } = await supabase
+        .from("user_profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+
+      setIsAdmin(data?.is_admin || false);
+    };
+
+    checkAdmin();
+  }, [user]);
 
   // 잠재옵션 훅
   const potentialSystem = usePotential({
@@ -1263,6 +1285,15 @@ function GameContent() {
             setShowSendEquipment(true);
           }}
           onClose={() => setShowGiftBox(false)}
+          isAdmin={isAdmin}
+          onAdminGold={() => {
+            setShowGiftBox(false);
+            setShowAdminGold(true);
+          }}
+          onAdminTicket={() => {
+            setShowGiftBox(false);
+            setShowAdminTicket(true);
+          }}
         />
       )}
 
