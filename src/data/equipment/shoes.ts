@@ -44,7 +44,7 @@ export const SHOES: EquipmentBase[] = [
   {
     id: 'shoes-iron-boots',
     slot: 'shoes',
-    baseStats: { defense: 23, hp: 40 },  // 순수 탱커: 부가능력 없음 → HP 2배, 방어 1.5배
+    baseStats: { defense: 23, hp: 30 },  // 순수 탱커: HP 1.5배, 방어 1.5배
     emoji: '🦶',
     potentialSlots: 3,
     levels: createLevels('shoes-iron-boots', [
@@ -140,7 +140,7 @@ export const SHOES: EquipmentBase[] = [
   {
     id: 'shoes-knight-sabatons',
     slot: 'shoes',
-    baseStats: { defense: 27, hp: 70 },  // 순수 탱커: 부가능력 없음 → HP 2배, 방어 1.5배
+    baseStats: { defense: 27, hp: 50 },  // 순수 탱커: HP 1.5배, 방어 1.5배
     emoji: '⚔️',
     potentialSlots: 3,
     levels: createLevels('shoes-knight-sabatons', [

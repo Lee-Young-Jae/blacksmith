@@ -49,25 +49,25 @@ export const AI_DIFFICULTY_CONFIG: Record<AIDifficulty, {
   easy: {
     name: '쉬움',
     multiplier: 0.6,
-    rewardMultiplier: 0.5,
+    rewardMultiplier: 0.7,
     emoji: '😊',
   },
   normal: {
     name: '보통',
-    multiplier: 1.0,
-    rewardMultiplier: 1.0,
+    multiplier: 0.8,
+    rewardMultiplier: 1.2,
     emoji: '😐',
   },
   hard: {
     name: '어려움',
-    multiplier: 1.4,
-    rewardMultiplier: 1.5,
+    multiplier: 1.1,
+    rewardMultiplier: 2.0,
     emoji: '😤',
   },
   extreme: {
     name: '극한',
-    multiplier: 2.0,
-    rewardMultiplier: 2.5,
+    multiplier: 1.5,
+    rewardMultiplier: 3.0,
     emoji: '👹',
   },
 }

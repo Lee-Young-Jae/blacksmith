@@ -77,7 +77,7 @@ export const POTENTIAL_POOLS: Record<PotentialTier, PotentialOption[]> = {
     { stat: 'defense', minValue: 5, maxValue: 15, isPercentage: false, weight: 15 },
     { stat: 'defense', minValue: 2, maxValue: 5, isPercentage: true, weight: 10 },
     { stat: 'hp', minValue: 15, maxValue: 50, isPercentage: false, weight: 12 },
-    { stat: 'hp', minValue: 5, maxValue: 10, isPercentage: true, weight: 8 },  // HP% 추가
+    { stat: 'hp', minValue: 4, maxValue: 8, isPercentage: true, weight: 8 },  // HP%
     { stat: 'critRate', minValue: 3, maxValue: 5, isPercentage: true, weight: 10 },
     { stat: 'critDamage', minValue: 4, maxValue: 8, isPercentage: true, weight: 8 },
     { stat: 'penetration', minValue: 4, maxValue: 7, isPercentage: true, weight: 7 },
@@ -87,7 +87,7 @@ export const POTENTIAL_POOLS: Record<PotentialTier, PotentialOption[]> = {
     { stat: 'attack', minValue: 6, maxValue: 9, isPercentage: true, weight: 18 },
     { stat: 'attack', minValue: 10, maxValue: 25, isPercentage: false, weight: 12 },
     { stat: 'defense', minValue: 5, maxValue: 8, isPercentage: true, weight: 15 },
-    { stat: 'hp', minValue: 10, maxValue: 18, isPercentage: true, weight: 15 },  // HP% 대폭 상향
+    { stat: 'hp', minValue: 7, maxValue: 12, isPercentage: true, weight: 15 },  // HP%
     { stat: 'critRate', minValue: 4, maxValue: 7, isPercentage: true, weight: 15 },
     { stat: 'critDamage', minValue: 6, maxValue: 10, isPercentage: true, weight: 13 },
     { stat: 'penetration', minValue: 6, maxValue: 10, isPercentage: true, weight: 12 },
@@ -97,7 +97,7 @@ export const POTENTIAL_POOLS: Record<PotentialTier, PotentialOption[]> = {
     { stat: 'attack', minValue: 9, maxValue: 12, isPercentage: true, weight: 20 },
     { stat: 'attack', minValue: 20, maxValue: 40, isPercentage: false, weight: 10 },
     { stat: 'defense', minValue: 8, maxValue: 12, isPercentage: true, weight: 15 },
-    { stat: 'hp', minValue: 15, maxValue: 25, isPercentage: true, weight: 15 },  // HP% 대폭 상향
+    { stat: 'hp', minValue: 10, maxValue: 15, isPercentage: true, weight: 15 },  // HP%
     { stat: 'critRate', minValue: 5, maxValue: 9, isPercentage: true, weight: 15 },
     { stat: 'critDamage', minValue: 8, maxValue: 12, isPercentage: true, weight: 13 },
     { stat: 'penetration', minValue: 9, maxValue: 15, isPercentage: true, weight: 12 },

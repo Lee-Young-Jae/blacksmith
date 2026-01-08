@@ -44,7 +44,7 @@ export const TOPS: EquipmentBase[] = [
   {
     id: 'top-chainmail',
     slot: 'top',
-    baseStats: { defense: 36, hp: 100 },  // 순수 탱커: 부가능력 없음 → HP 2배, 방어 1.5배
+    baseStats: { defense: 36, hp: 75 },  // 순수 탱커: HP 1.5배, 방어 1.5배
     emoji: '🦺',
     potentialSlots: 3,
     levels: createLevels('top-chainmail', [
@@ -76,7 +76,7 @@ export const TOPS: EquipmentBase[] = [
   {
     id: 'top-plate-armor',
     slot: 'top',
-    baseStats: { defense: 45, hp: 110 },  // 순수 탱커: 부가능력 없음 → HP 2배, 방어 1.5배
+    baseStats: { defense: 45, hp: 80 },  // 순수 탱커: HP 1.5배, 방어 1.5배
     emoji: '🛡️',
     potentialSlots: 3,
     levels: createLevels('top-plate-armor', [

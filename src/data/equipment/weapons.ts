@@ -337,7 +337,7 @@ export const WEAPONS: EquipmentBase[] = [
   {
     id: "weapon-guardian-shield",
     slot: "weapon",
-    baseStats: { attack: 10, hp: 120, critRate: 2 }, // 방어형
+    baseStats: { attack: 8, hp: 80, critRate: 2, defense: 40 }, // 방어형
     emoji: "🛡️",
     potentialSlots: 3,
     levels: createLevels("weapon-guardian-shield", [
@@ -432,6 +432,38 @@ export const WEAPONS: EquipmentBase[] = [
         name: "아테나의 아이기스",
         comment: "지혜는 예견이 아니다. 살기 위해 무엇을 버릴지 아는 것.",
       },
+    ]),
+  },
+
+  // ===== 종이 부채 시리즈 (공격속도 극특화) =====
+  {
+    id: "weapon-paper-fan",
+    slot: "weapon",
+    baseStats: { attack: 15, attackSpeed: 72, evasion: 3 },
+    emoji: "🪭",
+    potentialSlots: 3,
+    levels: createLevels("weapon-paper-fan", [
+      { name: "종이 부채", comment: "바람이 살랑살랑..." },
+      { name: "대나무 부채", comment: "가볍고 빨라졌어." },
+      { name: "비단 부채", comment: "우아한 움직임이야." },
+      { name: "철선", comment: "철로 만든 부채라니!" },
+      { name: "강철선", comment: "날카로운 바람이 불어." },
+      { name: "무희의 부채", comment: "춤추듯 휘둘러!" },
+      { name: "바람 부채", comment: "바람을 다루기 시작했어." },
+      { name: "질풍 부채", comment: "빠른 바람이 분다!" },
+      { name: "폭풍 부채", comment: "폭풍을 일으켜!" },
+      { name: "선풍 부채", comment: "회오리가 생겨나!" },
+      { name: "신선의 부채", comment: "신선이 쓸 법 해." },
+      { name: "천풍선", comment: "하늘의 바람이야." },
+      { name: "뇌풍선", comment: "번개를 동반한 바람!" },
+      { name: "용풍선", comment: "용의 숨결 같은 바람!" },
+      { name: "신풍선", comment: "신의 바람이 분다." },
+      { name: "천상의 부채", comment: "천상의 바람이야." },
+      { name: "선계의 부채", comment: "선계에서 온 바람." },
+      { name: "신계의 부채", comment: "신들의 바람을 다뤄!" },
+      { name: "창세의 부채", comment: "세상을 만든 바람이야." },
+      { name: "만물의 부채", comment: "만물을 움직이는 바람!" },
+      { name: "파초선", comment: "화염산도 꺼버리는 전설의 부채!" },
     ]),
   },
 ];
