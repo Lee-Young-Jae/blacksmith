@@ -9,12 +9,13 @@ interface EquipmentImageProps {
   className?: string
 }
 
+// 이미지와 이모지 모두 동일한 컨테이너 크기 사용
 const SIZE_CLASSES = {
-  sm: 'w-6 h-6 text-lg',
-  md: 'w-8 h-8 text-xl',
-  lg: 'w-12 h-12 text-2xl',
-  xl: 'w-16 h-16 text-3xl',
-  '2xl': 'w-24 h-24 text-5xl',
+  sm: 'w-6 h-6',
+  md: 'w-8 h-8',
+  lg: 'w-12 h-12',
+  xl: 'w-16 h-16',
+  '2xl': 'w-24 h-24',
 }
 
 const EMOJI_SIZE_CLASSES = {
@@ -72,7 +73,11 @@ export default function EquipmentImage({
   }
 
   if (!base) {
-    return <span className={`${EMOJI_SIZE_CLASSES[size]} ${className}`}>❓</span>
+    return (
+      <span className={`${SIZE_CLASSES[size]} ${EMOJI_SIZE_CLASSES[size]} flex items-center justify-center ${className}`}>
+        ❓
+      </span>
+    )
   }
 
   // Get the level data for display name
@@ -84,15 +89,15 @@ export default function EquipmentImage({
       <img
         src={imagePath}
         alt={levelData?.name || base.levels[0].name}
-        className={`${SIZE_CLASSES[size]} object-contain ${className}`}
+        className={`${SIZE_CLASSES[size]} object-contain flex-shrink-0 ${className}`}
         onError={handleImageError}
       />
     )
   }
 
-  // Fallback to emoji
+  // Fallback to emoji - 이미지와 동일한 컨테이너 크기 사용
   return (
-    <span className={`${EMOJI_SIZE_CLASSES[size]} ${className}`}>
+    <span className={`${SIZE_CLASSES[size]} ${EMOJI_SIZE_CLASSES[size]} flex items-center justify-center flex-shrink-0 ${className}`}>
       {base.emoji}
     </span>
   )

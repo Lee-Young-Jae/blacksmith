@@ -95,7 +95,16 @@ export default function EquipmentEnhancePanel({
             <GiAnvilImpact className="text-3xl text-[var(--color-text-muted)]" />
           </div>
           <h2 className="text-base sm:text-lg font-bold text-[var(--color-text-primary)] mb-2">장비 강화</h2>
-          <p className="text-[var(--color-text-secondary)] text-sm">위에서 강화할 장비를 선택하세요</p>
+          <p className="text-[var(--color-text-secondary)] text-sm mb-4">위에서 강화할 장비를 선택하세요</p>
+
+          {/* 비활성화된 강화 버튼 (튜토리얼용 ID 포함) */}
+          <button
+            id="enhance-button"
+            disabled
+            className="btn btn-primary w-full max-w-xs mx-auto min-h-[56px] sm:min-h-[52px] text-base font-bold rounded-xl opacity-50 cursor-not-allowed"
+          >
+            강화하기
+          </button>
 
           {/* 보유 강화권 표시 */}
           {allTickets.length > 0 && (

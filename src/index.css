@@ -1029,6 +1029,20 @@ body {
   animation: shake 0.3s ease-in-out;
 }
 
+/* Flash effect for forge strike */
+@keyframes flash {
+  0% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-flash {
+  animation: flash 0.15s ease-out forwards;
+}
+
 /* Bounce in animation for result cards */
 @keyframes bounceIn {
   0% {
@@ -1045,6 +1059,95 @@ body {
   100% {
     transform: scale(1) translateY(0);
   }
+}
+
+/* Fade in scale animation for gacha cards */
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Fade in up animation for grid cards */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Forge animations */
+@keyframes float-up {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100px) scale(0.5);
+  }
+}
+
+.animate-float-up {
+  animation: float-up 3s ease-out infinite;
+}
+
+@keyframes spark {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--rotation, 0deg)) translateY(-20px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--rotation, 0deg)) translateY(-60px) scale(0);
+  }
+}
+
+.animate-spark {
+  animation: spark 0.4s ease-out forwards;
+}
+
+@keyframes jiggle {
+  0%, 100% {
+    transform: rotate(-2deg) scale(1);
+  }
+  25% {
+    transform: rotate(2deg) scale(1.02);
+  }
+  50% {
+    transform: rotate(-1deg) scale(0.98);
+  }
+  75% {
+    transform: rotate(1deg) scale(1.01);
+  }
+}
+
+.animate-jiggle {
+  animation: jiggle 0.3s ease-in-out;
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
 }
 
 .animate-bounce-in {

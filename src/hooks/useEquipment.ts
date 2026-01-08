@@ -118,33 +118,48 @@ export function useEquipment() {
 
       const typedEquipment = (equipmentData || []) as UserEquipmentRow[]
 
-      // 모든 장비의 잠재옵션 로드
+      // 모든 장비의 잠재옵션 로드 (URL 길이 제한으로 배치 처리)
       const equipmentIds = typedEquipment.map(e => e.id)
       let potentialsMap: Record<string, PotentialLine[]> = {}
 
       if (equipmentIds.length > 0) {
-        const { data: potentialsData, error: potentialsError } = await supabase
-          .from('equipment_potentials')
-          .select('*')
-          .in('equipment_id', equipmentIds)
+        // 50개씩 배치로 나누어 쿼리 (URL 길이 제한 방지)
+        const BATCH_SIZE = 50
+        const batches: string[][] = []
+        for (let i = 0; i < equipmentIds.length; i += BATCH_SIZE) {
+          batches.push(equipmentIds.slice(i, i + BATCH_SIZE))
+        }
 
-        if (potentialsError) throw potentialsError
+        // 모든 배치를 병렬로 쿼리
+        const batchResults = await Promise.all(
+          batches.map(batch =>
+            supabase
+              .from('equipment_potentials')
+              .select('*')
+              .in('equipment_id', batch)
+          )
+        )
 
-        const typedPotentials = (potentialsData || []) as PotentialRow[]
+        // 결과 병합
+        for (const result of batchResults) {
+          if (result.error) throw result.error
 
-        // 장비별로 잠재옵션 그룹화
-        for (const pot of typedPotentials) {
-          if (!potentialsMap[pot.equipment_id]) {
-            potentialsMap[pot.equipment_id] = []
+          const typedPotentials = (result.data || []) as PotentialRow[]
+
+          // 장비별로 잠재옵션 그룹화
+          for (const pot of typedPotentials) {
+            if (!potentialsMap[pot.equipment_id]) {
+              potentialsMap[pot.equipment_id] = []
+            }
+            potentialsMap[pot.equipment_id].push({
+              stat: pot.stat_type,
+              value: pot.stat_value,
+              isPercentage: pot.is_percentage,
+              tier: pot.tier,
+              isLocked: pot.is_locked,
+              isUnlocked: pot.is_unlocked,
+            })
           }
-          potentialsMap[pot.equipment_id].push({
-            stat: pot.stat_type,
-            value: pot.stat_value,
-            isPercentage: pot.is_percentage,
-            tier: pot.tier,
-            isLocked: pot.is_locked,
-            isUnlocked: pot.is_unlocked,
-          })
         }
       }
 
