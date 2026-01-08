@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { CharacterStats } from '../../types/stats'
 import type { BattleCard } from '../../types/battleCard'
+import { REFLECT_PERCENT_BY_TIER } from '../../types/battleCard'
 import { PVP_BATTLE_CONFIG } from '../../types/pvpBattle'
 import { GiCrossedSwords, GiTwoCoins, GiTrophy, GiCardRandom, GiStopwatch } from 'react-icons/gi'
 import { FaUser, FaSkull, FaHandshake } from 'react-icons/fa'
@@ -912,11 +913,15 @@ export function PvPRealtimeBattle({
                 addFloatingDamage('player', healAmount, false, true)
               }
 
-              // 반사 (고정 데미지)
-              const reflect = getPassiveBonus(currentOpponentSkills, 'damage_reflect')
-              if (reflect > 0 && damage > 0) {
-                setPlayerHp(hp => Math.max(0, hp - reflect))
-                addFloatingDamage('player', reflect, false, false)
+              // 반사 (하이브리드: 고정 + 받은 데미지 %)
+              const reflectSkill = currentOpponentSkills.find(s =>
+                s.card.activationType === 'passive' && s.card.effect.type === 'damage_reflect')
+              if (reflectSkill && damage > 0) {
+                const fixedReflect = reflectSkill.card.effect.value
+                const percentReflect = REFLECT_PERCENT_BY_TIER[reflectSkill.card.tier]
+                const totalReflect = fixedReflect + Math.floor(damage * percentReflect / 100)
+                setPlayerHp(hp => Math.max(0, hp - totalReflect))
+                addFloatingDamage('player', totalReflect, false, false)
               }
 
               return newHp
@@ -999,11 +1004,15 @@ export function PvPRealtimeBattle({
                 addFloatingDamage('opponent', healAmount, false, true)
               }
 
-              // 반사 (고정 데미지) - 원본 데미지 기준
-              const reflect = getPassiveBonus(currentPlayerSkills, 'damage_reflect')
-              if (reflect > 0 && rawDamage > 0) {
-                setOpponentHp(hp => Math.max(0, hp - reflect))
-                addFloatingDamage('opponent', reflect, false, false)
+              // 반사 (하이브리드: 고정 + 받은 데미지 %) - 원본 데미지 기준
+              const reflectSkill = currentPlayerSkills.find(s =>
+                s.card.activationType === 'passive' && s.card.effect.type === 'damage_reflect')
+              if (reflectSkill && rawDamage > 0) {
+                const fixedReflect = reflectSkill.card.effect.value
+                const percentReflect = REFLECT_PERCENT_BY_TIER[reflectSkill.card.tier]
+                const totalReflect = fixedReflect + Math.floor(rawDamage * percentReflect / 100)
+                setOpponentHp(hp => Math.max(0, hp - totalReflect))
+                addFloatingDamage('opponent', totalReflect, false, false)
               }
 
               return newHp

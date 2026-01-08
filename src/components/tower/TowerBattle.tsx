@@ -8,6 +8,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import type { CharacterStats } from '../../types/stats'
 import { getEffectiveCritDamage, getDamageMultiplier } from '../../types/stats'
 import type { BattleCard } from '../../types/battleCard'
+import { REFLECT_PERCENT_BY_TIER } from '../../types/battleCard'
 import type { TowerEnemy } from '../../types/tower'
 import { TOWER_CONFIG } from '../../types/tower'
 import { calculateAttackInterval, formatLargeNumber } from '../../utils/towerBattle'
@@ -532,16 +533,19 @@ export function TowerBattle({
           // 플레이어가 회피 성공
           addFloatingDamage(0, false, false, 'player', true)
         } else {
-          // 반사 데미지 (감소 전 원본 데미지 기준)
-          const reflect = getPassiveBonus('damage_reflect') + getActiveEffectValue('damage_reflect')
-          if (reflect > 0) {
-            const reflectDamage = Math.floor(rawDamage * reflect / 100)
+          // 반사 데미지 (하이브리드: 고정 + 받은 데미지 %)
+          const reflectSkill = playerSkillsRef.current.find(s =>
+            s.card.activationType === 'passive' && s.card.effect.type === 'damage_reflect')
+          if (reflectSkill && rawDamage > 0) {
+            const fixedReflect = reflectSkill.card.effect.value
+            const percentReflect = REFLECT_PERCENT_BY_TIER[reflectSkill.card.tier]
+            const totalReflect = fixedReflect + Math.floor(rawDamage * percentReflect / 100)
             setEnemyHp(prev => {
-              const newHp = Math.max(0, prev - reflectDamage)
+              const newHp = Math.max(0, prev - totalReflect)
               enemyHpRef.current = newHp
               return newHp
             })
-            addFloatingDamage(reflectDamage, false, false, 'enemy')
+            addFloatingDamage(totalReflect, false, false, 'enemy')
           }
 
           enemyDamageRef.current += damage

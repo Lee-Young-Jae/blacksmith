@@ -435,8 +435,8 @@ export const TIER_EFFECT_VALUES: Record<
     crit_damage_boost: 20,
     penetration_boost: 6,
     guaranteed_crit: 0,
-    // 반사: 8 고정 데미지 반사 (15회 = 120 가치)
-    damage_reflect: 8,
+    // 반사: 고정 15 + 받은 데미지 8% 반사
+    damage_reflect: 15,
     // 번개 일섬: 상대 최대 HP의 8% 즉시 데미지
     first_strike: 8,
     gold_bonus: 40,
@@ -479,8 +479,8 @@ export const TIER_EFFECT_VALUES: Record<
     penetration_boost: 10,
     // 확정 치명타: 3초간 (에픽)
     guaranteed_crit: 3,
-    // 반사: 12 고정 데미지 반사 (15회 = 180 가치)
-    damage_reflect: 12,
+    // 반사: 고정 25 + 받은 데미지 12% 반사
+    damage_reflect: 25,
     // 번개 일섬: 상대 최대 HP의 12% 즉시 데미지
     first_strike: 12,
     gold_bonus: 60,
@@ -528,8 +528,8 @@ export const TIER_EFFECT_VALUES: Record<
     penetration_boost: 15,
     // 확정 치명타: 5초간 (전설)
     guaranteed_crit: 5,
-    // 반사: 18 고정 데미지 반사 (15회 = 270 가치)
-    damage_reflect: 18,
+    // 반사: 고정 35 + 받은 데미지 15% 반사
+    damage_reflect: 35,
     // 번개 일섬: 상대 최대 HP의 15% 즉시 데미지
     first_strike: 15,
     gold_bonus: 100,
@@ -569,6 +569,14 @@ export const TIER_EFFECT_VALUES: Record<
     // 도발: 상대 공속 +30%, 방어력 -25% (4초)
     taunt: 30,
   },
+};
+
+// 등급별 반사 데미지 % (받은 데미지 기준)
+export const REFLECT_PERCENT_BY_TIER: Record<BattleCardTier, number> = {
+  common: 0,
+  rare: 8,
+  epic: 12,
+  legendary: 15,
 };
 
 // 등급별로 나올 수 있는 효과 타입 (AI 대전용)
@@ -1026,7 +1034,7 @@ export function formatCardDescription(effect: BattleCardEffect): string {
     case "penetration_boost":
       return `관통력 +${effect.value}%`;
     case "damage_reflect":
-      return `공격당할 때마다 ${effect.value} 반사 데미지`;
+      return `피격 시 ${effect.value} + 받은 데미지 일부 반사`;
     case "gold_bonus":
       return `획득 골드 +${effect.value}%`;
     case "lifesteal":
