@@ -245,7 +245,10 @@ export function TowerBattle({
       }
     }
 
-    const penetration = Math.min(100, (attackerStats.penetration || 0) + penetrationBoost)
+    // 관통력 곱연산: (1 - 기본관통) × (1 - 보너스관통) = 남은 방어 비율
+    const basePen = (attackerStats.penetration || 0) / 100
+    const bonusPen = penetrationBoost / 100
+    const penetration = (1 - (1 - basePen) * (1 - bonusPen)) * 100
 
     // LoL 스타일 방어력 계산 (K=120)
     // 데미지 배율 = 1 - (방어력 / (방어력 + K)) × (1 - 관통력/100)

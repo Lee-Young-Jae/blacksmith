@@ -380,7 +380,10 @@ export function PvPRealtimeBattle({
     if (tauntDefenseReduction) {
       defense *= 0.7
     }
-    const penetration = Math.min(100, (attackerStats.penetration || 0) + penetrationBonus)
+    // 관통력 곱연산: (1 - 기본관통) × (1 - 보너스관통) = 남은 방어 비율
+    const basePen = (attackerStats.penetration || 0) / 100
+    const bonusPen = penetrationBonus / 100
+    const penetration = (1 - (1 - basePen) * (1 - bonusPen)) * 100
 
     // 방어력 감소율: defense / (defense + 100) → 방어력 100이면 50% 감소
     // 계수 0.7 적용 → 방어력 100 시 실제 35% 데미지 감소 (버프됨)
