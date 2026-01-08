@@ -4,7 +4,6 @@ import type { UserEquipment, EquipmentSlot } from "../../types/equipment";
 import {
   EQUIPMENT_SLOTS,
   EQUIPMENT_SLOT_NAMES,
-  EQUIPMENT_SLOT_EMOJIS,
   calculateEquipmentStats,
   getEquipmentDisplayName,
 } from "../../types/equipment";
@@ -191,7 +190,7 @@ export default function EquipmentInventory({
           </div>
         )}
 
-        {/* Slot filter tabs */}
+        {/* Slot filter tabs - 대장간 테마 */}
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1">
           <button
             onClick={() => setActiveFilterSlot(null)}
@@ -199,8 +198,8 @@ export default function EquipmentInventory({
               flex-shrink-0 px-3 py-2 rounded-lg text-sm font-medium transition-all min-h-[40px]
               ${
                 !activeFilterSlot
-                  ? "bg-[var(--color-primary)] text-white"
-                  : "bg-[var(--color-bg-elevated-2)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated-3)]"
+                  ? "bg-gradient-to-r from-amber-600 to-orange-600 text-white border border-amber-500"
+                  : "bg-stone-800 text-stone-400 border border-stone-700 hover:border-amber-700/50 hover:text-amber-200"
               }
             `}
           >
@@ -219,13 +218,12 @@ export default function EquipmentInventory({
                   flex items-center gap-1.5
                   ${
                     activeFilterSlot === slot
-                      ? "bg-[var(--color-primary)] text-white"
-                      : "bg-[var(--color-bg-elevated-2)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-elevated-3)]"
+                      ? "bg-gradient-to-r from-amber-600 to-orange-600 text-white border border-amber-500"
+                      : "bg-stone-800 text-stone-400 border border-stone-700 hover:border-amber-700/50 hover:text-amber-200"
                   }
                 `}
               >
-                <span>{EQUIPMENT_SLOT_EMOJIS[slot]}</span>
-                <span className="hidden sm:inline">{EQUIPMENT_SLOT_NAMES[slot]}</span>
+                <span>{EQUIPMENT_SLOT_NAMES[slot]}</span>
                 <span className="text-xs opacity-70">({count})</span>
               </button>
             );
@@ -234,9 +232,9 @@ export default function EquipmentInventory({
 
         {/* Equipment grid */}
         {filteredInventory.length === 0 ? (
-          <div className="empty-state">
-            <span className="empty-state-icon">📦</span>
-            <span className="empty-state-text">인벤토리가 비어있습니다</span>
+          <div className="text-center py-8">
+            <span className="text-4xl block mb-2 opacity-50">📦</span>
+            <span className="text-stone-500">인벤토리가 비어있습니다</span>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] sm:max-h-[400px] overflow-y-auto">
