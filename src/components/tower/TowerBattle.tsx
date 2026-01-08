@@ -113,6 +113,9 @@ export function TowerBattle({
   // 보호막 상태 - 이전 층에서의 보호막이 있으면 그것을 사용
   const [playerShield, setPlayerShield] = useState(initialPlayerShield ?? 0)
   const playerShieldRef = useRef(initialPlayerShield ?? 0)
+  // 보호막 남은 지속시간 (스킬과 독립적으로 관리)
+  const [playerShieldDuration, setPlayerShieldDuration] = useState(0)
+  const playerShieldDurationRef = useRef(0)
 
   // 플로팅 데미지
   const [floatingDamages, setFloatingDamages] = useState<FloatingDamage[]>([])
@@ -165,6 +168,7 @@ export function TowerBattle({
   useEffect(() => { enemyHpRef.current = enemyHp }, [enemyHp])
   useEffect(() => { timeRef.current = timeRemaining }, [timeRemaining])
   useEffect(() => { playerShieldRef.current = playerShield }, [playerShield])
+  useEffect(() => { playerShieldDurationRef.current = playerShieldDuration }, [playerShieldDuration])
 
   // 플로팅 데미지 추가
   const addFloatingDamage = useCallback((
@@ -345,10 +349,12 @@ export function TowerBattle({
       setEnemyImageState('hit')
       setTimeout(() => setEnemyImageState(prev => prev === 'death' ? 'death' : 'idle'), 300)
     } else if (effect.type === 'shield') {
-      // 보호막: 최대 HP의 value% 만큼 보호막 생성
+      // 보호막: 최대 HP의 value% 만큼 보호막 생성, 지속시간 설정
       const shieldAmount = Math.floor(playerMaxHp * effect.value / 100)
       playerShieldRef.current = shieldAmount
       setPlayerShield(shieldAmount)
+      playerShieldDurationRef.current = skill.card.duration
+      setPlayerShieldDuration(skill.card.duration)
       // 보호막 생성 플로팅 메시지 (회복 스타일로 표시)
       addFloatingDamage(shieldAmount, false, true, 'player')
     } else if (effect.type === 'freeze') {
@@ -419,12 +425,26 @@ export function TowerBattle({
       })
 
       // 스킬 쿨다운/지속시간 업데이트
-      setPlayerSkills(prev => prev.map(skill => ({
-        ...skill,
-        cooldownRemaining: Math.max(0, skill.cooldownRemaining - delta / 1000),
-        durationRemaining: Math.max(0, skill.durationRemaining - delta / 1000),
-        isActive: skill.durationRemaining > delta / 1000 ? skill.isActive : false,
-      })))
+      const deltaSec = delta / 1000
+      setPlayerSkills(prev => prev.map(skill => {
+        const stillActive = skill.durationRemaining > deltaSec
+        return {
+          ...skill,
+          cooldownRemaining: Math.max(0, skill.cooldownRemaining - deltaSec),
+          durationRemaining: Math.max(0, skill.durationRemaining - deltaSec),
+          isActive: stillActive ? skill.isActive : false,
+        }
+      }))
+
+      // 보호막 지속시간 감소 (스킬과 독립적으로 관리)
+      setPlayerShieldDuration(prev => {
+        const newDuration = Math.max(0, prev - deltaSec)
+        if (prev > 0 && newDuration === 0 && playerShieldRef.current > 0) {
+          playerShieldRef.current = 0
+          setPlayerShield(0)
+        }
+        return newDuration
+      })
 
       // 공격 타이밍 체크
       playerNextAttackRef.current -= delta

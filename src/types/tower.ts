@@ -111,7 +111,7 @@ export const TOWER_CONFIG = {
 
   // 배틀 밸런스
   HP_MULTIPLIER: 1.5,          // 적정 배율 (1 → 1.5)
-  PLAYER_HP_MULTIPLIER: 2,     // 플레이어 HP 배율
+  PLAYER_HP_MULTIPLIER: 1.3,   // 플레이어 HP 배율 (PvP와 통일)
   DAMAGE_REDUCTION: 0.8,       // 데미지 감소 (20% 감소)
 
   // 보상

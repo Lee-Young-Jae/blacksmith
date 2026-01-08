@@ -182,6 +182,11 @@ export function PvPRealtimeBattle({
   const [opponentShield, setOpponentShield] = useState(0)
   const playerShieldRef = useRef(0)
   const opponentShieldRef = useRef(0)
+  // 보호막 남은 지속시간 (스킬과 독립적으로 관리)
+  const [playerShieldDuration, setPlayerShieldDuration] = useState(0)
+  const [opponentShieldDuration, setOpponentShieldDuration] = useState(0)
+  const playerShieldDurationRef = useRef(0)
+  const opponentShieldDurationRef = useRef(0)
 
   // 스킬 상태 ref (게임 루프에서 사용)
   const playerSkillsRef = useRef(playerSkills)
@@ -231,6 +236,14 @@ export function PvPRealtimeBattle({
   useEffect(() => {
     opponentShieldRef.current = opponentShield
   }, [opponentShield])
+
+  useEffect(() => {
+    playerShieldDurationRef.current = playerShieldDuration
+  }, [playerShieldDuration])
+
+  useEffect(() => {
+    opponentShieldDurationRef.current = opponentShieldDuration
+  }, [opponentShieldDuration])
 
   // 플로팅 데미지
   const [floatingDamages, setFloatingDamages] = useState<FloatingDamage[]>([])
@@ -471,10 +484,12 @@ export function PvPRealtimeBattle({
       const silenceDuration = effect.value > 0 ? effect.value : 2.5
       setOpponentSilenceDuration(silenceDuration)
     } else if (effect.type === 'shield') {
-      // 보호막: 최대 HP의 value% 만큼 보호막 생성
+      // 보호막: 최대 HP의 value% 만큼 보호막 생성, 지속시간 설정
       const shieldAmount = Math.floor(playerMaxHp * effect.value / 100)
       playerShieldRef.current = shieldAmount
       setPlayerShield(shieldAmount)
+      playerShieldDurationRef.current = card.duration
+      setPlayerShieldDuration(card.duration)
       addFloatingDamage('player', shieldAmount, false, true)
     } else if (effect.type === 'freeze') {
       // 냉기: 적 공속 감소 + 회피 무시 (지속 효과로 처리)
@@ -677,10 +692,12 @@ export function PvPRealtimeBattle({
       const silenceDuration = effect.value > 0 ? effect.value : 2.5
       setPlayerSilenceDuration(silenceDuration)
     } else if (effect.type === 'shield') {
-      // 보호막: 최대 HP의 value% 만큼 보호막 생성
+      // 보호막: 최대 HP의 value% 만큼 보호막 생성, 지속시간 설정
       const shieldAmount = Math.floor(opponentMaxHp * effect.value / 100)
       opponentShieldRef.current = shieldAmount
       setOpponentShield(shieldAmount)
+      opponentShieldDurationRef.current = card.duration
+      setOpponentShieldDuration(card.duration)
       addFloatingDamage('opponent', shieldAmount, false, true)
     } else if (effect.type === 'freeze') {
       // 냉기: 플레이어 공속 감소 + 회피 무시 (지속 효과로 처리)
@@ -768,19 +785,44 @@ export function PvPRealtimeBattle({
       })
 
       // 스킬 쿨다운/지속시간 업데이트
-      setPlayerSkills(prev => prev.map(skill => ({
-        ...skill,
-        cooldownRemaining: Math.max(0, skill.cooldownRemaining - deltaSec),
-        durationRemaining: Math.max(0, skill.durationRemaining - deltaSec),
-        isActive: skill.durationRemaining - deltaSec > 0 ? skill.isActive : false,
-      })))
+      setPlayerSkills(prev => prev.map(skill => {
+        const stillActive = skill.durationRemaining - deltaSec > 0
+        return {
+          ...skill,
+          cooldownRemaining: Math.max(0, skill.cooldownRemaining - deltaSec),
+          durationRemaining: Math.max(0, skill.durationRemaining - deltaSec),
+          isActive: stillActive ? skill.isActive : false,
+        }
+      }))
 
-      setOpponentSkills(prev => prev.map(skill => ({
-        ...skill,
-        cooldownRemaining: Math.max(0, skill.cooldownRemaining - deltaSec),
-        durationRemaining: Math.max(0, skill.durationRemaining - deltaSec),
-        isActive: skill.durationRemaining - deltaSec > 0 ? skill.isActive : false,
-      })))
+      setOpponentSkills(prev => prev.map(skill => {
+        const stillActive = skill.durationRemaining - deltaSec > 0
+        return {
+          ...skill,
+          cooldownRemaining: Math.max(0, skill.cooldownRemaining - deltaSec),
+          durationRemaining: Math.max(0, skill.durationRemaining - deltaSec),
+          isActive: stillActive ? skill.isActive : false,
+        }
+      }))
+
+      // 보호막 지속시간 감소 (스킬과 독립적으로 관리)
+      setPlayerShieldDuration(prev => {
+        const newDuration = Math.max(0, prev - deltaSec)
+        if (prev > 0 && newDuration === 0 && playerShieldRef.current > 0) {
+          playerShieldRef.current = 0
+          setPlayerShield(0)
+        }
+        return newDuration
+      })
+
+      setOpponentShieldDuration(prev => {
+        const newDuration = Math.max(0, prev - deltaSec)
+        if (prev > 0 && newDuration === 0 && opponentShieldRef.current > 0) {
+          opponentShieldRef.current = 0
+          setOpponentShield(0)
+        }
+        return newDuration
+      })
 
       // 스턴 지속시간 감소
       setPlayerStunDuration(prev => Math.max(0, prev - deltaSec))

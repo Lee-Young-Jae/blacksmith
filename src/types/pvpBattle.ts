@@ -224,7 +224,7 @@ export const PVP_BATTLE_CONFIG = {
   MIN_ATTACK_INTERVAL: 500,    // 최소 공격 간격 (0.5초)
 
   // PvP 밸런스 조정 (탱커 버프와 함께 조정됨)
-  HP_MULTIPLIER: 1.5,          // HP 배율 (1.5배) - 장비 HP 증가분 상쇄
+  HP_MULTIPLIER: 1.3,          // HP 배율 (1.3배) - 타워와 통일
   DAMAGE_REDUCTION: 0.8,       // 데미지 감소 (20%) - 전투 시간 단축
   DEFENDER_HP_BONUS: 1.15,     // 방어자 HP 보너스 (+15%) - AI 조작 보정
 

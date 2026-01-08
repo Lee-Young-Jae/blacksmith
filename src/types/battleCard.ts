@@ -514,8 +514,8 @@ export const TIER_EFFECT_VALUES: Record<
     shield: 30,
     // 냉기: 공속 -35%, 회피 무시 (4초)
     freeze: 35,
-    // 희생 일격: HP 15% 소모, 그 250% 데미지
-    sacrifice: 250,
+    // 희생 일격: HP 15% 소모, 그 180% 데미지
+    sacrifice: 180,
     // 도발: 상대 공속 +25%, 방어력 -20% (4초)
     taunt: 25,
   },
@@ -564,8 +564,8 @@ export const TIER_EFFECT_VALUES: Record<
     shield: 40,
     // 냉기: 공속 -50%, 회피 무시 (4초)
     freeze: 50,
-    // 희생 일격: HP 15% 소모, 그 350% 데미지
-    sacrifice: 350,
+    // 희생 일격: HP 15% 소모, 그 250% 데미지
+    sacrifice: 250,
     // 도발: 상대 공속 +30%, 방어력 -25% (4초)
     taunt: 30,
   },

@@ -337,7 +337,7 @@ export const WEAPONS: EquipmentBase[] = [
   {
     id: "weapon-guardian-shield",
     slot: "weapon",
-    baseStats: { attack: 12, hp: 120, critRate: 2 }, // 방어형
+    baseStats: { attack: 10, hp: 120, critRate: 2 }, // 방어형
     emoji: "🛡️",
     potentialSlots: 3,
     levels: createLevels("weapon-guardian-shield", [
