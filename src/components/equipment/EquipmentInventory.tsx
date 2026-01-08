@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { GiTicket, GiSwordman } from "react-icons/gi";
+import { GiTicket, GiSwordman, GiSwapBag } from "react-icons/gi";
 import type { UserEquipment, EquipmentSlot } from "../../types/equipment";
 import {
   EQUIPMENT_SLOTS,
@@ -124,22 +124,22 @@ export default function EquipmentInventory({
   };
 
   return (
-    <div className="card">
-      <div className="card-header">
+    <div className="rounded-2xl border border-amber-700/30 bg-gradient-to-b from-stone-900 to-stone-800 overflow-hidden">
+      <div className="p-4 border-b border-amber-700/30 bg-gradient-to-r from-amber-900/20 to-transparent">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-base font-bold text-[var(--color-text-primary)] flex items-center gap-2">
-            <span className="text-xl">🎒</span>
+          <h2 className="text-base font-bold text-amber-100 flex items-center gap-2">
+            <GiSwapBag className="text-xl text-amber-400" />
             인벤토리
-            <span className="text-sm text-[var(--color-text-muted)] font-normal">
+            <span className="text-sm text-amber-200/50 font-normal">
               ({filteredInventory.length})
             </span>
           </h2>
 
-          {/* Sort dropdown */}
+          {/* Sort dropdown - 대장간 테마 */}
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="bg-[var(--color-bg-elevated-3)] text-[var(--color-text-primary)] text-sm rounded-lg px-2 py-1.5 border border-[var(--color-border)]"
+            className="bg-stone-800 text-amber-100 text-sm rounded-lg px-2 py-1.5 border border-stone-600 focus:border-amber-500 focus:outline-none"
           >
             <option value="recent">최신순</option>
             <option value="combatPower">전투력순</option>
@@ -148,7 +148,7 @@ export default function EquipmentInventory({
         </div>
       </div>
 
-      <div className="card-body space-y-4">
+      <div className="p-4 space-y-4">
         {/* 강화권 섹션 */}
         {tickets.length > 0 && (
           <div className="p-3 rounded-lg bg-gradient-to-r from-cyan-900/20 to-blue-900/20 border border-cyan-500/30">

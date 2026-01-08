@@ -7,6 +7,7 @@ import {
 } from '../../types/equipment'
 import EquipmentDetail from './EquipmentDetail'
 import EquipmentImage from './EquipmentImage'
+import { GiChestArmor } from 'react-icons/gi'
 
 interface EquipmentSlotsProps {
   equipped: EquippedItems
@@ -35,14 +36,14 @@ export default function EquipmentSlots({
   }
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h2 className="text-base font-bold text-[var(--color-text-primary)] flex items-center gap-2">
-          <span className="text-xl">🛡️</span>
+    <div className="rounded-2xl border border-amber-700/30 bg-gradient-to-b from-stone-900 to-stone-800 overflow-hidden">
+      <div className="p-4 border-b border-amber-700/30 bg-gradient-to-r from-amber-900/20 to-transparent">
+        <h2 className="text-base font-bold text-amber-100 flex items-center gap-2">
+          <GiChestArmor className="text-xl text-amber-400" />
           장착 장비
         </h2>
       </div>
-      <div className="card-body">
+      <div className="p-4">
 
       {/* 7 Equipment Slots Grid */}
       <div className="grid grid-cols-4 gap-2">
@@ -104,7 +105,7 @@ export default function EquipmentSlots({
       </div>
       </div>
 
-      {/* Equipment Detail Modal */}
+      {/* Equipment Detail Modal - 대장간 테마 */}
       {selectedEquipment && (
         <EquipmentDetail
           equipment={selectedEquipment}

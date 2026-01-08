@@ -4,9 +4,9 @@ import {
   GiForestCamp,
   GiTicket,
   GiSwordman,
-  GiBackpack,
   GiCardboardBox,
   GiSparkles,
+  GiRuneStone,
 } from "react-icons/gi";
 import { FaRobot } from "react-icons/fa";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -721,56 +721,56 @@ function GameContent() {
             {/* 잠재옵션 탭 */}
             {activeTab === "potential" && (
               <div className="flex flex-col lg:flex-row gap-6">
-                {/* 장비 선택 */}
+                {/* 장비 선택 - 대장간 테마 경미 적용 */}
                 <div className="lg:w-80 flex-shrink-0">
-                  <div className="card">
-                    <div className="card-header">
-                      <h2 className="text-base font-bold text-[var(--color-text-primary)] flex items-center gap-2">
-                        <GiBackpack className="text-xl" />
+                  <div className="rounded-2xl border border-amber-700/30 bg-gradient-to-b from-stone-900 to-stone-800 overflow-hidden">
+                    <div className="p-4 border-b border-amber-700/30 bg-gradient-to-r from-amber-900/20 to-transparent">
+                      <h2 className="text-base font-bold text-amber-100 flex items-center gap-2">
+                        <GiRuneStone className="text-xl text-amber-400" />
                         장비 선택
                       </h2>
                     </div>
-                    <div className="card-body">
+                    <div className="p-4">
                       <div className="space-y-2 max-h-[50vh] sm:max-h-[400px] overflow-y-auto">
                         {sortedInventory.map((equip) => (
                           <button
                             key={equip.id}
                             onClick={() => setSelectedPotentialEquipment(equip)}
                             className={`
-                              list-item w-full min-h-[56px]
+                              flex items-center gap-3 w-full min-h-[56px] p-3 rounded-xl transition-all
                               ${
                                 selectedPotentialEquipment?.id === equip.id
-                                  ? "ring-2 ring-[var(--color-magic)] bg-[var(--color-magic)]/10"
-                                  : ""
+                                  ? "ring-2 ring-amber-500 bg-amber-900/30 border border-amber-500/50"
+                                  : "bg-stone-800/50 border border-stone-700/50 hover:border-amber-700/30 hover:bg-stone-800"
                               }
                             `}
                           >
                             <EquipmentImage equipment={equip} size="lg" />
-                            <div className="list-item-content">
-                              <span className="list-item-title">
+                            <div className="flex-1 text-left">
+                              <span className="block text-sm font-medium text-amber-100">
                                 {getEquipmentName(
                                   equip.equipmentBase,
                                   equip.starLevel
                                 )}
                               </span>
-                              <span className="list-item-subtitle">
-                                잠재옵션{" "}
+                              <span className="block text-xs text-amber-200/50">
+                                각인{" "}
                                 {
                                   equip.potentials.filter((p) => p.isUnlocked)
                                     .length
                                 }
-                                /3 해제
+                                /3 완료
                               </span>
                             </div>
                             {equip.isEquipped && (
-                              <span className="badge badge-success">장착</span>
+                              <span className="px-2 py-0.5 text-xs font-medium rounded bg-green-600/30 text-green-400 border border-green-500/30">장착</span>
                             )}
                           </button>
                         ))}
                         {sortedInventory.length === 0 && (
-                          <div className="empty-state">
-                            <GiCardboardBox className="empty-state-icon text-4xl text-gray-500" />
-                            <span className="empty-state-text">
+                          <div className="text-center py-8">
+                            <GiCardboardBox className="text-4xl text-stone-600 mx-auto mb-2" />
+                            <span className="text-sm text-stone-500">
                               장비가 없습니다
                             </span>
                           </div>
