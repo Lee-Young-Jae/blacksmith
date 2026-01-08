@@ -44,7 +44,7 @@ export const TOPS: EquipmentBase[] = [
   {
     id: 'top-chainmail',
     slot: 'top',
-    baseStats: { defense: 24, hp: 50 },  // 탱커는 회피 대신 방어 특화 (버프됨)
+    baseStats: { defense: 36, hp: 100 },  // 순수 탱커: 부가능력 없음 → HP 2배, 방어 1.5배
     emoji: '🦺',
     potentialSlots: 3,
     levels: createLevels('top-chainmail', [
@@ -76,7 +76,7 @@ export const TOPS: EquipmentBase[] = [
   {
     id: 'top-plate-armor',
     slot: 'top',
-    baseStats: { defense: 30, hp: 55 },  // 탱커는 회피 대신 방어 특화 (버프됨)
+    baseStats: { defense: 45, hp: 110 },  // 순수 탱커: 부가능력 없음 → HP 2배, 방어 1.5배
     emoji: '🛡️',
     potentialSlots: 3,
     levels: createLevels('top-plate-armor', [
@@ -172,7 +172,7 @@ export const TOPS: EquipmentBase[] = [
   {
     id: 'top-dragon-scale',
     slot: 'top',
-    baseStats: { defense: 12, hp: 30, attack: 10 },  // 공격+방어 특화, 회피 없음
+    baseStats: { defense: 14, hp: 45, attack: 10 },  // 공격형 탱커: HP 1.5배, 방어 1.2배
     emoji: '🐉',
     potentialSlots: 3,
     levels: createLevels('top-dragon-scale', [

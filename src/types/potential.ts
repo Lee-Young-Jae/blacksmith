@@ -55,7 +55,7 @@ export const POTENTIAL_POOLS: Record<PotentialTier, PotentialOption[]> = {
   common: [
     { stat: 'attack', minValue: 1, maxValue: 5, isPercentage: false, weight: 30 },
     { stat: 'defense', minValue: 1, maxValue: 5, isPercentage: false, weight: 30 },
-    { stat: 'hp', minValue: 10, maxValue: 50, isPercentage: false, weight: 30 },
+    { stat: 'hp', minValue: 3, maxValue: 10, isPercentage: false, weight: 30 },
     { stat: 'critRate', minValue: 1, maxValue: 2, isPercentage: true, weight: 5 },
     { stat: 'critDamage', minValue: 1, maxValue: 3, isPercentage: true, weight: 3 },
     { stat: 'penetration', minValue: 1, maxValue: 2, isPercentage: true, weight: 2 },
@@ -65,7 +65,7 @@ export const POTENTIAL_POOLS: Record<PotentialTier, PotentialOption[]> = {
     { stat: 'attack', minValue: 3, maxValue: 10, isPercentage: false, weight: 25 },
     { stat: 'attack', minValue: 1, maxValue: 3, isPercentage: true, weight: 10 },
     { stat: 'defense', minValue: 3, maxValue: 10, isPercentage: false, weight: 25 },
-    { stat: 'hp', minValue: 30, maxValue: 100, isPercentage: false, weight: 20 },
+    { stat: 'hp', minValue: 8, maxValue: 25, isPercentage: false, weight: 20 },
     { stat: 'critRate', minValue: 2, maxValue: 4, isPercentage: true, weight: 8 },
     { stat: 'critDamage', minValue: 3, maxValue: 6, isPercentage: true, weight: 7 },
     { stat: 'penetration', minValue: 2, maxValue: 4, isPercentage: true, weight: 5 },
@@ -76,7 +76,7 @@ export const POTENTIAL_POOLS: Record<PotentialTier, PotentialOption[]> = {
     { stat: 'attack', minValue: 3, maxValue: 6, isPercentage: true, weight: 15 },
     { stat: 'defense', minValue: 5, maxValue: 15, isPercentage: false, weight: 15 },
     { stat: 'defense', minValue: 2, maxValue: 5, isPercentage: true, weight: 10 },
-    { stat: 'hp', minValue: 50, maxValue: 200, isPercentage: false, weight: 12 },
+    { stat: 'hp', minValue: 15, maxValue: 50, isPercentage: false, weight: 12 },
     { stat: 'hp', minValue: 5, maxValue: 10, isPercentage: true, weight: 8 },  // HP% 추가
     { stat: 'critRate', minValue: 4, maxValue: 7, isPercentage: true, weight: 10 },
     { stat: 'critDamage', minValue: 5, maxValue: 10, isPercentage: true, weight: 8 },
@@ -110,7 +110,7 @@ export const SLOT_UNLOCK_COSTS: [number, number, number] = [500, 2000, 10000]
 
 // 리롤 기본 비용 및 고정 라인당 추가 비용
 export const REROLL_BASE_COST = 200
-export const REROLL_LOCKED_LINE_MULTIPLIER = 2.5  // 고정된 라인당 비용 배율
+export const REROLL_LOCKED_LINE_MULTIPLIER = 3.5  // 고정된 라인당 비용 배율
 
 // 리롤 시 등급 확률 (랜덤 등급 부여)
 export const TIER_ROLL_RATES: Record<PotentialTier, number> = {

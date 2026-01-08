@@ -47,7 +47,7 @@ export const GLOVES: EquipmentBase[] = [
   {
     id: "gloves-iron-gauntlets",
     slot: "gloves",
-    baseStats: { defense: 14, attack: 4 },  // 탱커는 방어 특화, 공속 없음 (버프됨)
+    baseStats: { defense: 21, attack: 4 },  // 순수 탱커: 부가능력 없음 → 방어 1.5배
     emoji: "🤜",
     potentialSlots: 3,
     levels: createLevels("gloves-iron-gauntlets", [

@@ -47,7 +47,7 @@ export const HATS: EquipmentBase[] = [
   {
     id: "hat-iron-helm",
     slot: "hat",
-    baseStats: { defense: 18, hp: 35 },  // 탱커는 회피 대신 방어 특화 (버프됨)
+    baseStats: { defense: 27, hp: 70 },  // 순수 탱커: 부가능력 없음 → HP 2배, 방어 1.5배
     emoji: "🪖",
     potentialSlots: 3,
     levels: createLevels("hat-iron-helm", [
@@ -175,7 +175,7 @@ export const HATS: EquipmentBase[] = [
   {
     id: "hat-viking-helm",
     slot: "hat",
-    baseStats: { defense: 5, hp: 15, attack: 8 },  // 공격 특화, 회피 없음
+    baseStats: { defense: 6, hp: 23, attack: 8 },  // 공격형 탱커: HP 1.5배, 방어 1.2배
     emoji: "⛑️",
     potentialSlots: 3,
     levels: createLevels("hat-viking-helm", [

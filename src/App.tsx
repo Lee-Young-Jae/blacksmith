@@ -4,6 +4,9 @@ import {
   GiForestCamp,
   GiTicket,
   GiSwordman,
+  GiBackpack,
+  GiCardboardBox,
+  GiSparkles,
 } from "react-icons/gi";
 import { FaRobot } from "react-icons/fa";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -723,7 +726,7 @@ function GameContent() {
                   <div className="card">
                     <div className="card-header">
                       <h2 className="text-base font-bold text-[var(--color-text-primary)] flex items-center gap-2">
-                        <span className="text-xl">🎒</span>
+                        <GiBackpack className="text-xl" />
                         장비 선택
                       </h2>
                     </div>
@@ -766,7 +769,7 @@ function GameContent() {
                         ))}
                         {sortedInventory.length === 0 && (
                           <div className="empty-state">
-                            <span className="empty-state-icon">📦</span>
+                            <GiCardboardBox className="empty-state-icon text-4xl text-gray-500" />
                             <span className="empty-state-text">
                               장비가 없습니다
                             </span>
@@ -834,7 +837,7 @@ function GameContent() {
                     <div className="card">
                       <div className="card-body">
                         <div className="empty-state">
-                          <span className="empty-state-icon">✨</span>
+                          <GiSparkles className="empty-state-icon text-4xl text-gray-500" />
                           <span className="empty-state-text">
                             좌측에서 장비를 선택하세요
                           </span>

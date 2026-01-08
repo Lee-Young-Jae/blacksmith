@@ -8,6 +8,7 @@ import {
   shouldWarnOnSell,
 } from "../../types/equipment";
 import EquipmentImage from "./EquipmentImage";
+import { FaLock, FaThumbtack } from "react-icons/fa";
 import {
   POTENTIAL_TIER_NAMES,
   POTENTIAL_TIER_COLORS,
@@ -178,10 +179,15 @@ export default function EquipmentDetail({
                     `}
                   >
                     {!line.isUnlocked ? (
-                      <span className="text-[var(--color-text-muted)]">🔒 슬롯 잠김</span>
+                      <span className="flex items-center gap-2 text-[var(--color-text-muted)]">
+                        <FaLock className="text-sm" />
+                        슬롯 잠김
+                      </span>
                     ) : (
                       <>
-                        {line.isLocked && <span className="text-[var(--color-accent)]">📌</span>}
+                        {line.isLocked && (
+                          <FaThumbtack className="text-[var(--color-accent)] text-sm flex-shrink-0" />
+                        )}
                         <span className={tierColor}>{formatPotentialLine(line)}</span>
                         <span className={`text-xs ${tierColor} ml-auto`}>
                           {POTENTIAL_TIER_NAMES[line.tier as PotentialTier]}

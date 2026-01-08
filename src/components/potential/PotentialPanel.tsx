@@ -13,6 +13,8 @@ import {
 } from '../../types/potential'
 import { getEquipmentDisplayName } from '../../types/equipment'
 import { EquipmentImage } from '../equipment'
+import { FaLock, FaUnlock, FaThumbtack, FaExclamationTriangle } from 'react-icons/fa'
+import { GiSparkles } from 'react-icons/gi'
 
 interface PotentialPanelProps {
   equipment: UserEquipment
@@ -149,26 +151,36 @@ export default function PotentialPanel({
             return (
               <div
                 key={index}
-                className="flex items-center gap-3 p-3 rounded-lg border bg-[var(--color-bg-elevated-1)] border-[var(--color-border)] min-h-[56px]"
+                className="flex items-center gap-3 p-4 rounded-xl border-2 bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700/50 min-h-[64px] transition-all hover:border-gray-600/50 hover:shadow-lg"
               >
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-[var(--color-bg-elevated-2)] text-[var(--color-text-muted)]">
-                  🔒
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-gray-700/50 to-gray-800/50 text-gray-400 border border-gray-600/30">
+                  <FaLock className="text-lg" />
                 </div>
                 <div className="flex-1">
-                  <span className="text-[var(--color-text-muted)]">슬롯 {index + 1} 잠김</span>
+                  <div className="text-sm font-semibold text-gray-300">슬롯 {index + 1}</div>
+                  <div className="text-xs text-gray-500">잠금 상태</div>
                 </div>
                 <button
                   onClick={() => handleUnlockSlot(index)}
                   disabled={!canAffordUnlock || isUnlocking !== null}
-                  className={`btn btn-sm ${canAffordUnlock && isUnlocking === null ? 'btn-success' : 'btn-ghost opacity-50'}`}
+                  className={`
+                    px-4 py-2.5 rounded-lg font-semibold text-sm transition-all transform
+                    ${canAffordUnlock && isUnlocking === null
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white shadow-lg hover:shadow-xl hover:scale-105'
+                      : 'bg-gray-700/50 text-gray-500 cursor-not-allowed'
+                    }
+                  `}
                 >
                   {isUnlocking === index ? (
-                    <span className="flex items-center gap-1">
-                      <span className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" />
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       해제 중
                     </span>
                   ) : (
-                    <>해제 ({unlockCost.toLocaleString()}G)</>
+                    <span className="flex items-center gap-2">
+                      <FaUnlock className="text-xs" />
+                      해제 ({unlockCost.toLocaleString()}G)
+                    </span>
                   )}
                 </button>
               </div>
@@ -183,39 +195,52 @@ export default function PotentialPanel({
             <div
               key={index}
               className={`
-                flex items-center gap-3 p-3 rounded-lg border transition-all min-h-[56px]
+                flex items-center gap-3 p-4 rounded-xl border-2 transition-all min-h-[64px]
                 ${lockedLines[index]
-                  ? 'bg-[var(--color-accent)]/10 border-[var(--color-accent)]/50'
-                  : `${tierBg} border-[var(--color-border)]`
+                  ? 'bg-gradient-to-br from-yellow-900/20 to-orange-900/20 border-yellow-500/50 shadow-lg shadow-yellow-500/10'
+                  : `${tierBg} border-[var(--color-border)] hover:shadow-lg`
                 }
+                hover:scale-[1.02] cursor-pointer
               `}
             >
               {/* Lock Toggle */}
               <button
-                onClick={() => toggleLock(index)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  toggleLock(index)
+                }}
                 className={`
-                  w-10 h-10 rounded-lg flex items-center justify-center transition-all
+                  w-12 h-12 rounded-xl flex items-center justify-center transition-all transform
                   ${lockedLines[index]
-                    ? 'bg-[var(--color-accent)] text-white'
-                    : 'bg-[var(--color-bg-elevated-2)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-elevated-3)]'
+                    ? 'bg-gradient-to-br from-yellow-500 to-orange-500 text-white shadow-lg hover:shadow-xl hover:scale-110'
+                    : 'bg-gradient-to-br from-gray-700/50 to-gray-800/50 text-gray-400 hover:from-gray-600/50 hover:to-gray-700/50 hover:text-gray-300 border border-gray-600/30'
                   }
                 `}
                 title={lockedLines[index] ? '고정 해제' : '고정 (리롤 시 유지)'}
               >
-                {lockedLines[index] ? '📌' : '🔓'}
+                {lockedLines[index] ? (
+                  <FaThumbtack className="text-lg" />
+                ) : (
+                  <FaUnlock className="text-lg" />
+                )}
               </button>
 
               {/* Line Content */}
-              <div className="flex-1 flex items-center gap-2">
-                <span className={tierColor.split(' ')[0]}>
+              <div className="flex-1 flex flex-col gap-1">
+                <span className={`font-semibold text-base ${tierColor.split(' ')[0]}`}>
                   {formatPotentialLine(line)}
                 </span>
+                <div className={`text-xs px-2 py-0.5 rounded-md inline-block w-fit ${tierColor}`}>
+                  {POTENTIAL_TIER_NAMES[line.tier]}
+                </div>
               </div>
 
-              {/* Tier Badge */}
-              <div className={`text-xs px-2 py-1 rounded-lg ${tierColor}`}>
-                {POTENTIAL_TIER_NAMES[line.tier]}
-              </div>
+              {/* Lock Indicator */}
+              {lockedLines[index] && (
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-yellow-500/20 text-yellow-400">
+                  <FaThumbtack className="text-sm" />
+                </div>
+              )}
             </div>
           )
         })}
@@ -225,9 +250,9 @@ export default function PotentialPanel({
       <div className="px-4 pb-4 space-y-3 safe-area-bottom">
         {/* Lock Cost Warning */}
         {lockedCount > 0 && (
-          <div className="info-box warning">
-            <div className="flex items-center gap-2 text-[var(--color-accent)] text-sm">
-              <span>⚠️</span>
+          <div className="p-3 rounded-lg bg-gradient-to-r from-yellow-900/20 to-orange-900/20 border border-yellow-500/30">
+            <div className="flex items-center gap-2 text-yellow-400 text-sm font-medium">
+              <FaExclamationTriangle className="text-base flex-shrink-0" />
               <span>{lockedCount}줄 고정 - 비용 증가</span>
             </div>
           </div>
@@ -252,17 +277,26 @@ export default function PotentialPanel({
         <button
           onClick={handleReroll}
           disabled={!canAffordReroll || !canReroll || isRerolling}
-          className={`btn w-full py-3.5 text-base ${canAffordReroll && canReroll && !isRerolling ? 'btn-magic' : 'btn-ghost opacity-50'}`}
+          className={`
+            w-full py-3 rounded-lg font-semibold text-base transition-all
+            ${canAffordReroll && canReroll && !isRerolling
+              ? 'bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white shadow-md hover:shadow-lg'
+              : 'bg-gray-700/50 text-gray-500 cursor-not-allowed'
+            }
+          `}
         >
           {isRerolling ? (
             <span className="flex items-center justify-center gap-2">
-              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               리롤 중...
             </span>
           ) : !canReroll ? (
             '리롤할 라인이 없습니다'
           ) : (
-            '✨ 잠재옵션 리롤'
+            <span className="flex items-center justify-center gap-2">
+              <GiSparkles className="text-base" />
+              잠재옵션 리롤
+            </span>
           )}
         </button>
 
