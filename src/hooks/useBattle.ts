@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react'
 import { getRandomWeapon } from '../data/weapons'
-import { getTotalAttack } from '../utils/starforce'
 import type {
   BattleMatch,
   BattleParticipant,
@@ -22,23 +21,19 @@ interface AIData {
 
 function generateAIData(difficulty: AIDifficulty, playerStats: CharacterStats): AIData {
   const config = AI_DIFFICULTY_CONFIG[difficulty]
-  const targetAttack = playerStats.attack * config.multiplier
 
-  // 랜덤 무기 선택
+  // AI 공격력: 플레이어 공격력 × 난이도 배율 (±10% 랜덤 변동)
+  const baseTargetAttack = playerStats.attack * config.multiplier
+  const attackVariation = 1 + (Math.random() - 0.5) * 0.2  // 0.9 ~ 1.1
+  const aiAttack = Math.floor(baseTargetAttack * attackVariation)
+
+  // 랜덤 무기 선택 (표시용)
   const weaponType = getRandomWeapon()
 
-  // 적절한 레벨 계산 (역산)
-  let level = 0
-  let currentAttack = weaponType.baseAttack
-  while (currentAttack < targetAttack && level < 30) {
-    level++
-    currentAttack = getTotalAttack(weaponType.baseAttack, level)
-  }
-
-  // 약간의 랜덤 변동
+  // 무기 레벨은 표시용으로만 사용 (실제 공격력은 aiAttack 사용)
+  let level = Math.min(30, Math.floor(playerStats.attack / 20))
   const variation = Math.floor((Math.random() - 0.5) * 3)
   level = Math.max(0, level + variation)
-  const totalAttack = getTotalAttack(weaponType.baseAttack, level)
 
   const weapon: UserWeapon = {
     id: 'ai-weapon',
@@ -48,19 +43,24 @@ function generateAIData(difficulty: AIDifficulty, playerStats: CharacterStats): 
     isDestroyed: false,
     consecutiveFails: 0,
     createdAt: new Date(),
-    totalAttack,
+    totalAttack: aiAttack,  // 실제 계산된 공격력 사용
   }
 
-  // AI 스탯 생성 (플레이어 스탯 기반 + 난이도 배율)
+  // AI 스탯 생성 (플레이어 스탯 반영 + 난이도 배율)
+  // 목표: 하위/상위 유저 모두 비슷한 승률 (~55-60%)
   const stats: CharacterStats = {
-    attack: totalAttack,
+    attack: aiAttack,  // 직접 계산된 공격력 사용
     defense: Math.floor((DEFAULT_CHARACTER_STATS.defense + playerStats.defense * 0.5) * config.multiplier),
     hp: Math.floor((DEFAULT_CHARACTER_STATS.hp + playerStats.hp * 0.3) * config.multiplier),
-    critRate: DEFAULT_CHARACTER_STATS.critRate + Math.floor(level * 0.3),
-    critDamage: DEFAULT_CHARACTER_STATS.critDamage + Math.floor(level * 1),
-    penetration: Math.floor(level * 0.2),
+    // 치명타 확률: 플레이어 치명타의 70% 반영 (상한 85%)
+    critRate: Math.min(85, Math.floor((DEFAULT_CHARACTER_STATS.critRate + playerStats.critRate * 0.7) * config.multiplier)),
+    // 치명타 데미지: 플레이어 초과분의 60% 반영
+    critDamage: Math.floor((DEFAULT_CHARACTER_STATS.critDamage + (playerStats.critDamage - 150) * 0.6) * config.multiplier),
+    // 관통력: 플레이어 관통력의 50% 반영
+    penetration: Math.floor(playerStats.penetration * 0.5 * config.multiplier),
     attackSpeed: DEFAULT_CHARACTER_STATS.attackSpeed,
-    evasion: Math.floor(level * 0.1),  // AI도 레벨에 따라 약간의 회피율
+    // 회피율: 플레이어 회피율의 40% 반영
+    evasion: Math.floor(playerStats.evasion * 0.4 * config.multiplier),
   }
 
   return { weapon, stats }
