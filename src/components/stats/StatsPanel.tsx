@@ -9,6 +9,7 @@ import {
   calculateCombatPower,
   PERCENTAGE_STATS,
 } from '../../types/stats'
+import { GiScrollUnfurled } from 'react-icons/gi'
 
 interface StatsPanelProps {
   equipmentStats: CharacterStats
@@ -38,10 +39,10 @@ export default function StatsPanel({
 
   if (compact) {
     return (
-      <div className="card p-3">
+      <div className="rounded-xl border border-amber-700/30 bg-gradient-to-b from-stone-900 to-stone-800 p-3">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-[var(--color-text-secondary)]">전투력</span>
-          <span className="text-lg font-bold text-[var(--color-accent)]">
+          <span className="text-sm text-amber-200/60">전투력</span>
+          <span className="text-lg font-bold text-amber-400">
             {totalCombatPower.toLocaleString()}
           </span>
         </div>
@@ -58,21 +59,21 @@ export default function StatsPanel({
   }
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h2 className="text-base font-bold text-[var(--color-text-primary)] flex items-center gap-2">
-          <span className="text-xl">📊</span>
+    <div className="rounded-2xl border border-amber-700/30 bg-gradient-to-b from-stone-900 to-stone-800 overflow-hidden">
+      <div className="p-4 border-b border-amber-700/30 bg-gradient-to-r from-amber-900/20 to-transparent">
+        <h2 className="text-base font-bold text-amber-100 flex items-center gap-2">
+          <GiScrollUnfurled className="text-xl text-amber-400" />
           캐릭터 스탯
         </h2>
       </div>
 
-      <div className="card-body space-y-4">
-        {/* Combat Power */}
-        <div className="combat-power">
-          <span className="combat-power-label">총 전투력</span>
-          <span className="combat-power-value">{totalCombatPower.toLocaleString()}</span>
+      <div className="p-4 space-y-4">
+        {/* Combat Power - 대장간 테마 */}
+        <div className="p-4 rounded-xl bg-gradient-to-r from-amber-900/30 to-orange-900/20 border border-amber-600/30 text-center">
+          <span className="text-sm text-amber-200/60 block mb-1">총 전투력</span>
+          <span className="text-3xl font-bold text-amber-400">{totalCombatPower.toLocaleString()}</span>
           {equipmentCombatPower > 0 && (
-            <span className="combat-power-bonus">장비 +{equipmentCombatPower.toLocaleString()}</span>
+            <span className="text-sm text-green-400 block mt-1">장비 +{equipmentCombatPower.toLocaleString()}</span>
           )}
         </div>
 
@@ -85,11 +86,11 @@ export default function StatsPanel({
             const isPercentage = PERCENTAGE_STATS.includes(stat)
 
             return (
-              <div key={stat} className="info-box p-3">
+              <div key={stat} className="p-3 rounded-lg bg-stone-800/50 border border-stone-700/50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{STAT_ICONS[stat]}</span>
-                    <span className="text-[var(--color-text-secondary)] text-sm">{STAT_NAMES[stat]}</span>
+                    <span className="text-stone-400 text-sm">{STAT_NAMES[stat]}</span>
                   </div>
                   <div className="text-right">
                     <span className={`text-base font-bold ${STAT_COLORS[stat]}`}>
@@ -100,10 +101,10 @@ export default function StatsPanel({
 
                 {/* Breakdown */}
                 {showBreakdown && bonus !== 0 && (
-                  <div className="flex items-center justify-end gap-2 mt-1 text-xs text-[var(--color-text-muted)]">
+                  <div className="flex items-center justify-end gap-2 mt-1 text-xs text-stone-500">
                     <span>기본 {formatStat(stat, base)}</span>
                     <span>+</span>
-                    <span className="text-[var(--color-success)]">
+                    <span className="text-green-400">
                       장비 +{isPercentage ? formatNumberString(bonus) : Math.round(bonus)}{isPercentage ? '%' : ''}
                     </span>
                   </div>
@@ -111,11 +112,9 @@ export default function StatsPanel({
 
                 {/* Progress bar for percentage stats */}
                 {isPercentage && stat !== 'critDamage' && stat !== 'attackSpeed' && stat !== 'evasion' && (
-                  <div className="mt-2 h-1.5 bg-[var(--color-bg-elevated-2)] rounded-full overflow-hidden">
+                  <div className="mt-2 h-1.5 bg-stone-900 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all ${
-                        stat === 'critRate' ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-magic)]'
-                      }`}
+                      className="h-full rounded-full transition-all bg-gradient-to-r from-amber-500 to-orange-500"
                       style={{ width: `${Math.min(total, 100)}%` }}
                     />
                   </div>
@@ -126,8 +125,8 @@ export default function StatsPanel({
         </div>
 
         {/* Stats Explanation */}
-        <div className="pt-3 border-t border-[var(--color-border)]">
-          <div className="text-xs text-[var(--color-text-muted)] space-y-1">
+        <div className="pt-3 border-t border-stone-700/50">
+          <div className="text-xs text-stone-500 space-y-1">
             <div>• 치명타 확률: 적에게 치명타를 입힐 확률</div>
             <div>• 치명타 데미지: 치명타 발생 시 추가 데미지 (%)</div>
             <div>• 관통력: 적 방어력 무시 비율 (%)</div>

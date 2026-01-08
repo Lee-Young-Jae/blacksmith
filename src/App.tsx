@@ -7,6 +7,7 @@ import {
   GiCardboardBox,
   GiSparkles,
   GiRuneStone,
+  GiSwapBag,
 } from "react-icons/gi";
 import { FaRobot } from "react-icons/fa";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -863,24 +864,25 @@ function GameContent() {
                       />
                     )}
                   {!equipmentStarForce.selectedEquipment && (
-                    <div className="card p-8 text-center">
-                      <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-[var(--color-bg-elevated-2)] flex items-center justify-center">
-                        <GiAnvilImpact className="text-4xl text-[var(--color-text-muted)]" />
+                    <div className="rounded-2xl border border-amber-700/30 bg-gradient-to-b from-stone-900 to-stone-800 p-8 text-center">
+                      <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-900/30 to-orange-900/30 border border-amber-600/30 flex items-center justify-center">
+                        <GiAnvilImpact className="text-4xl text-amber-500" />
                       </div>
-                      <p className="text-[var(--color-text-secondary)]">
+                      <p className="text-amber-200/60">
                         아래에서 강화할 장비를 선택하세요
                       </p>
                     </div>
                   )}
 
                   {/* 장비 선택 리스트 */}
-                  <div id="enhance-inventory" className="card">
-                    <div className="card-header py-2">
+                  <div id="enhance-inventory" className="rounded-2xl border border-amber-700/30 bg-gradient-to-b from-stone-900 to-stone-800 overflow-hidden">
+                    <div className="p-3 border-b border-amber-700/30 bg-gradient-to-r from-amber-900/20 to-transparent">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-[var(--color-text-primary)]">
+                        <h3 className="text-sm font-bold text-amber-100 flex items-center gap-2">
+                          <GiSwapBag className="text-amber-400" />
                           인벤토리
                         </h3>
-                        <span className="text-xs text-[var(--color-text-muted)]">
+                        <span className="text-xs text-amber-200/50">
                           장비 {equipmentSystem.inventory.length}개
                           {enhancementTickets.tickets.length > 0 &&
                             ` · 아이템 ${enhancementTickets.tickets.reduce(
@@ -890,11 +892,11 @@ function GameContent() {
                         </span>
                       </div>
                     </div>
-                    <div className="card-body py-2 space-y-3">
+                    <div className="p-3 space-y-3">
                       {/* 장비 목록 */}
                       <div>
-                        <p className="text-[10px] text-[var(--color-text-muted)] mb-1.5 flex items-center gap-1">
-                          <GiSwordman className="text-sm" /> 장비
+                        <p className="text-[10px] text-stone-400 mb-1.5 flex items-center gap-1">
+                          <GiSwordman className="text-sm text-amber-500" /> 장비
                         </p>
                         <div className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3">
                           {sortedInventory.map((equip) => (
@@ -904,24 +906,24 @@ function GameContent() {
                                 equipmentStarForce.selectEquipment(equip)
                               }
                               className={`
-                                flex-shrink-0 w-16 flex flex-col items-center gap-1 p-2 rounded-lg transition-all
+                                flex-shrink-0 w-16 flex flex-col items-center gap-1 p-2 rounded-lg transition-all border
                                 ${
                                   equipmentStarForce.selectedEquipment?.id ===
                                   equip.id
-                                    ? "bg-[var(--color-primary)]/20 ring-2 ring-[var(--color-primary)]"
-                                    : "bg-[var(--color-bg-elevated-2)] hover:bg-[var(--color-bg-elevated-3)]"
+                                    ? "bg-amber-900/30 ring-2 ring-amber-500 border-amber-500"
+                                    : "bg-stone-800/50 hover:bg-stone-700/50 border-stone-700/50 hover:border-amber-700/50"
                                 }
                               `}
                             >
                               <div className="relative">
                                 <EquipmentImage equipment={equip} size="md" />
                                 {equip.starLevel > 0 && (
-                                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--color-accent)] text-black text-[8px] font-bold flex items-center justify-center">
+                                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-black text-[8px] font-bold flex items-center justify-center">
                                     {equip.starLevel}
                                   </div>
                                 )}
                               </div>
-                              <span className="text-[9px] text-[var(--color-text-secondary)] truncate w-full text-center">
+                              <span className="text-[9px] text-stone-300 truncate w-full text-center">
                                 {
                                   getEquipmentName(
                                     equip.equipmentBase,
@@ -932,7 +934,7 @@ function GameContent() {
                             </button>
                           ))}
                           {sortedInventory.length === 0 && (
-                            <div className="flex-1 text-center py-4 text-[var(--color-text-muted)] text-sm">
+                            <div className="flex-1 text-center py-4 text-stone-500 text-sm">
                               장비가 없습니다
                             </div>
                           )}
@@ -942,10 +944,10 @@ function GameContent() {
                       {/* 강화권 목록 */}
                       {enhancementTickets.tickets.length > 0 && (
                         <div>
-                          <p className="text-[10px] text-[var(--color-text-muted)] mb-1.5 flex items-center gap-1">
+                          <p className="text-[10px] text-stone-400 mb-1.5 flex items-center gap-1">
                             <GiTicket className="text-sm text-cyan-400" />{" "}
                             강화권
-                            <span className="text-[9px] text-gray-500 ml-1">
+                            <span className="text-[9px] text-stone-500 ml-1">
                               (클릭하여 사용)
                             </span>
                           </p>

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { GiExplosiveMaterials, GiStarFormation, GiSparkles, GiCancel } from 'react-icons/gi'
-import { FaPray } from 'react-icons/fa'
+import { GiExplosiveMaterials, GiStarFormation, GiSparkles, GiCancel, GiAnvilImpact } from 'react-icons/gi'
+import { FaPray, FaFire } from 'react-icons/fa'
 import type { EnhancementFeedItem, EnhanceResult } from '../types/starforce'
 import { getLevelTier, LEVEL_COLORS } from '../types/weapon'
 import { generateNickname } from '../utils/nicknameGenerator'
@@ -137,14 +137,15 @@ export function LiveFeed({ items: realItems, currentUserId, onSendCondolence }: 
   }
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h3 className="text-sm font-bold text-[var(--color-text-primary)] flex items-center gap-2">
-          <span className="w-2 h-2 bg-[var(--color-danger)] rounded-full animate-pulse" />
+    <div className="rounded-2xl border border-amber-700/30 bg-gradient-to-b from-stone-900 to-stone-800 overflow-hidden">
+      <div className="p-4 border-b border-amber-700/30 bg-gradient-to-r from-amber-900/20 to-transparent">
+        <h3 className="text-sm font-bold text-amber-100 flex items-center gap-2">
+          <GiAnvilImpact className="text-lg text-amber-400" />
           실시간 강화
+          <FaFire className="w-3 h-3 text-orange-500 animate-pulse" />
         </h3>
       </div>
-      <div className="card-body p-3">
+      <div className="p-3">
         <div className="space-y-2 overflow-y-auto max-h-64">
           {displayItems.map((item, index) => {
             const levelTier = getLevelTier(item.fromLevel)
@@ -158,12 +159,12 @@ export function LiveFeed({ items: realItems, currentUserId, onSendCondolence }: 
             return (
               <div
                 key={item.id}
-                className={`flex items-center justify-between text-sm p-2 rounded-lg bg-[var(--color-bg-elevated-2)] transition-all ${
+                className={`flex items-center justify-between text-sm p-2 rounded-lg bg-stone-800/50 border border-stone-700/50 transition-all ${
                   index === 0 ? 'animate-[slideIn_0.3s_ease-out]' : ''
                 }`}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-[var(--color-text-primary)] text-xs truncate">{item.username}</p>
+                  <p className="text-amber-100 text-xs truncate">{item.username}</p>
                   <p className={`text-xs truncate ${levelColor}`}>
                     {item.weaponName}
                   </p>
@@ -176,7 +177,7 @@ export function LiveFeed({ items: realItems, currentUserId, onSendCondolence }: 
                   {canSendCondolence && (
                     <button
                       onClick={() => onSendCondolence(item.userId!, item.username, item.id)}
-                      className="p-1 rounded hover:bg-[var(--color-bg-elevated-3)] transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
+                      className="p-1 rounded hover:bg-stone-700 transition-colors text-stone-500 hover:text-amber-400"
                       title="묵념 보내기"
                     >
                       <FaPray className="w-4 h-4" />
