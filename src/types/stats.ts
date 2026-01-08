@@ -156,34 +156,16 @@ export function compareStats(
 }
 
 // =============================================
-// 크리티컬 데미지 체감 효과 (Diminishing Returns)
+// 크리티컬 데미지 (선형 적용, 체감 없음)
 // =============================================
 
-// 크뎀 체감 효과 설정
-export const CRIT_DAMAGE_CONFIG = {
-  SOFT_CAP: 200,           // 체감 시작 기준점 (200%)
-  DIMINISHING_RATE: 0.5,   // 체감 비율 (50%)
-}
-
 /**
- * 크리티컬 데미지 체감 효과 적용
- * - 200% 이하: 그대로 적용
- * - 200% 초과: 200% + (초과분 × 50%)
- *
- * 예시:
- * - 200% → 200%
- * - 270% → 200% + (70% × 0.5) = 235%
- * - 300% → 200% + (100% × 0.5) = 250%
+ * 크리티컬 데미지 적용 (선형)
+ * - 타 게임과 동일하게 체감 없이 그대로 적용
+ * - 예: 300% → 300%
  */
 export function getEffectiveCritDamage(rawCritDamage: number): number {
-  const { SOFT_CAP, DIMINISHING_RATE } = CRIT_DAMAGE_CONFIG
-
-  if (rawCritDamage <= SOFT_CAP) {
-    return rawCritDamage
-  }
-
-  const excess = rawCritDamage - SOFT_CAP
-  return SOFT_CAP + (excess * DIMINISHING_RATE)
+  return rawCritDamage
 }
 
 // =============================================
