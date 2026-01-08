@@ -474,7 +474,8 @@ function GameContent() {
   const kstDate = new Date(Date.now() + kstOffset);
   const today = kstDate.toISOString().split("T")[0];
   // 프로필이 로드된 경우에만 일일보상 버튼 표시
-  const canClaimDaily = userData.profile !== null && userData.profile.lastDailyClaim !== today;
+  const canClaimDaily =
+    userData.profile !== null && userData.profile.lastDailyClaim !== today;
 
   // 무기 획득
   const handleAcquireWeapon = async (): Promise<UserWeapon> => {
@@ -1105,7 +1106,7 @@ function GameContent() {
                     </div>
 
                     {/* 우측: 액션 패널 */}
-                    <div className="flex-1 max-w-md">
+                    <div className="flex-1">
                       {battleWeapon &&
                         (battleSystem.status === "idle" ? (
                           <BattleMatchmaking
@@ -1279,9 +1280,7 @@ function GameContent() {
       )}
 
       {/* 친구 초대 패널 */}
-      {showReferral && (
-        <ReferralPanel onClose={() => setShowReferral(false)} />
-      )}
+      {showReferral && <ReferralPanel onClose={() => setShowReferral(false)} />}
 
       {/* 선물함 패널 */}
       {showGiftBox && (

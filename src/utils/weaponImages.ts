@@ -1,35 +1,30 @@
 /**
- * 무기 이미지 동적 임포트
- * Vite의 import.meta.glob을 사용하여 모든 무기 이미지를 자동으로 로드
+ * 무기 이미지 경로 생성
+ * public/equipment 폴더에서 무기 이미지를 가져옴
  *
- * 폴더 구조: src/assets/weapons/{weapon_id}/{level}.{ext}
- * 예: src/assets/weapons/wooden_sword/0.png, wooden_sword/1.png, ...
+ * 폴더 구조: public/equipment/weapon-{weapon_id}/{level}.png
+ * 예: public/equipment/weapon-wooden-sword/0.png, weapon-wooden-sword/1.png, ...
+ *
+ * 무기 ID 변환: wooden_sword → weapon-wooden-sword
  */
 
-// 모든 무기 이미지를 eagerly import (레벨별 폴더 구조)
-const weaponImageModules = import.meta.glob<{ default: string }>(
-  "../assets/weapons/**/*.{png,jpg,jpeg,webp,gif}",
-  { eager: true }
-);
+/**
+ * 무기 ID를 폴더명으로 변환
+ * wooden_sword → weapon-wooden-sword
+ */
+function weaponIdToFolderName(weaponId: string): string {
+  return `weapon-${weaponId.replace(/_/g, "-")}`;
+}
 
-// 무기 ID → 레벨 → 이미지 URL 매핑
-const weaponLevelImages: Record<string, Record<number, string>> = {};
-
-for (const path in weaponImageModules) {
-  // 경로 파싱: '../assets/weapons/wooden_sword/0.png' → weaponId: 'wooden_sword', level: 0
-  const parts = path.split("/");
-  const fileName = parts.pop()?.replace(/\.[^/.]+$/, "") || "";
-  const weaponId = parts.pop() || "";
-
-  if (weaponId && fileName) {
-    const level = parseInt(fileName, 10);
-    if (!isNaN(level)) {
-      if (!weaponLevelImages[weaponId]) {
-        weaponLevelImages[weaponId] = {};
-      }
-      weaponLevelImages[weaponId][level] = weaponImageModules[path].default;
-    }
-  }
+/**
+ * 무기 이미지 경로 생성
+ * @param weaponId 무기 ID (예: 'wooden_sword')
+ * @param level 강화 레벨 (0-20)
+ * @returns 이미지 경로 (예: '/equipment/weapon-wooden-sword/0.png')
+ */
+function getWeaponImagePath(weaponId: string, level: number): string {
+  const folderName = weaponIdToFolderName(weaponId);
+  return `/equipment/${folderName}/${level}.png`;
 }
 
 /**
@@ -42,47 +37,33 @@ export function getWeaponImage(
   weaponId: string,
   level: number = 0
 ): string | undefined {
-  const images = weaponLevelImages[weaponId];
-  if (!images) return undefined;
-
-  // 정확한 레벨 이미지가 있으면 반환
-  if (images[level] !== undefined) {
-    return images[level];
-  }
-
-  // 없으면 가장 가까운 낮은 레벨 이미지 찾기
-  const availableLevels = Object.keys(images)
-    .map(Number)
-    .sort((a, b) => b - a);
-  for (const availableLevel of availableLevels) {
-    if (availableLevel <= level) {
-      return images[availableLevel];
-    }
-  }
-
-  // 그래도 없으면 가장 낮은 레벨 이미지 반환
-  return images[availableLevels[availableLevels.length - 1]];
+  // public 폴더의 이미지는 직접 경로를 반환
+  // 이미지 존재 여부는 브라우저에서 확인 (404 시 fallback)
+  return getWeaponImagePath(weaponId, level);
 }
 
 /**
  * 무기의 모든 레벨 이미지 가져오기
+ * public 폴더를 사용하므로 동적으로 경로 생성
  */
 export function getWeaponImages(
   weaponId: string
 ): Record<number, string> | undefined {
-  return weaponLevelImages[weaponId];
+  // public 폴더의 이미지는 동적으로 경로 생성
+  // 실제 존재 여부는 확인할 수 없으므로, 0-20 레벨까지 경로 반환
+  const images: Record<number, string> = {};
+  for (let i = 0; i <= 20; i++) {
+    images[i] = getWeaponImagePath(weaponId, i);
+  }
+  return images;
 }
 
 /**
  * 특정 무기에 이미지가 있는지 확인
+ * public 폴더를 사용하므로 항상 true 반환 (실제 존재 여부는 브라우저에서 확인)
  */
-export function hasWeaponImage(weaponId: string, level?: number): boolean {
-  const images = weaponLevelImages[weaponId];
-  if (!images) return false;
-  if (level !== undefined) {
-    return images[level] !== undefined;
-  }
-  return Object.keys(images).length > 0;
+export function hasWeaponImage(_weaponId: string, _level?: number): boolean {
+  // public 폴더의 이미지는 항상 경로가 존재한다고 가정
+  // 실제 존재 여부는 브라우저에서 404 에러로 확인
+  return true;
 }
-
-export default weaponLevelImages;
