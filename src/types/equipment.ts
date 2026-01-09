@@ -1,7 +1,7 @@
 import type { CharacterStats } from "./stats";
 import type { PotentialLine } from "./potential";
 
-// 장비 슬롯 타입 (7부위)
+// 장비 슬롯 타입 (8부위)
 export type EquipmentSlot =
   | "hat" // 모자
   | "top" // 상의
@@ -9,7 +9,8 @@ export type EquipmentSlot =
   | "weapon" // 무기
   | "gloves" // 장갑
   | "shoes" // 신발
-  | "earring"; // 귀고리
+  | "earring" // 귀고리
+  | "ring"; // 반지
 
 export const EQUIPMENT_SLOTS: EquipmentSlot[] = [
   "hat",
@@ -19,6 +20,7 @@ export const EQUIPMENT_SLOTS: EquipmentSlot[] = [
   "gloves",
   "shoes",
   "earring",
+  "ring",
 ];
 
 export const EQUIPMENT_SLOT_NAMES: Record<EquipmentSlot, string> = {
@@ -29,6 +31,7 @@ export const EQUIPMENT_SLOT_NAMES: Record<EquipmentSlot, string> = {
   gloves: "장갑",
   shoes: "신발",
   earring: "귀고리",
+  ring: "반지",
 };
 
 export const EQUIPMENT_SLOT_EMOJIS: Record<EquipmentSlot, string> = {
@@ -39,6 +42,7 @@ export const EQUIPMENT_SLOT_EMOJIS: Record<EquipmentSlot, string> = {
   gloves: "🧤",
   shoes: "👟",
   earring: "💎",
+  ring: "💍",
 };
 
 // 레벨 티어 (스타포스 레벨 기반)

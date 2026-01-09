@@ -88,16 +88,20 @@ export function mergeStats(
 }
 
 // 전투력 계산
+// PvP 실제 전투 가치 기준 가중치:
+// - 30초 실시간 턴제, 공격 간격 = 2000ms / (attackSpeed / 100)
+// - 공속 2배 = 공격 횟수 2배 = DPS 2배
+// - HP 높으면 생존 시간 증가 = 공격 횟수 증가
 export function calculateCombatPower(stats: CharacterStats): number {
   const weights = {
-    attack: 1.0,
-    defense: 0.8,
-    hp: 0.1,
-    critRate: 5.0,
-    critDamage: 0.5,
-    penetration: 3.0,
-    attackSpeed: 2.0, // 공격속도 가중치
-    evasion: 4.0, // 회피율 가중치 (회피는 강력하므로 높은 가중치)
+    attack: 1.0,       // 기준: 데미지 직접 증가
+    defense: 0.6,      // def/(def+100) 공식, 체감 효과
+    hp: 0.15,          // 생존 시간 증가 = 공격 기회 증가
+    critRate: 2.0,     // 1%당 평균 데미지 ~0.5-1% 증가
+    critDamage: 0.3,   // critRate와 시너지, 10%당 ~1-3% 증가
+    penetration: 2.0,  // 방어력 직접 무효화
+    attackSpeed: 1.0,  // 1%p당 DPS +1% (PvP 핵심)
+    evasion: 1.5,      // 1%당 생존력 ~1% 증가
   };
 
   return Math.floor(

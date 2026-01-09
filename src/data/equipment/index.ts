@@ -6,6 +6,7 @@ import { WEAPONS } from './weapons'
 import { GLOVES } from './gloves'
 import { SHOES } from './shoes'
 import { EARRINGS } from './earrings'
+import { RINGS } from './rings'
 
 // 모든 장비 데이터
 export const ALL_EQUIPMENT: EquipmentBase[] = [
@@ -16,6 +17,7 @@ export const ALL_EQUIPMENT: EquipmentBase[] = [
   ...GLOVES,
   ...SHOES,
   ...EARRINGS,
+  ...RINGS,
 ]
 
 // 슬롯별 장비 데이터
@@ -27,6 +29,7 @@ export const EQUIPMENT_BY_SLOT: Record<EquipmentSlot, EquipmentBase[]> = {
   gloves: GLOVES,
   shoes: SHOES,
   earring: EARRINGS,
+  ring: RINGS,
 }
 
 // ID로 장비 찾기
@@ -54,10 +57,11 @@ export const EQUIPMENT_COUNTS: Record<EquipmentSlot, number> = {
   gloves: GLOVES.length,
   shoes: SHOES.length,
   earring: EARRINGS.length,
+  ring: RINGS.length,
 }
 
 // 총 장비 개수
 export const TOTAL_EQUIPMENT_COUNT = ALL_EQUIPMENT.length
 
 // Re-export individual arrays
-export { HATS, TOPS, BOTTOMS, WEAPONS, GLOVES, SHOES, EARRINGS }
+export { HATS, TOPS, BOTTOMS, WEAPONS, GLOVES, SHOES, EARRINGS, RINGS }

@@ -45,57 +45,65 @@ export default function EquipmentSlots({
       </div>
       <div className="p-4">
 
-      {/* 7 Equipment Slots Grid */}
-      <div className="grid grid-cols-4 gap-2">
-        {/* Top row: hat, top, weapon */}
-        <div className="col-start-2">
+      {/* 8 Equipment Slots Grid - 인체 실루엣 스타일 */}
+      <div className="grid grid-cols-[repeat(3,4rem)] gap-2 w-fit mx-auto">
+        {/* Row 1: 모자 (중앙) */}
+        <div className="col-start-2 row-start-1">
           <EquipmentSlotBox
             slot="hat"
             equipment={equipped.hat}
             onClick={() => handleSlotClick('hat')}
           />
         </div>
-        <div className="col-start-3 row-start-1 row-span-2 flex items-center">
-          <EquipmentSlotBox
-            slot="weapon"
-            equipment={equipped.weapon}
-            onClick={() => handleSlotClick('weapon')}
-            isLarge
-          />
-        </div>
 
-        {/* Second row: earring, top */}
-        <div className="col-start-1">
+        {/* Row 2: 귀걸이, 상의, 무기 */}
+        <div className="col-start-1 row-start-2">
           <EquipmentSlotBox
             slot="earring"
             equipment={equipped.earring}
             onClick={() => handleSlotClick('earring')}
           />
         </div>
-        <div className="col-start-2">
+        <div className="col-start-2 row-start-2">
           <EquipmentSlotBox
             slot="top"
             equipment={equipped.top}
             onClick={() => handleSlotClick('top')}
           />
         </div>
-
-        {/* Third row: gloves, bottom */}
-        <div className="col-start-1">
+        <div className="col-start-3 row-start-2">
           <EquipmentSlotBox
-            slot="gloves"
-            equipment={equipped.gloves}
-            onClick={() => handleSlotClick('gloves')}
+            slot="weapon"
+            equipment={equipped.weapon}
+            onClick={() => handleSlotClick('weapon')}
           />
         </div>
-        <div className="col-start-2">
+
+        {/* Row 3: 반지, 하의, 장갑 */}
+        <div className="col-start-1 row-start-3">
+          <EquipmentSlotBox
+            slot="ring"
+            equipment={equipped.ring}
+            onClick={() => handleSlotClick('ring')}
+          />
+        </div>
+        <div className="col-start-2 row-start-3">
           <EquipmentSlotBox
             slot="bottom"
             equipment={equipped.bottom}
             onClick={() => handleSlotClick('bottom')}
           />
         </div>
-        <div className="col-start-3">
+        <div className="col-start-3 row-start-3">
+          <EquipmentSlotBox
+            slot="gloves"
+            equipment={equipped.gloves}
+            onClick={() => handleSlotClick('gloves')}
+          />
+        </div>
+
+        {/* Row 4: 신발 (중앙) */}
+        <div className="col-start-2 row-start-4">
           <EquipmentSlotBox
             slot="shoes"
             equipment={equipped.shoes}
@@ -136,15 +144,15 @@ function EquipmentSlotBox({ slot, equipment, onClick, isLarge }: EquipmentSlotBo
   const slotName = EQUIPMENT_SLOT_NAMES[slot]
   const slotEmoji = EQUIPMENT_SLOT_EMOJIS[slot]
 
+  // isLarge: 너비는 동일(w-16), 높이만 크게(h-[4.5rem] ≈ 72px)
+  const sizeClass = isLarge ? 'w-16 h-[4.5rem]' : 'w-16 h-16'
+
   if (!equipment) {
     // Empty slot
     return (
       <button
         onClick={onClick}
-        className={`
-          ${isLarge ? 'w-20 h-24' : 'w-16 h-16'}
-          item-slot border-dashed flex-col gap-1
-        `}
+        className={`${sizeClass} item-slot border-dashed flex-col gap-1`}
       >
         <span className={`${isLarge ? 'text-2xl' : 'text-lg'} opacity-40`}>
           {slotEmoji}
@@ -158,10 +166,7 @@ function EquipmentSlotBox({ slot, equipment, onClick, isLarge }: EquipmentSlotBo
   return (
     <button
       onClick={onClick}
-      className={`
-        ${isLarge ? 'w-20 h-24' : 'w-16 h-16'}
-        item-slot equipped flex-col relative
-      `}
+      className={`${sizeClass} item-slot equipped flex-col relative`}
     >
       {/* Star level badge */}
       {equipment.starLevel > 0 && (
