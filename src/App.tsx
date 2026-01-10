@@ -678,6 +678,7 @@ function GameContent() {
                       onEquip={equipmentSystem.equipItem}
                       onUnequip={equipmentSystem.unequipItem}
                       onOpenInventory={handleOpenInventory}
+                      onRefreshEquipment={equipmentSystem.loadEquipment}
                     />
                   </div>
 
