@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { UserEquipment } from "../../types/equipment";
 import {
   EQUIPMENT_SLOT_NAMES,
@@ -8,7 +9,7 @@ import {
   shouldWarnOnSell,
 } from "../../types/equipment";
 import EquipmentImage from "./EquipmentImage";
-import { FaLock, FaThumbtack } from "react-icons/fa";
+import { FaLock, FaThumbtack, FaExclamationTriangle } from "react-icons/fa";
 import {
   POTENTIAL_TIER_NAMES,
   POTENTIAL_TIER_COLORS,
@@ -56,6 +57,21 @@ export default function EquipmentDetail({
   const combatPower = calculateCombatPower(stats);
   const sellPrice = getEquipmentSellPrice(equipment);
   const warnOnSell = shouldWarnOnSell(equipment);
+
+  const [showSellWarning, setShowSellWarning] = useState(false);
+
+  const handleSellClick = () => {
+    if (warnOnSell) {
+      setShowSellWarning(true);
+    } else {
+      onSell?.();
+    }
+  };
+
+  const handleConfirmSell = () => {
+    setShowSellWarning(false);
+    onSell?.();
+  };
 
   // Get other equipment of same slot for comparison
   const sameSlotItems =
@@ -209,7 +225,7 @@ export default function EquipmentDetail({
             골드
             {warnOnSell && (
               <span className="text-orange-400 ml-2">
-                (해제된 잠재옵션 있음!)
+                ({starLevel > 0 && "강화됨"}{starLevel > 0 && unlockedCount > 0 && " / "}{unlockedCount > 0 && "잠재옵션 해제됨"})
               </span>
             )}
           </div>
@@ -242,6 +258,11 @@ export default function EquipmentDetail({
                 해제
               </button>
             )}
+            {!isEquipped && onSell && (
+              <button onClick={handleSellClick} className="btn btn-accent flex-1">
+                판매 ({sellPrice.toLocaleString()}G)
+              </button>
+            )}
             {!isEquipped && onEquip && (
               <button
                 id="equip-button"
@@ -251,14 +272,76 @@ export default function EquipmentDetail({
                 장착
               </button>
             )}
-            {!isEquipped && onSell && (
-              <button onClick={onSell} className="btn btn-accent flex-1">
-                판매 ({sellPrice.toLocaleString()}G)
-              </button>
-            )}
           </div>
         </div>
       </div>
+
+      {/* Sell Warning Modal */}
+      {showSellWarning && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setShowSellWarning(false)}
+        >
+          <div
+            className="mx-4 max-w-sm w-full bg-[var(--color-bg-elevated-1)] border border-[var(--color-border)] rounded-2xl shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated-2)]">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-orange-500/20 flex items-center justify-center">
+                  <FaExclamationTriangle className="text-orange-400 text-xl" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-[var(--color-text-primary)]">판매 확인</h3>
+                  <p className="text-xs text-[var(--color-text-muted)]">강화된 장비입니다</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-4 space-y-3">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-[var(--color-bg-elevated-2)]">
+                <EquipmentImage equipment={equipment} size="lg" />
+                <div>
+                  <div className="font-bold text-[var(--color-text-primary)]">{displayName}</div>
+                  <div className="text-sm text-[var(--color-text-secondary)]">
+                    {starLevel > 0 && <span className="text-[var(--color-accent)]">★{starLevel} </span>}
+                    {unlockedCount > 0 && <span>잠재옵션 {unlockedCount}줄</span>}
+                  </div>
+                </div>
+              </div>
+              <p className="text-[var(--color-text-secondary)] text-sm leading-relaxed">
+                이 장비는 {starLevel > 0 && <span className="text-[var(--color-accent)] font-bold">★{starLevel} 강화</span>}
+                {starLevel > 0 && unlockedCount > 0 && " 및 "}
+                {unlockedCount > 0 && <span className="text-purple-400 font-bold">잠재옵션 {unlockedCount}개 해제</span>}
+                가 되어있습니다.
+                <br />정말 판매하시겠습니까?
+              </p>
+              <div className="text-center text-sm">
+                <span className="text-[var(--color-text-muted)]">판매가: </span>
+                <span className="text-[var(--color-accent)] font-bold text-lg">{sellPrice.toLocaleString()} G</span>
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="p-4 border-t border-[var(--color-border)] flex gap-3">
+              <button
+                onClick={() => setShowSellWarning(false)}
+                className="flex-1 py-3 rounded-xl font-semibold text-sm bg-[var(--color-bg-elevated-3)] hover:bg-[var(--color-bg-elevated-2)] text-[var(--color-text-primary)] transition-colors border border-[var(--color-border)]"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleConfirmSell}
+                className="flex-1 py-3 rounded-xl font-semibold text-sm bg-red-600 hover:bg-red-500 text-white transition-colors"
+              >
+                판매
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

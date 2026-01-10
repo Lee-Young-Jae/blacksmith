@@ -337,7 +337,9 @@ export function getEquipmentSellPrice(equipment: UserEquipment): number {
   return Math.floor(basePrice + linearBonus + quadraticBonus);
 }
 
-// 판매 시 잠재옵션 경고 필요 여부 (해제된 슬롯이 있으면 경고)
+// 판매 시 경고 필요 여부 (해제된 잠재옵션이 있거나 스타포스가 있으면 경고)
 export function shouldWarnOnSell(equipment: UserEquipment): boolean {
-  return equipment.potentials.some((p) => p.isUnlocked);
+  const hasUnlockedPotential = equipment.potentials.some((p) => p.isUnlocked);
+  const hasStarForce = equipment.starLevel > 0;
+  return hasUnlockedPotential || hasStarForce;
 }
