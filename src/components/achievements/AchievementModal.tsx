@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FiX, FiCheck, FiLock } from 'react-icons/fi'
+import { FiX, FiCheck, FiLock, FiEye } from 'react-icons/fi'
 import { GiTrophy, GiCrossedSwords, GiAnvilImpact, GiTreasureMap } from 'react-icons/gi'
 import type {
   AchievementWithProgress,
@@ -10,7 +10,7 @@ import {
   ACHIEVEMENT_TIER_COLORS,
   ACHIEVEMENT_CATEGORY_NAMES,
 } from '../../types/achievement'
-import { ProfileBorder } from './ProfileBorder'
+import { ProfileBorder, hasFrameForAchievement } from './ProfileBorder'
 
 interface AchievementModalProps {
   achievements: AchievementWithProgress[]
@@ -134,7 +134,10 @@ export function AchievementModal({
         <div className="flex-shrink-0 p-4 bg-stone-900/50 border-b border-stone-700/50">
           <div className="flex items-center gap-4">
             <div className="flex flex-col items-center gap-2">
-              <ProfileBorder borderClass={previewBorder?.borderClass} size="lg">
+              <ProfileBorder
+                borderId={previewBorder?.id}
+                size="xl"
+              >
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -153,8 +156,22 @@ export function AchievementModal({
                       [{ACHIEVEMENT_TIER_NAMES[previewBorder.tier]}]
                     </span>
                     <span className="text-amber-100 font-bold">{previewBorder.name}</span>
+                    {!previewBorder.isUnlocked && (
+                      <span className="px-1.5 py-0.5 text-xs bg-stone-700 text-stone-400 rounded border border-stone-600/50">
+                        <FiLock className="inline w-3 h-3 mr-0.5" />
+                        미해금
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm text-stone-400 mt-1 line-clamp-2">{previewBorder.description}</p>
+                  {/* 프레임 정보 */}
+                  {hasFrameForAchievement(previewBorder.id) && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-amber-900/30 text-amber-300 border border-amber-500/30">
+                        프레임 테두리
+                      </span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="text-stone-500">테두리를 선택하세요</p>
@@ -211,17 +228,17 @@ export function AchievementModal({
             const progress = Math.min(achievement.progress, achievement.unlockCondition.target)
             const progressPercent = (progress / achievement.unlockCondition.target) * 100
             const isEquipped = equippedBorderId === achievement.id
+            const hasFrame = hasFrameForAchievement(achievement.id)
+            const isPreviewing = previewBorderId === achievement.id
 
             return (
               <div
                 key={achievement.id}
                 className={`p-3 rounded-xl border transition-all ${
                   achievement.isUnlocked
-                    ? `${TIER_BG_STYLES[achievement.tier]} hover:border-amber-500/50`
+                    ? `${TIER_BG_STYLES[achievement.tier]} ${isPreviewing ? 'border-amber-500/70 ring-1 ring-amber-500/30' : 'hover:border-amber-500/50'}`
                     : 'bg-stone-900/50 border-stone-700/50 opacity-60'
                 }`}
-                onMouseEnter={() => achievement.isUnlocked && setPreviewBorderId(achievement.id)}
-                onMouseLeave={() => setPreviewBorderId(null)}
               >
                 <div className="flex items-center gap-3">
                   {/* 잠금/해금 아이콘 */}
@@ -247,6 +264,16 @@ export function AchievementModal({
                       }`}>
                         {ACHIEVEMENT_TIER_NAMES[achievement.tier]}
                       </span>
+                      {/* 프레임 태그 */}
+                      {hasFrame && (
+                        <span className={`text-xs px-1.5 py-0.5 rounded ${
+                          achievement.isUnlocked
+                            ? 'bg-cyan-900/40 text-cyan-300 border border-cyan-500/30'
+                            : 'bg-stone-800 text-stone-500'
+                        }`}>
+                          프레임
+                        </span>
+                      )}
                       <span className="text-amber-100 font-medium truncate">{achievement.name}</span>
                       {isEquipped && (
                         <span className="px-1.5 py-0.5 text-xs bg-amber-600/30 text-amber-300 rounded border border-amber-500/30">
@@ -273,20 +300,38 @@ export function AchievementModal({
                     )}
                   </div>
 
-                  {/* 장착 버튼 */}
-                  {achievement.isUnlocked && (
-                    <button
-                      onClick={() => handleEquip(isEquipped ? null : achievement.id)}
-                      disabled={isEquipping}
-                      className={`flex-shrink-0 px-3 py-1.5 text-sm rounded-lg font-medium transition-all disabled:opacity-50 ${
-                        isEquipped
-                          ? 'bg-stone-700 text-stone-300 hover:bg-stone-600 border border-stone-600/50'
-                          : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-500 hover:to-orange-500 shadow-lg shadow-orange-900/20'
-                      }`}
-                    >
-                      {isEquipped ? '해제' : '장착'}
-                    </button>
-                  )}
+                  {/* 버튼 영역 */}
+                  <div className="flex-shrink-0 flex items-center gap-2">
+                    {/* 미리보기 버튼 - 프레임이 있는 경우만 */}
+                    {hasFrame && (
+                      <button
+                        onClick={() => setPreviewBorderId(isPreviewing ? null : achievement.id)}
+                        className={`p-2 rounded-lg transition-all ${
+                          isPreviewing
+                            ? 'bg-cyan-600/30 text-cyan-300 border border-cyan-500/50'
+                            : 'text-stone-400 hover:text-cyan-300 hover:bg-stone-700/50 border border-transparent'
+                        }`}
+                        title="미리보기"
+                      >
+                        <FiEye className="w-4 h-4" />
+                      </button>
+                    )}
+
+                    {/* 장착 버튼 - 해금되고 프레임이 있는 경우만 */}
+                    {achievement.isUnlocked && hasFrame && (
+                      <button
+                        onClick={() => handleEquip(isEquipped ? null : achievement.id)}
+                        disabled={isEquipping}
+                        className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-all disabled:opacity-50 ${
+                          isEquipped
+                            ? 'bg-stone-700 text-stone-300 hover:bg-stone-600 border border-stone-600/50'
+                            : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-500 hover:to-orange-500 shadow-lg shadow-orange-900/20'
+                        }`}
+                      >
+                        {isEquipped ? '해제' : '장착'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             )

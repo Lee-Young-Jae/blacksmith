@@ -30,6 +30,7 @@ import {
   GiLightBulb,
 } from "react-icons/gi";
 import { FaRobot, FaUser, FaTimes } from "react-icons/fa";
+import { AvatarWithBorder, getFrameForBorder } from "../achievements/ProfileBorder";
 
 // =============================================
 // 타입 정의
@@ -39,6 +40,7 @@ interface PvPMatchmakingProps {
   playerStats: CharacterStats;
   playerName: string;
   playerAvatarUrl?: string; // 플레이어 프로필 이미지
+  playerBorderId?: string | null; // 플레이어 업적 테두리 ID
   combatPower: number;
   equipment: EquippedItems;
   ownedCards: OwnedCard[];
@@ -214,6 +216,7 @@ export function PvPMatchmaking({
   playerStats,
   playerName,
   playerAvatarUrl,
+  playerBorderId,
   combatPower,
   equipment,
   ownedCards,
@@ -468,10 +471,12 @@ export function PvPMatchmaking({
       <PvPRealtimeBattle
         playerName={playerName}
         playerAvatarUrl={playerAvatarUrl}
+        playerFrameImage={getFrameForBorder(playerBorderId)}
         playerStats={playerStats}
         playerCards={playerCards}
         opponentName={opponent.username}
         opponentAvatarUrl={opponent.avatarUrl}
+        opponentFrameImage={getFrameForBorder(opponent.equippedBorder)}
         opponentStats={opponent.stats}
         opponentCards={opponentCards}
         opponentIsAI={opponent.isAI}
@@ -531,16 +536,14 @@ export function PvPMatchmaking({
           <div className="flex items-center justify-between">
             {/* 플레이어 */}
             <div className="flex-1 text-center">
-              <div className="w-16 h-16 mx-auto bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center mb-2 border-2 border-cyan-400 shadow-lg shadow-cyan-500/30 overflow-hidden">
-                {playerAvatarUrl ? (
-                  <img
-                    src={playerAvatarUrl}
-                    alt={playerName}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <FaUser className="text-3xl text-white" />
-                )}
+              <div className="mx-auto mb-2 flex justify-center">
+                <AvatarWithBorder
+                  avatarUrl={playerAvatarUrl}
+                  username={playerName}
+                  borderId={playerBorderId}
+                  size="lg"
+                  fallbackIcon={<FaUser className="text-2xl text-white" />}
+                />
               </div>
               <p className="text-cyan-400 font-bold">{playerName}</p>
               <p className="text-yellow-400 text-sm font-medium">
@@ -558,23 +561,19 @@ export function PvPMatchmaking({
 
             {/* 상대 */}
             <div className="flex-1 text-center">
-              <div
-                className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-2 border-2 shadow-lg overflow-hidden ${
-                  opponent.isAI
-                    ? "bg-gradient-to-br from-yellow-500 to-amber-600 border-yellow-400 shadow-yellow-500/30"
-                    : "bg-gradient-to-br from-red-500 to-orange-600 border-red-400 shadow-red-500/30"
-                }`}
-              >
+              <div className="mx-auto mb-2 flex justify-center">
                 {opponent.isAI ? (
-                  <FaRobot className="text-3xl text-white" />
-                ) : opponent.avatarUrl ? (
-                  <img
-                    src={opponent.avatarUrl}
-                    alt={opponent.username}
-                    className="w-full h-full object-cover"
-                  />
+                  <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-full flex items-center justify-center border-2 border-yellow-400 shadow-lg shadow-yellow-500/30">
+                    <FaRobot className="text-3xl text-white" />
+                  </div>
                 ) : (
-                  <FaUser className="text-3xl text-white" />
+                  <AvatarWithBorder
+                    avatarUrl={opponent.avatarUrl}
+                    username={opponent.username}
+                    borderId={opponent.equippedBorder}
+                    size="lg"
+                    fallbackIcon={<FaUser className="text-2xl text-white" />}
+                  />
                 )}
               </div>
               <p className="text-red-400 font-bold">{opponent.username}</p>

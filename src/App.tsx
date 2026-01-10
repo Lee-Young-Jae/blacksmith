@@ -158,7 +158,7 @@ function GameContent() {
   const liveFeed = useLiveFeed();
   const giftSystem = useGift();
   const tutorial = useTutorial();
-  const { updateProgress: updateAchievement } = useAchievements();
+  const { updateProgress: updateAchievement, equippedBorderId } = useAchievements();
 
   const [view, setView] = useState<GameView>("acquire");
   const [activeTab, setActiveTab] = useState<TabType>("equipment");
@@ -1191,6 +1191,7 @@ function GameContent() {
                     user?.user_metadata?.avatar_url ||
                     user?.user_metadata?.picture
                   }
+                  playerEquippedBorder={equippedBorderId}
                   combatPower={totalCombatPower}
                   equipment={equipmentSystem.equipped}
                   gold={gold}

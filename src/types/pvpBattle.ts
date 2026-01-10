@@ -162,6 +162,7 @@ export interface PvPOpponent {
   stats: CharacterStats
   cardCount: number  // 방어덱 카드 수 (비공개이므로 개수만)
   avatarUrl?: string  // 프로필 이미지 URL
+  equippedBorder?: string | null  // 장착한 업적 테두리 ID
   isAI?: boolean     // AI 상대 여부 (폴백용)
   aiCards?: BattleCard[]  // AI 상대의 카드 (실시간 배틀용)
   defenseCards?: BattleCard[]  // 실제 유저의 방어덱 카드

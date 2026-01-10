@@ -177,12 +177,15 @@ export interface LeaderboardEntry {
   rank: number
   userId: string
   username: string
+  avatarUrl?: string | null
   rating: number
   tier: LeagueTier
   wins: number
   losses: number
   winStreak: number
   combatPower: number
+  // 업적 테두리 (업적 ID)
+  equippedBorder?: string | null
 }
 
 // =============================================

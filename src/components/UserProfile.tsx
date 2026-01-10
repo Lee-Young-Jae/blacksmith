@@ -25,10 +25,7 @@ export function UserProfile({ username, battlesRemaining, maxBattles, onUpdateUs
     achievements,
     equippedBorderId,
     equipBorder,
-    getEquippedBorder,
   } = useAchievements()
-
-  const equippedBorder = getEquippedBorder()
 
   if (!user) return null
 
@@ -52,7 +49,7 @@ export function UserProfile({ username, battlesRemaining, maxBattles, onUpdateUs
           onClick={() => setShowMenu(!showMenu)}
           className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 rounded-lg px-3 py-2 transition-colors"
         >
-          <ProfileBorder borderClass={equippedBorder?.borderClass} size="sm">
+          <ProfileBorder borderId={equippedBorderId} size="sm">
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
             ) : (
@@ -83,7 +80,7 @@ export function UserProfile({ username, battlesRemaining, maxBattles, onUpdateUs
               {/* 유저 정보 */}
               <div className="p-4 border-b border-gray-700">
                 <div className="flex items-center gap-3">
-                  <ProfileBorder borderClass={equippedBorder?.borderClass} size="md">
+                  <ProfileBorder borderId={equippedBorderId} size="md">
                     {avatarUrl ? (
                       <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
                     ) : (

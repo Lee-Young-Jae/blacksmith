@@ -192,12 +192,14 @@ export function usePvPRanking(): UsePvPRankingReturn {
       const entries: LeaderboardEntry[] = (data || []).map((row: {
         user_id: string
         username: string
+        avatar_url?: string | null
         rating: number
         tier: string
         wins: number
         losses: number
         win_streak: number
         combat_power: number
+        equipped_border?: string | null
       }, index: number) => {
         // 항상 레이팅에서 티어 계산 (DB tier와 불일치 방지)
         const calculatedTier = getTierFromRating(row.rating || 0)
@@ -206,12 +208,14 @@ export function usePvPRanking(): UsePvPRankingReturn {
           rank: index + 1,
           userId: row.user_id,
           username: row.username || '플레이어',
+          avatarUrl: row.avatar_url,
           rating: row.rating,
           tier: calculatedTier,
           wins: row.wins,
           losses: row.losses,
           winStreak: row.win_streak,
           combatPower: row.combat_power,
+          equippedBorder: row.equipped_border,
         }
       })
 

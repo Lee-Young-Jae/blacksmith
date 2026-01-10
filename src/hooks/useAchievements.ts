@@ -29,6 +29,9 @@ function transformBorderRow(row: AchievementBorderRow): AchievementBorder {
     seasonId: row.season_id,
     isSeasonal: row.is_seasonal || false,
     seasonEndDate: row.season_end_date,
+    borderEffect: row.border_effect || 'glow',
+    borderColor: row.border_color || null,
+    frameImage: row.frame_image || null,
   }
 }
 
@@ -136,13 +139,17 @@ export function useAchievements() {
       // DB에서 직접 해당 조건 타입의 업적들 조회 (state에 의존하지 않음)
       const { data: bordersData, error: bordersError } = await supabase
         .from('achievement_borders')
-        .select('id')
-        .eq('unlock_condition->>type', conditionType)
+        .select('id, unlock_condition')
 
       if (bordersError) {
         console.error('Failed to fetch achievement borders:', bordersError)
         return []
       }
+
+      // 클라이언트에서 조건 타입 필터링 (JSONB 쿼리 호환성 문제 해결)
+      const filteredBorders = (bordersData || []).filter(
+        b => b.unlock_condition?.type === conditionType
+      )
 
       // 이미 해금된 업적 조회
       const { data: unlockedData } = await supabase
@@ -154,7 +161,7 @@ export function useAchievements() {
       const unlockedIds = new Set((unlockedData || []).map(u => u.border_id))
 
       // 해금되지 않은 업적만 필터
-      const achievementIds = (bordersData || [])
+      const achievementIds = filteredBorders
         .map(b => b.id)
         .filter(id => !unlockedIds.has(id))
 

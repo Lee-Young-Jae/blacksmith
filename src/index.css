@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 
 /* =============================================
    대장장이 - 디자인 시스템
@@ -261,6 +264,47 @@ body {
 @keyframes legendary-glow {
   0%, 100% { box-shadow: 0 0 15px var(--rarity-legendary-bg); }
   50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.4); }
+}
+
+/* Achievement Border Animations */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes legendary-border-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6), 0 0 40px rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.4);
+  }
+}
+
+@keyframes sparkle {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes rainbow-border {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+.animate-legendary-glow {
+  animation: legendary-border-glow 2s ease-in-out infinite;
+}
+
+.animate-sparkle {
+  animation: sparkle 8s linear infinite;
+}
+
+.animate-rainbow {
+  animation: rainbow-border 5s linear infinite;
 }
 
 /* Star Level Badge */
@@ -1216,4 +1260,344 @@ body {
     opacity: 0;
     transform: translateY(-10px) scale(0.95);
   }
+}
+
+/* =============================================
+   프로필 테두리 효과 애니메이션
+   ============================================= */
+
+/* Pulse - 심박동 효과 */
+@keyframes border-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes border-expand {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+}
+
+.animate-border-pulse {
+  animation: border-pulse 2s ease-in-out infinite;
+}
+
+.animate-border-expand {
+  animation: border-expand 1.5s ease-out infinite;
+}
+
+/* Sparkle - 반짝임 효과 */
+@keyframes sparkle-float {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translate(var(--tx, 0), var(--ty, 0)) scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(var(--tx, 0), var(--ty, 0)) scale(1.2);
+  }
+}
+
+.animate-sparkle-float {
+  animation: sparkle-float 1.5s ease-in-out infinite;
+}
+
+/* Lightning - 번개 효과 */
+@keyframes lightning-flash {
+  0%, 90%, 100% {
+    opacity: 0.5;
+  }
+  92%, 95% {
+    opacity: 1;
+  }
+}
+
+@keyframes lightning-path {
+  0%, 100% {
+    opacity: 0;
+    stroke-dasharray: 0 100;
+  }
+  10%, 30% {
+    opacity: 1;
+    stroke-dasharray: 50 50;
+  }
+  50% {
+    opacity: 0;
+    stroke-dasharray: 100 0;
+  }
+}
+
+@keyframes lightning-bolt {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-lightning-flash {
+  animation: lightning-flash 3s ease-in-out infinite;
+}
+
+.animate-lightning-path {
+  animation: lightning-path 2s ease-in-out infinite;
+}
+
+.animate-lightning-bolt {
+  animation: lightning-bolt 2s ease-in-out infinite;
+}
+
+/* Aurora - 오로라 효과 */
+@keyframes aurora-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes aurora-shimmer {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.animate-aurora-rotate {
+  animation: aurora-rotate 8s linear infinite;
+}
+
+.animate-aurora-shimmer {
+  animation: aurora-shimmer 3s ease-in-out infinite;
+}
+
+/* Fire - 불꽃 효과 */
+@keyframes fire-glow {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes flame-rise {
+  0%, 100% {
+    opacity: 0;
+    transform: translate(var(--tx, -2px), var(--ty, 0)) rotate(var(--rot, 0deg)) scaleY(0.5);
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.8;
+    transform: translate(var(--tx, -2px), calc(var(--ty, 0px) - 8px)) rotate(var(--rot, 0deg)) scaleY(1.2);
+  }
+}
+
+.animate-fire-glow {
+  animation: fire-glow 1s ease-in-out infinite;
+}
+
+.animate-flame-rise {
+  animation: flame-rise 0.8s ease-out infinite;
+}
+
+/* Rain - 비 효과 */
+@keyframes rain-fall {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(200%);
+    opacity: 0;
+  }
+}
+
+.animate-rain-fall {
+  animation: rain-fall 1.5s linear infinite;
+}
+
+/* Wind - 바람 효과 */
+@keyframes wind-glow {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes wind-swirl {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes wind-line {
+  0% {
+    stroke-dashoffset: 20;
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    stroke-dashoffset: -20;
+    opacity: 0.3;
+  }
+}
+
+.animate-wind-glow {
+  animation: wind-glow 2s ease-in-out infinite;
+}
+
+.animate-wind-swirl {
+  animation: wind-swirl 10s linear infinite;
+}
+
+.animate-wind-line {
+  animation: wind-line 2s linear infinite;
+}
+
+/* Storm - 폭풍 효과 */
+@keyframes storm-flash {
+  0%, 88%, 100% {
+    opacity: 0.5;
+  }
+  90%, 94% {
+    opacity: 1;
+  }
+}
+
+@keyframes storm-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes storm-circle {
+  0% {
+    stroke-dashoffset: 0;
+    transform: rotate(0deg);
+  }
+  100% {
+    stroke-dashoffset: 50;
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes storm-circle-reverse {
+  0% {
+    stroke-dashoffset: 0;
+    transform: rotate(0deg);
+  }
+  100% {
+    stroke-dashoffset: -50;
+    transform: rotate(-360deg);
+  }
+}
+
+.animate-storm-flash {
+  animation: storm-flash 4s ease-in-out infinite;
+}
+
+.animate-storm-rotate {
+  animation: storm-rotate 6s linear infinite;
+}
+
+.animate-storm-circle {
+  animation: storm-circle 4s linear infinite;
+  transform-origin: center;
+}
+
+.animate-storm-circle-reverse {
+  animation: storm-circle-reverse 5s linear infinite;
+  transform-origin: center;
+}
+
+/* Cosmic - 우주 효과 */
+@keyframes cosmic-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes star-twinkle {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.3);
+  }
+}
+
+.animate-cosmic-rotate {
+  animation: cosmic-rotate 20s linear infinite;
+}
+
+.animate-star-twinkle {
+  animation: star-twinkle 2s ease-in-out infinite;
+}
+
+/* Particles - 파티클 효과 */
+@keyframes particle-orbit {
+  0% {
+    transform: rotate(var(--start-angle, 0deg)) translateX(var(--orbit-radius, 20px)) rotate(calc(-1 * var(--start-angle, 0deg)));
+  }
+  100% {
+    transform: rotate(calc(var(--start-angle, 0deg) + 360deg)) translateX(var(--orbit-radius, 20px)) rotate(calc(-1 * (var(--start-angle, 0deg) + 360deg)));
+  }
+}
+
+@keyframes particle-glow {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.animate-particle-orbit {
+  animation: particle-orbit 4s linear infinite;
+}
+
+.animate-particle-glow {
+  animation: particle-glow 1.5s ease-in-out infinite;
 }

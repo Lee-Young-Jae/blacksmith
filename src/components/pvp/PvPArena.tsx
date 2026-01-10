@@ -22,6 +22,7 @@ import { useCardDeck } from '../../hooks/useCardDeck'
 import { usePvPRanking } from '../../hooks/usePvPRanking'
 import { GiCrossedSwords, GiShield, GiCardPlay, GiTrophy, GiScrollUnfurled, GiTicket } from 'react-icons/gi'
 import type { IconType } from 'react-icons'
+import { AvatarWithBorder } from '../achievements/ProfileBorder'
 
 // =============================================
 // 타입 정의
@@ -33,6 +34,7 @@ interface PvPArenaProps {
   playerStats: CharacterStats
   playerName: string
   playerAvatarUrl?: string  // 플레이어 프로필 이미지
+  playerEquippedBorder?: string | null  // 플레이어 장착 업적 테두리 ID
   combatPower: number
   equipment: EquippedItems
   gold: number
@@ -57,6 +59,7 @@ export function PvPArena({
   playerStats,
   playerName,
   playerAvatarUrl,
+  playerEquippedBorder,
   combatPower,
   equipment,
   gold,
@@ -86,13 +89,13 @@ export function PvPArena({
       {/* 헤더 - 내 정보 */}
       <div className="flex items-center justify-between mb-4 p-3 bg-gray-700/50 rounded-lg">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center overflow-hidden">
-            {playerAvatarUrl ? (
-              <img src={playerAvatarUrl} alt={playerName} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-2xl">⚔️</span>
-            )}
-          </div>
+          <AvatarWithBorder
+            avatarUrl={playerAvatarUrl}
+            username={playerName}
+            borderId={playerEquippedBorder}
+            size="sm"
+            fallbackIcon={<span className="text-2xl">⚔️</span>}
+          />
           <div>
             <p className="text-white font-bold">{playerName}</p>
             <p className="text-gray-400 text-sm">전투력 {combatPower.toLocaleString()}</p>
@@ -181,6 +184,7 @@ export function PvPArena({
             playerStats={playerStats}
             playerName={playerName}
             playerAvatarUrl={playerAvatarUrl}
+            playerBorderId={playerEquippedBorder}
             combatPower={combatPower}
             equipment={equipment}
             ownedCards={cardDeck.ownedCards}

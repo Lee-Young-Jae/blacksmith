@@ -88,6 +88,7 @@ interface OpponentRow {
   total_stats: Record<string, number>
   card_count: number
   avatar_url?: string
+  equipped_border?: string | null
 }
 
 interface DefenseDeckRow {
@@ -411,6 +412,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
           stats: selected.total_stats as unknown as CharacterStats,
           cardCount: selected.card_count,
           avatarUrl: selected.avatar_url,
+          equippedBorder: selected.equipped_border,
           isAI: false,
           defenseCards,
           equipmentSnapshot: equipmentSnapshot as PvPOpponent['equipmentSnapshot'],
@@ -480,6 +482,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
         stats: selected.total_stats as unknown as CharacterStats,
         cardCount: selected.card_count,
         avatarUrl: selected.avatar_url,
+        equippedBorder: selected.equipped_border,
         isAI: false,
         defenseCards,
         equipmentSnapshot: equipmentSnapshot as PvPOpponent['equipmentSnapshot'],

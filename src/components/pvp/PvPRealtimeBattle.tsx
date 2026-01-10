@@ -17,7 +17,8 @@ import {
   GiStopwatch,
   GiChart,
 } from "react-icons/gi";
-import { FaUser, FaSkull, FaHandshake } from "react-icons/fa";
+import { FaUser, FaSkull, FaHandshake, FaRobot } from "react-icons/fa";
+import { AvatarWithBorder } from "../achievements/ProfileBorder";
 
 // =============================================
 // 타입 정의
@@ -27,12 +28,14 @@ interface PvPRealtimeBattleProps {
   // 플레이어 정보
   playerName: string;
   playerAvatarUrl?: string; // 플레이어 프로필 이미지
+  playerFrameImage?: string | null; // 플레이어 프레임 이미지
   playerStats: CharacterStats;
   playerCards: BattleCard[];
 
   // 상대 정보
   opponentName: string;
   opponentAvatarUrl?: string; // 상대 프로필 이미지
+  opponentFrameImage?: string | null; // 상대 프레임 이미지
   opponentStats: CharacterStats;
   opponentCards: BattleCard[];
   opponentIsAI?: boolean;
@@ -82,10 +85,12 @@ interface FloatingDamage {
 export function PvPRealtimeBattle({
   playerName,
   playerAvatarUrl,
+  playerFrameImage,
   playerStats,
   playerCards,
   opponentName,
   opponentAvatarUrl,
+  opponentFrameImage,
   opponentStats,
   opponentCards,
   opponentIsAI = true,
@@ -1418,14 +1423,18 @@ export function PvPRealtimeBattle({
           <div className="space-y-1 bg-red-950/30 rounded-lg p-2 border border-red-900/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {opponentAvatarUrl ? (
-                  <img
-                    src={opponentAvatarUrl}
-                    alt={opponentName}
-                    className="w-6 h-6 rounded-full object-cover border border-red-400"
-                  />
+                {opponentIsAI ? (
+                  <div className="w-6 h-6 rounded-full bg-yellow-600 flex items-center justify-center">
+                    <FaRobot className="text-white text-xs" />
+                  </div>
                 ) : (
-                  <FaUser className="text-red-400" />
+                  <AvatarWithBorder
+                    avatarUrl={opponentAvatarUrl}
+                    username={opponentName}
+                    frameImage={opponentFrameImage}
+                    size="sm"
+                    fallbackIcon={<FaUser className="text-red-400 text-xs" />}
+                  />
                 )}
                 <span className="text-red-400 font-bold text-lg">
                   {opponentName}
@@ -1683,15 +1692,13 @@ export function PvPRealtimeBattle({
             )}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {playerAvatarUrl ? (
-                  <img
-                    src={playerAvatarUrl}
-                    alt={playerName}
-                    className="w-6 h-6 rounded-full object-cover border border-cyan-400"
-                  />
-                ) : (
-                  <FaUser className="text-cyan-400" />
-                )}
+                <AvatarWithBorder
+                  avatarUrl={playerAvatarUrl}
+                  username={playerName}
+                  frameImage={playerFrameImage}
+                  size="sm"
+                  fallbackIcon={<FaUser className="text-cyan-400 text-xs" />}
+                />
                 <span className="text-cyan-400 font-bold text-lg">
                   {playerName}
                 </span>
@@ -2022,26 +2029,18 @@ export function PvPRealtimeBattle({
                     <div className="flex items-center justify-between gap-2">
                       {/* 플레이어 */}
                       <div className="flex-1 text-center">
-                        <div
-                          className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center overflow-hidden ${
-                            isWin
-                              ? "bg-gradient-to-br from-yellow-400 to-amber-500 ring-2 ring-yellow-300"
-                              : isLose
-                              ? "bg-gradient-to-br from-gray-500 to-gray-600"
-                              : "bg-gradient-to-br from-gray-400 to-gray-500"
-                          }`}
-                        >
-                          {playerAvatarUrl ? (
-                            <img
-                              src={playerAvatarUrl}
-                              alt={playerName}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-2xl">
-                              {isWin ? "😎" : isLose ? "😢" : "😐"}
-                            </span>
-                          )}
+                        <div className={`mx-auto ${isWin ? "ring-2 ring-yellow-300 rounded-full" : ""}`}>
+                          <AvatarWithBorder
+                            avatarUrl={playerAvatarUrl}
+                            username={playerName}
+                            frameImage={playerFrameImage}
+                            size="sm"
+                            fallbackIcon={
+                              <span className="text-2xl">
+                                {isWin ? "😎" : isLose ? "😢" : "😐"}
+                              </span>
+                            }
+                          />
                         </div>
                         <p className="text-xs text-cyan-400 font-medium mt-1 truncate">
                           {playerName}
@@ -2094,26 +2093,18 @@ export function PvPRealtimeBattle({
 
                       {/* 상대 */}
                       <div className="flex-1 text-center">
-                        <div
-                          className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center overflow-hidden ${
-                            isLose
-                              ? "bg-gradient-to-br from-yellow-400 to-amber-500"
-                              : isWin
-                              ? "bg-gradient-to-br from-gray-500 to-gray-600"
-                              : "bg-gradient-to-br from-gray-400 to-gray-500"
-                          }`}
-                        >
-                          {opponentAvatarUrl ? (
-                            <img
-                              src={opponentAvatarUrl}
-                              alt={opponentName}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-2xl">
-                              {isLose ? "😎" : isWin ? "😢" : "😐"}
-                            </span>
-                          )}
+                        <div className={`mx-auto ${isLose ? "ring-2 ring-yellow-300 rounded-full" : ""}`}>
+                          <AvatarWithBorder
+                            avatarUrl={opponentAvatarUrl}
+                            username={opponentName}
+                            frameImage={opponentFrameImage}
+                            size="sm"
+                            fallbackIcon={
+                              <span className="text-2xl">
+                                {isLose ? "😎" : isWin ? "😢" : "😐"}
+                              </span>
+                            }
+                          />
                         </div>
                         <p className="text-xs text-red-400 font-medium mt-1 truncate">
                           {opponentName}

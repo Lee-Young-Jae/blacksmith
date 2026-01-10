@@ -14,6 +14,7 @@ import type {
 } from '../../types/league'
 import { TIER_INFO, LEAGUE_TIERS } from '../../types/league'
 import { GiTrophy, GiMedal, GiRibbonMedal } from 'react-icons/gi'
+import { AvatarWithBorder } from '../achievements/ProfileBorder'
 
 // =============================================
 // 타입 정의
@@ -87,6 +88,14 @@ function LeaderboardItem({
           <span>#{entry.rank}</span>
         )}
       </div>
+
+      {/* 아바타 + 테두리 */}
+      <AvatarWithBorder
+        avatarUrl={entry.avatarUrl}
+        username={entry.username}
+        borderId={entry.equippedBorder}
+        size="sm"
+      />
 
       {/* 유저 정보 */}
       <div className="flex-1 min-w-0">

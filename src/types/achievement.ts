@@ -4,6 +4,26 @@ export type AchievementTier = 'common' | 'rare' | 'epic' | 'unique' | 'legendary
 // 업적 카테고리
 export type AchievementCategory = 'battle' | 'enhancement' | 'collection'
 
+// 테두리 효과 타입
+export type BorderEffectType =
+  | 'none'       // 효과 없음
+  | 'glow'       // 은은한 글로우
+  | 'pulse'      // 펄스 효과
+  | 'sparkle'    // 반짝임 파티클
+  | 'lightning'  // 번개 효과
+  | 'aurora'     // 오로라/무지개 효과
+  | 'fire'       // 불꽃 효과
+  | 'rain'       // 비/골드 떨어지는 효과
+  | 'wind'       // 바람/돌풍 효과
+  | 'storm'      // 폭풍 효과
+  | 'cosmic'     // 우주/별 효과
+  | 'particles'  // 파티클 떠다니는 효과
+
+// 테두리 색상 타입
+export type BorderColorType =
+  | 'gray' | 'blue' | 'purple' | 'amber' | 'yellow' | 'gold'
+  | 'orange' | 'red' | 'cyan' | 'emerald' | 'indigo' | 'rainbow'
+
 // 업적 조건 타입
 export type AchievementConditionType =
   | 'pvp_wins'        // PvP 승리 수
@@ -36,6 +56,11 @@ export interface AchievementBorder {
   seasonId: number | null
   isSeasonal: boolean
   seasonEndDate: string | null
+  // 개별 테두리 효과
+  borderEffect: BorderEffectType
+  borderColor: BorderColorType | null
+  // 프레임 이미지 (업적별 고유)
+  frameImage: string | null
 }
 
 // 유저 업적 진행 상황 (DB user_achievements 테이블)
@@ -107,6 +132,11 @@ export interface AchievementBorderRow {
   season_id: number | null
   is_seasonal: boolean
   season_end_date: string | null
+  // 개별 테두리 효과
+  border_effect: BorderEffectType | null
+  border_color: BorderColorType | null
+  // 프레임 이미지 (업적별 고유)
+  frame_image: string | null
 }
 
 export interface UserAchievementRow {
