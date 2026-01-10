@@ -44,12 +44,7 @@ export default function EquipmentDetail({
   onSell,
   inventory,
 }: EquipmentDetailProps) {
-  const {
-    equipmentBase,
-    starLevel,
-    potentials,
-    isEquipped,
-  } = equipment;
+  const { equipmentBase, starLevel, potentials, isEquipped } = equipment;
   const displayName = getEquipmentDisplayName(equipment);
   const comment = getEquipmentComment(equipmentBase, starLevel);
   const unlockedCount = getUnlockedSlotCount(potentials);
@@ -122,7 +117,9 @@ export default function EquipmentDetail({
           </div>
 
           {/* Blacksmith Comment */}
-          <div className="mt-3 text-sm text-[var(--color-text-secondary)] italic">"{comment}"</div>
+          <div className="mt-3 text-sm text-[var(--color-text-secondary)] italic">
+            "{comment}"
+          </div>
         </div>
 
         {/* Content */}
@@ -134,19 +131,25 @@ export default function EquipmentDetail({
               <span className="text-[var(--color-accent)] text-lg font-bold">
                 {starLevel}
               </span>
-              <span className="text-[var(--color-text-muted)] text-sm">장비레벨</span>
+              <span className="text-[var(--color-text-muted)] text-sm">
+                장비레벨
+              </span>
             </div>
           )}
 
           {/* Combat Power */}
           <div className="combat-power">
             <span className="combat-power-label">전투력</span>
-            <span className="combat-power-value">{combatPower.toLocaleString()}</span>
+            <span className="combat-power-value">
+              {combatPower.toLocaleString()}
+            </span>
           </div>
 
           {/* Stats */}
           <div className="info-box">
-            <h3 className="text-sm font-bold text-[var(--color-text-secondary)] mb-3">장비 스탯</h3>
+            <h3 className="text-sm font-bold text-[var(--color-text-secondary)] mb-3">
+              장비 스탯
+            </h3>
             <div className="grid grid-cols-2 gap-2">
               {(Object.keys(stats) as (keyof CharacterStats)[]).map((stat) => {
                 const value = stats[stat];
@@ -177,21 +180,28 @@ export default function EquipmentDetail({
           {/* Potentials */}
           <div className="info-box">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-[var(--color-text-secondary)]">잠재옵션</h3>
+              <h3 className="text-sm font-bold text-[var(--color-text-secondary)]">
+                잠재옵션
+              </h3>
               <span className="text-sm text-[var(--color-text-muted)]">
                 {unlockedCount}/3 해제
               </span>
             </div>
             <div className="space-y-2">
               {potentials.map((line, index) => {
-                const tierColor = POTENTIAL_TIER_COLORS[line.tier as PotentialTier];
+                const tierColor =
+                  POTENTIAL_TIER_COLORS[line.tier as PotentialTier];
                 const tierBg = POTENTIAL_TIER_BG[line.tier as PotentialTier];
                 return (
                   <div
                     key={index}
                     className={`
                       flex items-center gap-2 text-sm p-2.5 rounded-lg min-h-[40px]
-                      ${line.isUnlocked ? tierBg : 'bg-[var(--color-bg-elevated-2)]'}
+                      ${
+                        line.isUnlocked
+                          ? tierBg
+                          : "bg-[var(--color-bg-elevated-2)]"
+                      }
                     `}
                   >
                     {!line.isUnlocked ? (
@@ -204,7 +214,9 @@ export default function EquipmentDetail({
                         {line.isLocked && (
                           <FaThumbtack className="text-[var(--color-accent)] text-sm flex-shrink-0" />
                         )}
-                        <span className={tierColor}>{formatPotentialLine(line)}</span>
+                        <span className={tierColor}>
+                          {formatPotentialLine(line)}
+                        </span>
                         <span className={`text-xs ${tierColor} ml-auto`}>
                           {POTENTIAL_TIER_NAMES[line.tier as PotentialTier]}
                         </span>
@@ -225,7 +237,9 @@ export default function EquipmentDetail({
             골드
             {warnOnSell && (
               <span className="text-orange-400 ml-2">
-                ({starLevel > 0 && "강화됨"}{starLevel > 0 && unlockedCount > 0 && " / "}{unlockedCount > 0 && "잠재옵션 해제됨"})
+                ({starLevel > 0 && "강화됨"}
+                {starLevel > 0 && unlockedCount > 0 && " / "}
+                {unlockedCount > 0 && "잠재옵션 해제됨"})
               </span>
             )}
           </div>
@@ -259,7 +273,10 @@ export default function EquipmentDetail({
               </button>
             )}
             {!isEquipped && onSell && (
-              <button onClick={handleSellClick} className="btn btn-accent flex-1">
+              <button
+                onClick={handleSellClick}
+                className="btn btn-accent flex-1"
+              >
                 판매 ({sellPrice.toLocaleString()}G)
               </button>
             )}
@@ -293,8 +310,12 @@ export default function EquipmentDetail({
                   <FaExclamationTriangle className="text-orange-400 text-xl" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-[var(--color-text-primary)]">판매 확인</h3>
-                  <p className="text-xs text-[var(--color-text-muted)]">강화된 장비입니다</p>
+                  <h3 className="font-bold text-lg text-[var(--color-text-primary)]">
+                    판매 확인
+                  </h3>
+                  <p className="text-xs text-[var(--color-text-muted)]">
+                    강화된 장비입니다
+                  </p>
                 </div>
               </div>
             </div>
@@ -304,23 +325,43 @@ export default function EquipmentDetail({
               <div className="flex items-center gap-3 p-3 rounded-lg bg-[var(--color-bg-elevated-2)]">
                 <EquipmentImage equipment={equipment} size="lg" />
                 <div>
-                  <div className="font-bold text-[var(--color-text-primary)]">{displayName}</div>
+                  <div className="font-bold text-[var(--color-text-primary)]">
+                    {displayName}
+                  </div>
                   <div className="text-sm text-[var(--color-text-secondary)]">
-                    {starLevel > 0 && <span className="text-[var(--color-accent)]">★{starLevel} </span>}
-                    {unlockedCount > 0 && <span>잠재옵션 {unlockedCount}줄</span>}
+                    {starLevel > 0 && (
+                      <span className="text-[var(--color-accent)]">
+                        ★{starLevel}{" "}
+                      </span>
+                    )}
+                    {unlockedCount > 0 && (
+                      <span>잠재옵션 {unlockedCount}줄</span>
+                    )}
                   </div>
                 </div>
               </div>
               <p className="text-[var(--color-text-secondary)] text-sm leading-relaxed">
-                이 장비는 {starLevel > 0 && <span className="text-[var(--color-accent)] font-bold">★{starLevel} 강화</span>}
+                이 장비는{" "}
+                {starLevel > 0 && (
+                  <span className="text-[var(--color-accent)] font-bold">
+                    ★{starLevel} 강화
+                  </span>
+                )}
                 {starLevel > 0 && unlockedCount > 0 && " 및 "}
-                {unlockedCount > 0 && <span className="text-purple-400 font-bold">잠재옵션 {unlockedCount}개 해제</span>}
+                {unlockedCount > 0 && (
+                  <span className="text-purple-400 font-bold">
+                    잠재옵션 {unlockedCount}개 해제
+                  </span>
+                )}
                 가 되어있습니다.
-                <br />정말 판매하시겠습니까?
+                <br />
+                정말 판매하시겠습니까?
               </p>
               <div className="text-center text-sm">
                 <span className="text-[var(--color-text-muted)]">판매가: </span>
-                <span className="text-[var(--color-accent)] font-bold text-lg">{sellPrice.toLocaleString()} G</span>
+                <span className="text-[var(--color-accent)] font-bold text-lg">
+                  {sellPrice.toLocaleString()} G
+                </span>
               </div>
             </div>
 

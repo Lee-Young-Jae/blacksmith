@@ -1269,19 +1269,19 @@ export function PvPRealtimeBattle({
           }
         }
 
-        // AI 스킬 사용 (공격 시 70% 확률)
-        if (opponentIsAI && Math.random() < 0.7) {
+        // 상대 스킬 사용 (공격 시 70% 확률)
+        // 방어자는 실시간으로 플레이하지 않으므로 AI가 대신 스킬 사용
+        if (Math.random() < 0.7) {
           aiUseSkill(elapsedTimeRef.current);
         }
       }
 
-      // AI 주기적 스킬 체크 (2초마다)
-      if (opponentIsAI) {
-        aiSkillCheckRef.current -= deltaMs;
-        if (aiSkillCheckRef.current <= 0) {
-          aiSkillCheckRef.current = 2000; // 2초 간격
-          aiUseSkill(elapsedTimeRef.current);
-        }
+      // 상대 주기적 스킬 체크 (2초마다)
+      // 방어자는 실시간으로 플레이하지 않으므로 AI가 대신 스킬 사용
+      aiSkillCheckRef.current -= deltaMs;
+      if (aiSkillCheckRef.current <= 0) {
+        aiSkillCheckRef.current = 2000; // 2초 간격
+        aiUseSkill(elapsedTimeRef.current);
       }
     }, 50); // 20fps
 
@@ -1297,7 +1297,6 @@ export function PvPRealtimeBattle({
     aiUseSkill,
     playerMaxHp,
     opponentMaxHp,
-    opponentIsAI,
   ]);
 
   // 배틀 종료 체크

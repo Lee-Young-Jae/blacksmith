@@ -89,6 +89,7 @@ interface OpponentRow {
   card_count: number
   avatar_url?: string
   equipped_border?: string | null
+  frame_image?: string | null
 }
 
 interface DefenseDeckRow {
@@ -908,7 +909,7 @@ export function usePvPBattle(): UsePvPBattleReturn {
       // 상대 프로필 조회 (없을 수 있음)
       const { data: profileData } = await supabase
         .from('user_profiles')
-        .select('username')
+        .select('username, avatar_url, equipped_border')
         .eq('id', opponentId)
         .maybeSingle()
 
@@ -964,6 +965,8 @@ export function usePvPBattle(): UsePvPBattleReturn {
           username: profileData.username,
           rating: rankingData?.rating || 400,
           tier: rankingData?.tier || 'bronze',
+          avatarUrl: profileData.avatar_url,
+          equippedBorder: profileData.equipped_border,
           isAI: false, // 실제 유저이므로 false
           defenseCards: [],
         })
@@ -978,6 +981,8 @@ export function usePvPBattle(): UsePvPBattleReturn {
           stats: defense.total_stats as unknown as CharacterStats,
           cardCount: [defense.card_slot_1, defense.card_slot_2, defense.card_slot_3]
             .filter(Boolean).length,
+          avatarUrl: profileData.avatar_url,
+          equippedBorder: profileData.equipped_border,
           defenseCards,
           equipmentSnapshot: defense.equipment_snapshot as PvPOpponent['equipmentSnapshot'],
         })
