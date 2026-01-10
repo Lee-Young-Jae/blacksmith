@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import type { UserEquipment, EquipmentBase } from '../../types/equipment'
+import { useImageCache } from '../../hooks/useImageCache'
 
 interface EquipmentImageProps {
   equipment?: UserEquipment
@@ -7,6 +8,7 @@ interface EquipmentImageProps {
   starLevel?: number
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl'
   className?: string
+  showLoading?: boolean  // 로딩 인디케이터 표시 여부
 }
 
 // 이미지와 이모지 모두 동일한 컨테이너 크기 사용
@@ -32,6 +34,7 @@ export default function EquipmentImage({
   starLevel: propLevel,
   size = 'md',
   className = '',
+  showLoading = true,
 }: EquipmentImageProps) {
   // Track which image indices have failed to load
   const [failedIndices, setFailedIndices] = useState<Set<number>>(new Set())
@@ -65,12 +68,15 @@ export default function EquipmentImage({
     return { imagePath: undefined, currentIndex: -1 }
   }, [base, level, failedIndices])
 
-  // Handle image load error - mark this index as failed and try next
-  const handleImageError = () => {
-    if (currentIndex >= 0) {
+  // 이미지 캐시 훅 사용
+  const { isLoaded, isLoading, hasError, retry } = useImageCache(imagePath)
+
+  // 이미지 로드 실패 시 다음 레벨로 fallback
+  useEffect(() => {
+    if (hasError && currentIndex >= 0) {
       setFailedIndices(prev => new Set([...prev, currentIndex]))
     }
-  }
+  }, [hasError, currentIndex])
 
   if (!base) {
     return (
@@ -83,21 +89,35 @@ export default function EquipmentImage({
   // Get the level data for display name
   const levelData = base.levels[level] ?? base.levels[0]
 
-  // If image path exists, try to show image
-  if (imagePath) {
+  // 로딩 중일 때
+  if (imagePath && isLoading && showLoading) {
+    return (
+      <div className={`${SIZE_CLASSES[size]} flex items-center justify-center flex-shrink-0 ${className}`}>
+        <div className="w-1/2 h-1/2 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  // 이미지가 성공적으로 로드된 경우
+  if (imagePath && isLoaded) {
     return (
       <img
         src={imagePath}
         alt={levelData?.name || base.levels[0].name}
         className={`${SIZE_CLASSES[size]} object-contain flex-shrink-0 ${className}`}
-        onError={handleImageError}
+        loading="lazy"
       />
     )
   }
 
-  // Fallback to emoji - 이미지와 동일한 컨테이너 크기 사용
+  // 이미지 로드 실패 또는 이미지 없음 - 이모지로 fallback
   return (
-    <span className={`${SIZE_CLASSES[size]} ${EMOJI_SIZE_CLASSES[size]} flex items-center justify-center flex-shrink-0 ${className}`}>
+    <span
+      className={`${SIZE_CLASSES[size]} ${EMOJI_SIZE_CLASSES[size]} flex items-center justify-center flex-shrink-0 ${className}`}
+      onClick={hasError ? retry : undefined}
+      title={hasError ? '클릭하여 다시 로드' : undefined}
+      style={hasError ? { cursor: 'pointer' } : undefined}
+    >
       {base.emoji}
     </span>
   )

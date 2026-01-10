@@ -12,6 +12,7 @@ interface UserProfileRow {
   last_daily_claim: string | null
   avatar_url: string | null
   equipped_border: string | null
+  onboarding_completed: boolean
 }
 
 interface UserWeaponRow {
@@ -30,6 +31,7 @@ interface UserProfile {
   lastDailyClaim: string | null
   avatarUrl: string | null
   equippedBorder: string | null
+  onboardingCompleted: boolean
 }
 
 interface UserDataState {
@@ -60,8 +62,6 @@ export function useUserData() {
     const loadUserData = async () => {
       setState(prev => ({ ...prev, isLoading: true, error: null }))
 
-      let isNewUser = false
-
       try {
         // OAuth 아바타 URL 가져오기
         const oauthAvatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || null
@@ -69,14 +69,12 @@ export function useUserData() {
         // 프로필 로드
         let { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
-          .select('username, gold, last_daily_claim, avatar_url, equipped_border')
+          .select('username, gold, last_daily_claim, avatar_url, equipped_border, onboarding_completed')
           .eq('id', user.id)
           .single()
 
         // 프로필이 없으면 생성 (최초 로그인)
         if (profileError && profileError.code === 'PGRST116') {
-          isNewUser = true // 신규 유저 표시
-
           // 게임 스타일의 랜덤 닉네임 생성
           const username = generateNickname()
 
@@ -87,8 +85,9 @@ export function useUserData() {
               username,
               gold: 20000,
               avatar_url: oauthAvatarUrl,
+              onboarding_completed: false,
             })
-            .select('username, gold, last_daily_claim, avatar_url, equipped_border')
+            .select('username, gold, last_daily_claim, avatar_url, equipped_border, onboarding_completed')
             .single()
 
           if (createError) {
@@ -166,11 +165,13 @@ export function useUserData() {
             lastDailyClaim: typedProfile.last_daily_claim,
             avatarUrl: oauthAvatarUrl || typedProfile.avatar_url,
             equippedBorder: typedProfile.equipped_border,
+            onboardingCompleted: typedProfile.onboarding_completed,
           },
           weapon,
           isLoading: false,
           error: null,
-          isNewUser,
+          // 온보딩이 완료되지 않은 유저는 모달 표시
+          isNewUser: !typedProfile.onboarding_completed,
         })
       } catch (err) {
         console.error('Failed to load user data:', err)
@@ -487,10 +488,28 @@ export function useUserData() {
     }
   }, [user])
 
-  // 신규 유저 플래그 리셋 (오프닝 완료 후)
-  const clearNewUserFlag = useCallback(() => {
-    setState(prev => ({ ...prev, isNewUser: false }))
-  }, [])
+  // 온보딩 완료 처리 (환영 모달 완료 후)
+  const clearNewUserFlag = useCallback(async () => {
+    if (!user) return
+
+    try {
+      // DB에 온보딩 완료 플래그 저장
+      await supabase
+        .from('user_profiles')
+        .update({ onboarding_completed: true })
+        .eq('id', user.id)
+
+      setState(prev => ({
+        ...prev,
+        isNewUser: false,
+        profile: prev.profile ? { ...prev.profile, onboardingCompleted: true } : null,
+      }))
+    } catch (err) {
+      console.error('Failed to complete onboarding:', err)
+      // 에러가 나도 UI는 닫히도록 state만 업데이트
+      setState(prev => ({ ...prev, isNewUser: false }))
+    }
+  }, [user])
 
   return {
     ...state,
