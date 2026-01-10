@@ -52,6 +52,7 @@ import {
   FaPlus,
   FaChartLine,
 } from "react-icons/fa";
+import { AvatarWithBorder } from "../achievements/ProfileBorder";
 
 // =============================================
 // 강화권 표시 컴포넌트
@@ -172,10 +173,10 @@ function CardSelector({
               onClick={() => setActiveSlot(isActive ? null : slotIndex)}
               className={`w-24 h-32 rounded-lg border-2 cursor-pointer transition-all ${
                 isActive
-                  ? "border-yellow-400 bg-yellow-900/20"
+                  ? "border-amber-400 bg-amber-900/20"
                   : card
                   ? `${BATTLE_CARD_TIER_COLORS[card.tier]} border-current`
-                  : "border-gray-600 border-dashed bg-gray-700/30"
+                  : "border-amber-700/30 border-dashed bg-stone-700/30"
               }`}
             >
               {battleCard ? (
@@ -184,10 +185,10 @@ function CardSelector({
                   <p className="text-[10px] text-center text-white font-medium line-clamp-1">
                     {battleCard.name}
                   </p>
-                  <p className="text-[9px] text-center text-gray-400 mt-0.5 line-clamp-2">
+                  <p className="text-[9px] text-center text-amber-200/60 mt-0.5 line-clamp-2">
                     {battleCard.description}
                   </p>
-                  <p className="text-[8px] text-gray-500 mt-0.5">
+                  <p className="text-[8px] text-amber-200/50 mt-0.5">
                     {battleCard.activationType === "passive"
                       ? "패시브"
                       : `CD ${battleCard.cooldown}s`}
@@ -195,7 +196,7 @@ function CardSelector({
                 </div>
               ) : (
                 <div className="h-full flex items-center justify-center">
-                  <span className="text-gray-500 text-xs">
+                  <span className="text-amber-200/50 text-xs">
                     슬롯 {slotIndex + 1}
                   </span>
                 </div>
@@ -207,7 +208,7 @@ function CardSelector({
 
       {/* 슬롯 선택 안내 */}
       {activeSlot !== null && (
-        <div className="text-center text-xs text-yellow-400">
+        <div className="text-center text-xs text-amber-400">
           슬롯 {activeSlot + 1}에 넣을 카드를 선택하세요
           {selectedSlots[activeSlot] && (
             <button
@@ -225,7 +226,7 @@ function CardSelector({
 
       {/* 카드 목록 */}
       {activeSlot !== null && (
-        <div className="max-h-48 overflow-y-auto bg-gray-700/30 rounded-lg p-2">
+        <div className="max-h-48 overflow-y-auto bg-stone-800/50 rounded-lg p-2 border border-amber-700/30">
           <div className="grid grid-cols-2 gap-2">
             {sortedCards.map((card) => {
               const isSelected = selectedIds.includes(card.id);
@@ -243,7 +244,7 @@ function CardSelector({
                   disabled={isSelected}
                   className={`p-2 rounded-lg text-left transition-all ${
                     isSelected
-                      ? "opacity-40 cursor-not-allowed bg-gray-600"
+                      ? "opacity-40 cursor-not-allowed bg-stone-600"
                       : `${
                           BATTLE_CARD_TIER_COLORS[card.tier]
                         } hover:scale-[1.02] cursor-pointer`
@@ -255,10 +256,10 @@ function CardSelector({
                       {battleCard.name}
                     </span>
                   </div>
-                  <p className="text-[10px] text-gray-300 line-clamp-1">
+                  <p className="text-[10px] text-amber-200/60 line-clamp-1">
                     {battleCard.description}
                   </p>
-                  <p className="text-[9px] text-gray-500 mt-0.5">
+                  <p className="text-[9px] text-amber-200/50 mt-0.5">
                     {battleCard.activationType === "passive"
                       ? "패시브"
                       : `CD ${battleCard.cooldown}s`}
@@ -268,7 +269,7 @@ function CardSelector({
             })}
           </div>
           {sortedCards.length === 0 && (
-            <p className="text-gray-500 text-center py-3 text-sm">
+            <p className="text-amber-200/50 text-center py-3 text-sm">
               보유한 카드가 없습니다
             </p>
           )}
@@ -684,12 +685,12 @@ export function TowerArena({
   return (
     <div className="w-full max-w-2xl mx-auto">
       {/* 헤더 */}
-      <div className="bg-gradient-to-r from-purple-900/50 to-indigo-900/50 border border-purple-500/30 rounded-xl p-4 mb-4">
+      <div className="bg-gradient-to-r from-amber-900/40 to-stone-900/60 border border-amber-700/30 rounded-2xl p-4 mb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <GiForestCamp className="text-3xl text-emerald-400" />
             <div>
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <h2 className="text-xl font-bold text-amber-100 flex items-center gap-2">
                 수련의 숲
                 {tower.towerStatus && !tower.towerStatus.isOpen && (
                   <span className="text-xs bg-red-600 px-2 py-0.5 rounded-full">
@@ -697,13 +698,13 @@ export function TowerArena({
                   </span>
                 )}
               </h2>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-amber-200/60">
                 최고 기록:{" "}
-                <span className="text-yellow-400 font-bold">
+                <span className="text-amber-400 font-bold">
                   {tower.progress?.highestFloor || 0}층
                 </span>
                 {myRank > 0 && (
-                  <span className="text-purple-400 ml-2">(#{myRank})</span>
+                  <span className="text-amber-300 ml-2">(#{myRank})</span>
                 )}
               </p>
             </div>
@@ -713,10 +714,10 @@ export function TowerArena({
             {/* 리더보드 버튼 */}
             <button
               onClick={() => setShowLeaderboard(!showLeaderboard)}
-              className={`p-2 rounded-lg transition-all ${
+              className={`p-2 rounded-xl transition-all ${
                 showLeaderboard
-                  ? "bg-yellow-600 text-white"
-                  : "bg-gray-700/50 text-gray-300 hover:bg-gray-600/50"
+                  ? "bg-amber-600 text-white"
+                  : "bg-stone-700/50 text-amber-200/60 hover:bg-stone-600/50 hover:text-amber-100"
               }`}
               title="랭킹"
             >
@@ -727,10 +728,10 @@ export function TowerArena({
             {tower.isAdmin && (
               <button
                 onClick={() => setShowAdminPanel(!showAdminPanel)}
-                className={`p-2 rounded-lg transition-all ${
+                className={`p-2 rounded-xl transition-all ${
                   showAdminPanel
                     ? "bg-red-600 text-white"
-                    : "bg-gray-700/50 text-gray-300 hover:bg-gray-600/50"
+                    : "bg-stone-700/50 text-amber-200/60 hover:bg-stone-600/50 hover:text-amber-100"
                 }`}
                 title="관리자 설정"
               >
@@ -740,8 +741,8 @@ export function TowerArena({
 
             {view === "climbing" && session && (
               <div className="text-right ml-2">
-                <p className="text-sm text-gray-400">누적 보상</p>
-                <p className="text-xl font-bold text-yellow-400">
+                <p className="text-sm text-amber-200/60">누적 보상</p>
+                <p className="text-xl font-bold text-amber-400">
                   {session.totalGoldEarned.toLocaleString()} G
                 </p>
               </div>
@@ -752,8 +753,8 @@ export function TowerArena({
               !showLeaderboard &&
               !showAdminPanel && (
                 <div className="text-right ml-2">
-                  <p className="text-sm text-gray-400">현재 도전</p>
-                  <p className="text-2xl font-bold text-purple-400">
+                  <p className="text-sm text-amber-200/60">현재 도전</p>
+                  <p className="text-2xl font-bold text-amber-400">
                     {tower.progress.currentFloor}층
                   </p>
                 </div>
@@ -1570,8 +1571,8 @@ export function TowerArena({
 
       {/* 리더보드 */}
       {showLeaderboard && (
-        <div className="bg-gray-800/50 border border-yellow-500/30 rounded-xl p-4 mb-4">
-          <h3 className="text-sm font-bold text-yellow-400 mb-3 flex items-center gap-2">
+        <div className="bg-stone-800/50 border border-amber-700/30 rounded-2xl p-4 mb-4">
+          <h3 className="text-sm font-bold text-amber-400 mb-3 flex items-center gap-2">
             <GiPodium /> 등반 랭킹 TOP 50
           </h3>
           {leaderboard.length > 0 ? (
@@ -1579,10 +1580,10 @@ export function TowerArena({
               {leaderboard.map((entry) => (
                 <div
                   key={entry.userId}
-                  className={`flex items-center gap-3 p-2 rounded-lg ${
+                  className={`flex items-center gap-3 p-2 rounded-xl ${
                     entry.rank <= 3
-                      ? "bg-gradient-to-r from-yellow-900/30 to-transparent"
-                      : "bg-gray-700/30"
+                      ? "bg-gradient-to-r from-amber-900/30 to-transparent"
+                      : "bg-stone-700/30"
                   }`}
                 >
                   {/* 순위 */}
@@ -1594,7 +1595,7 @@ export function TowerArena({
                         ? "text-gray-300"
                         : entry.rank === 3
                         ? "text-amber-600"
-                        : "text-gray-500"
+                        : "text-amber-200/50"
                     }`}
                   >
                     {entry.rank <= 3
@@ -1602,22 +1603,17 @@ export function TowerArena({
                       : `#${entry.rank}`}
                   </div>
 
-                  {/* 아바타 */}
-                  {entry.avatarUrl ? (
-                    <img
-                      src={entry.avatarUrl}
-                      alt={entry.username}
-                      className="w-8 h-8 rounded-full object-cover border border-gray-600"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-white text-sm">
-                      {entry.username.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  {/* 아바타 + 테두리 */}
+                  <AvatarWithBorder
+                    avatarUrl={entry.avatarUrl}
+                    username={entry.username}
+                    borderId={entry.equippedBorder}
+                    size="sm"
+                  />
 
                   {/* 이름 */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium truncate">
+                    <p className="text-amber-100 font-medium truncate">
                       {entry.username}
                     </p>
                     <p className={`text-xs ${TOWER_TIER_COLORS[entry.tier]}`}>
@@ -1627,7 +1623,7 @@ export function TowerArena({
 
                   {/* 층수 */}
                   <div className="text-right">
-                    <p className="text-purple-400 font-bold">
+                    <p className="text-amber-400 font-bold">
                       {entry.highestFloor}층
                     </p>
                   </div>
@@ -1635,7 +1631,7 @@ export function TowerArena({
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 text-center py-4">
+            <p className="text-amber-200/50 text-center py-4">
               아직 기록이 없습니다
             </p>
           )}
@@ -1955,10 +1951,10 @@ export function TowerArena({
         (tower.towerStatus?.isOpen || tower.isAdmin) && (
           <div className="space-y-4">
             {/* 공격 덱 선택 */}
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4">
-              <h4 className="text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
-                <GiCardDraw className="text-purple-400" /> 공격덱 선택
-                <span className="text-xs text-gray-500">
+            <div className="bg-stone-800/50 border border-amber-700/30 rounded-2xl p-4">
+              <h4 className="text-sm font-bold text-amber-100 mb-3 flex items-center gap-2">
+                <GiCardDraw className="text-amber-400" /> 공격덱 선택
+                <span className="text-xs text-amber-200/50">
                   ({selectedCards.filter(Boolean).length}/3)
                 </span>
               </h4>
@@ -1968,7 +1964,7 @@ export function TowerArena({
                 onSelect={handleCardSelect}
               />
               {cardDeck.ownedCards.length === 0 && (
-                <p className="text-gray-500 text-center text-sm mt-2">
+                <p className="text-amber-200/50 text-center text-sm mt-2">
                   PvP 탭에서 카드를 뽑으세요
                 </p>
               )}
@@ -1985,9 +1981,9 @@ export function TowerArena({
       {view === "climbing" && currentEnemy && session && (
         <div className="space-y-4">
           {/* 현재 층 표시 */}
-          <div className="flex items-center justify-between bg-gray-800/50 rounded-lg px-4 py-2">
-            <span className="text-gray-400">현재 도전</span>
-            <span className="text-xl font-bold text-purple-400">
+          <div className="flex items-center justify-between bg-stone-800/50 rounded-xl px-4 py-2 border border-amber-700/30">
+            <span className="text-amber-200/60">현재 도전</span>
+            <span className="text-xl font-bold text-amber-400">
               {session.currentFloor}층
             </span>
           </div>
@@ -2010,7 +2006,7 @@ export function TowerArena({
           {/* 등반 종료 버튼 */}
           <button
             onClick={handleEndClimbing}
-            className="w-full py-3 bg-gray-700 hover:bg-gray-600 rounded-xl font-medium text-gray-300 transition-all flex items-center justify-center gap-2"
+            className="w-full py-3 bg-stone-700/60 hover:bg-stone-600/60 rounded-xl font-medium text-amber-200/80 transition-all flex items-center justify-center gap-2 border border-amber-700/30"
           >
             <FaDoorOpen />
             등반 종료 ({session.totalGoldEarned.toLocaleString()} G 받기)
@@ -2022,18 +2018,18 @@ export function TowerArena({
       {view === "summary" && session && (
         <div className="space-y-4">
           {/* 결과 헤더 */}
-          <div className="bg-gradient-to-br from-purple-900/50 to-indigo-900/50 border border-purple-500/50 rounded-xl p-6 text-center">
+          <div className="bg-gradient-to-br from-amber-900/40 to-stone-900/60 border border-amber-500/50 rounded-2xl p-6 text-center">
             <div className="text-5xl mb-4">
               {session.clearedFloors.length > 0 ? "🏔️" : "💀"}
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">등반 종료</h2>
-            <p className="text-gray-400">
+            <h2 className="text-2xl font-bold text-amber-100 mb-2">등반 종료</h2>
+            <p className="text-amber-200/60">
               {session.startFloor}층에서 시작하여 {session.highestReached}층까지
               도달
             </p>
 
             {session.isNewRecord && (
-              <div className="mt-3 inline-flex items-center gap-2 bg-yellow-500/20 border border-yellow-500/50 rounded-lg px-4 py-2">
+              <div className="mt-3 inline-flex items-center gap-2 bg-yellow-500/20 border border-yellow-500/50 rounded-xl px-4 py-2">
                 <GiTrophy className="text-yellow-400" />
                 <span className="text-yellow-300 font-bold">
                   최고 기록 갱신!
@@ -2043,21 +2039,21 @@ export function TowerArena({
           </div>
 
           {/* 통계 */}
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4">
-            <h3 className="text-sm text-gray-400 mb-3 flex items-center gap-2">
+          <div className="bg-stone-800/50 border border-amber-700/30 rounded-2xl p-4">
+            <h3 className="text-sm text-amber-200/60 mb-3 flex items-center gap-2">
               <GiForestCamp />
               수련 통계
             </h3>
             <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-3 bg-gray-900/50 rounded-lg">
-                <p className="text-xs text-gray-400 mb-1">클리어 층수</p>
-                <p className="text-xl font-bold text-purple-400">
+              <div className="text-center p-3 bg-stone-900/50 rounded-xl">
+                <p className="text-xs text-amber-200/50 mb-1">클리어 층수</p>
+                <p className="text-xl font-bold text-amber-400">
                   {session.clearedFloors.length}층
                 </p>
               </div>
-              <div className="text-center p-3 bg-gray-900/50 rounded-lg">
-                <p className="text-xs text-gray-400 mb-1">최고 도달</p>
-                <p className="text-xl font-bold text-cyan-400">
+              <div className="text-center p-3 bg-stone-900/50 rounded-xl">
+                <p className="text-xs text-amber-200/50 mb-1">최고 도달</p>
+                <p className="text-xl font-bold text-amber-300">
                   {session.highestReached}층
                 </p>
               </div>
@@ -2065,17 +2061,17 @@ export function TowerArena({
           </div>
 
           {/* 획득 보상 */}
-          <div className="bg-gradient-to-br from-yellow-900/30 to-amber-900/30 border border-yellow-500/30 rounded-xl p-4">
-            <h3 className="text-sm text-yellow-400 mb-3 flex items-center gap-2">
+          <div className="bg-gradient-to-br from-amber-900/30 to-stone-900/30 border border-amber-500/30 rounded-2xl p-4">
+            <h3 className="text-sm text-amber-400 mb-3 flex items-center gap-2">
               <GiTwoCoins />
               획득 보상
             </h3>
             <div className="text-center">
-              <p className="text-3xl font-bold text-yellow-400">
+              <p className="text-3xl font-bold text-amber-400">
                 +{session.totalGoldEarned.toLocaleString()} G
               </p>
               {session.clearedFloors.length > 0 && (
-                <p className="text-sm text-gray-400 mt-2">
+                <p className="text-sm text-amber-200/60 mt-2">
                   {session.clearedFloors.length}개 층 클리어 보상
                 </p>
               )}
@@ -2085,7 +2081,7 @@ export function TowerArena({
           {/* 버튼 */}
           <button
             onClick={handleBackToSelect}
-            className="w-full py-3 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2"
+            className="w-full py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-500/30"
           >
             <FaDoorOpen />
             처음으로

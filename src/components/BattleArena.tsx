@@ -30,13 +30,13 @@ function StatLine({
 }) {
   return (
     <div className="flex items-center justify-between gap-2 sm:gap-3 md:gap-4 py-1 sm:py-1.5 md:py-2">
-      <span className="text-gray-300 flex items-center gap-1.5 sm:gap-2 md:gap-2.5 min-w-0 flex-1">
+      <span className="text-amber-100/80 flex items-center gap-1.5 sm:gap-2 md:gap-2.5 min-w-0 flex-1">
         <Icon className="text-sm sm:text-base md:text-lg shrink-0" />
         <span className="text-xs sm:text-sm md:text-base truncate pr-1 md:pr-2">
           {label}
         </span>
       </span>
-      <span className="text-white font-semibold text-xs sm:text-sm md:text-base whitespace-nowrap shrink-0 ml-2">
+      <span className="text-amber-100 font-semibold text-xs sm:text-sm md:text-base whitespace-nowrap shrink-0 ml-2">
         {isPercent ? `${value}%` : value.toLocaleString()}
       </span>
     </div>
@@ -46,7 +46,7 @@ function StatLine({
 // 플레이어/상대 스탯 패널
 function StatsDisplay({ stats }: { stats: CharacterStats }) {
   return (
-    <div className="w-full space-y-0 sm:space-y-0.5 md:space-y-1 mt-3 text-left bg-gray-800/30 rounded-lg p-2.5 sm:p-3 md:p-4 lg:p-3.5">
+    <div className="w-full space-y-0 sm:space-y-0.5 md:space-y-1 mt-3 text-left bg-stone-800/50 rounded-lg p-2.5 sm:p-3 md:p-4 lg:p-3.5">
       <StatLine label="공격력" value={stats.attack} Icon={GiSwordBrandish} />
       <StatLine label="방어력" value={stats.defense} Icon={GiShield} />
       <StatLine
@@ -109,25 +109,25 @@ export function BattleArena({
   // 매칭 중
   if (isMatchmaking) {
     return (
-      <div className="bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 rounded-2xl p-8 w-full max-w-2xl border border-gray-700/50 shadow-2xl">
+      <div className="bg-gradient-to-b from-stone-900 via-stone-800 to-stone-900 rounded-2xl p-8 w-full max-w-2xl border border-amber-700/30 shadow-2xl">
         <div className="flex flex-col items-center gap-6">
           <div className="relative">
-            <h3 className="text-2xl font-bold text-white mb-2">
+            <h3 className="text-2xl font-bold text-amber-100 mb-2">
               상대를 찾는 중...
             </h3>
-            <div className="absolute -top-1 -left-1 w-full h-full bg-yellow-400/20 blur-xl rounded-full" />
+            <div className="absolute -top-1 -left-1 w-full h-full bg-amber-400/20 blur-xl rounded-full" />
           </div>
           <div className="relative">
-            <div className="w-20 h-20 border-4 border-gray-700 border-t-yellow-400 border-r-purple-400 rounded-full animate-spin" />
+            <div className="w-20 h-20 border-4 border-stone-700 border-t-amber-400 border-r-orange-400 rounded-full animate-spin" />
             <div
-              className="absolute inset-0 w-20 h-20 border-4 border-transparent border-b-blue-400 border-l-green-400 rounded-full animate-spin"
+              className="absolute inset-0 w-20 h-20 border-4 border-transparent border-b-amber-500 border-l-orange-500 rounded-full animate-spin"
               style={{
                 animationDirection: "reverse",
                 animationDuration: "1.5s",
               }}
             />
           </div>
-          <p className="text-gray-400 text-sm animate-pulse">
+          <p className="text-amber-200/60 text-sm animate-pulse">
             AI 상대를 생성하고 있습니다...
           </p>
         </div>
@@ -139,18 +139,18 @@ export function BattleArena({
 
   return (
     <div className="w-full h-full flex flex-col">
-      <div className="bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 rounded-2xl p-4 sm:p-6 lg:p-8 border border-gray-700/50 shadow-2xl flex-1">
+      <div className="bg-gradient-to-b from-stone-900 via-stone-800 to-stone-900 rounded-2xl p-4 sm:p-6 lg:p-8 border border-amber-700/30 shadow-2xl flex-1">
         {/* 제목 */}
         <div className="text-center mb-4 sm:mb-6">
           <h3
             className={`text-xl sm:text-2xl font-bold mb-2 flex items-center justify-center gap-2 ${
               isFighting
-                ? "text-yellow-400 animate-pulse"
+                ? "text-amber-400 animate-pulse"
                 : isFinished && result === "win"
                 ? "text-green-400"
                 : isFinished && result === "lose"
                 ? "text-red-400"
-                : "text-white"
+                : "text-amber-100"
             }`}
           >
             {isFighting && <GiSwordBrandish className="text-lg sm:text-xl" />}
@@ -177,8 +177,8 @@ export function BattleArena({
               isFinished && result === "win"
                 ? "bg-gradient-to-br from-green-900/40 to-emerald-900/30 ring-2 ring-green-500 shadow-lg shadow-green-500/20"
                 : isFinished && result === "lose"
-                ? "bg-gray-700/30 opacity-60"
-                : "bg-gradient-to-br from-blue-900/30 to-indigo-900/20 border border-blue-500/30"
+                ? "bg-stone-700/30 opacity-60"
+                : "bg-gradient-to-br from-amber-900/30 to-stone-900/40 border border-amber-500/30"
             }`}
           >
             <div className="flex flex-col items-center">
@@ -192,10 +192,10 @@ export function BattleArena({
                   showGlow={!player.weapon.isDestroyed}
                 />
               </div>
-              <p className="text-white font-bold text-base sm:text-lg mb-1">
+              <p className="text-amber-100 font-bold text-base sm:text-lg mb-1">
                 {player.name}
               </p>
-              <p className="text-gray-400 text-xs mb-2 sm:mb-3 text-center">
+              <p className="text-amber-200/60 text-xs mb-2 sm:mb-3 text-center">
                 {getWeaponName(
                   player.weapon.weaponType,
                   player.weapon.starLevel
@@ -241,12 +241,12 @@ export function BattleArena({
                 <span
                   className={`text-3xl lg:text-4xl font-bold ${
                     isFighting
-                      ? "text-yellow-400 drop-shadow-lg"
+                      ? "text-amber-400 drop-shadow-lg"
                       : isFinished && result === "win"
                       ? "text-green-400"
                       : isFinished && result === "lose"
                       ? "text-red-400"
-                      : "text-gray-500"
+                      : "text-amber-200/50"
                   }`}
                 >
                   VS
@@ -258,21 +258,21 @@ export function BattleArena({
             </div>
             {/* 모바일용 가로선 */}
             <div className="lg:hidden flex items-center gap-2 my-2">
-              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-600 to-gray-600" />
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-amber-700/50 to-amber-700/50" />
               <span
                 className={`text-lg font-bold px-2 ${
                   isFighting
-                    ? "text-yellow-400"
+                    ? "text-amber-400"
                     : isFinished && result === "win"
                     ? "text-green-400"
                     : isFinished && result === "lose"
                     ? "text-red-400"
-                    : "text-gray-500"
+                    : "text-amber-200/50"
                 }`}
               >
                 VS
               </span>
-              <div className="flex-1 h-px bg-gradient-to-l from-transparent via-gray-600 to-gray-600" />
+              <div className="flex-1 h-px bg-gradient-to-l from-transparent via-amber-700/50 to-amber-700/50" />
             </div>
           </div>
 
@@ -282,8 +282,8 @@ export function BattleArena({
               isFinished && result === "lose"
                 ? "bg-gradient-to-br from-red-900/40 to-rose-900/30 ring-2 ring-red-500 shadow-lg shadow-red-500/20"
                 : isFinished && result === "win"
-                ? "bg-gray-700/30 opacity-60"
-                : "bg-gradient-to-br from-purple-900/30 to-pink-900/20 border border-purple-500/30"
+                ? "bg-stone-700/30 opacity-60"
+                : "bg-gradient-to-br from-orange-900/30 to-stone-900/40 border border-orange-500/30"
             }`}
           >
             <div className="flex flex-col items-center">
@@ -297,10 +297,10 @@ export function BattleArena({
                   showGlow={!opponent.weapon.isDestroyed}
                 />
               </div>
-              <p className="text-white font-bold text-base sm:text-lg mb-1">
+              <p className="text-amber-100 font-bold text-base sm:text-lg mb-1">
                 {opponent.name}
               </p>
-              <p className="text-gray-400 text-xs mb-2 sm:mb-3 text-center">
+              <p className="text-amber-200/60 text-xs mb-2 sm:mb-3 text-center">
                 {getWeaponName(
                   opponent.weapon.weaponType,
                   opponent.weapon.starLevel
@@ -405,13 +405,13 @@ export function BattleArena({
               className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl mb-4 ${
                 result === "win"
                   ? "bg-gradient-to-r from-yellow-900/50 to-amber-900/50 border border-yellow-500/50"
-                  : "bg-gray-800/50 border border-gray-600/50"
+                  : "bg-stone-800/50 border border-amber-700/30"
               }`}
             >
               <GiTwoCoins className="text-2xl" />
               <p
                 className={`font-bold text-xl ${
-                  result === "win" ? "text-yellow-400" : "text-gray-400"
+                  result === "win" ? "text-yellow-400" : "text-amber-200/60"
                 }`}
               >
                 +{goldReward.toLocaleString()} 골드
@@ -419,10 +419,10 @@ export function BattleArena({
             </div>
 
             {result === "lose" && (
-              <p className="text-gray-500 text-sm mb-4">참여 보상</p>
+              <p className="text-amber-200/50 text-sm mb-4">참여 보상</p>
             )}
             {result === "draw" && (
-              <p className="text-gray-500 text-sm mb-4">무승부 보상</p>
+              <p className="text-amber-200/50 text-sm mb-4">무승부 보상</p>
             )}
 
             <button

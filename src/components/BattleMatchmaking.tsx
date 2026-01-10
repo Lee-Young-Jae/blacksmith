@@ -11,7 +11,7 @@ import {
   GiHealthNormal,
   GiTwoCoins,
   GiLightBulb,
-  GiCrossedSwords,
+  GiAnvilImpact,
 } from "react-icons/gi";
 import { FaClock } from "react-icons/fa";
 
@@ -41,22 +41,22 @@ export function BattleMatchmaking({
 
   return (
     <div className="w-full h-full flex flex-col">
-      <div className="bg-gradient-to-br from-gray-800 via-gray-800 to-gray-900 rounded-2xl p-4 sm:p-6 lg:p-8 border border-gray-700/50 shadow-2xl flex-1">
+      <div className="bg-gradient-to-b from-stone-900 via-stone-800 to-stone-900 rounded-2xl p-4 sm:p-6 lg:p-8 border border-amber-700/30 shadow-2xl flex-1">
         {/* 헤더 */}
         <div className="text-center mb-4 sm:mb-6">
-          <h3 className="text-xl sm:text-2xl font-bold text-white mb-1 flex items-center justify-center gap-2">
-            <GiCrossedSwords className="text-yellow-400 text-lg sm:text-xl" />
+          <h3 className="text-xl sm:text-2xl font-bold text-amber-100 mb-1 flex items-center justify-center gap-2">
+            <GiAnvilImpact className="text-amber-400 text-lg sm:text-xl" />
             AI 대결
           </h3>
-          <p className="text-gray-400 text-xs sm:text-sm">
+          <p className="text-amber-200/60 text-xs sm:text-sm">
             난이도를 선택하고 대결을 시작하세요
           </p>
         </div>
 
         {/* 대결 횟수 표시 */}
-        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-gray-700/50 to-gray-800/50 rounded-xl border border-gray-600/30">
+        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-stone-800/60 to-stone-900/60 rounded-xl border border-amber-700/30">
           <div className="flex items-center justify-between mb-2 sm:mb-3">
-            <span className="text-gray-300 text-xs sm:text-sm font-medium">
+            <span className="text-amber-200/80 text-xs sm:text-sm font-medium">
               오늘 남은 대결
             </span>
             <span
@@ -67,7 +67,7 @@ export function BattleMatchmaking({
               {battlesRemaining}/{maxBattles}
             </span>
           </div>
-          <div className="h-2.5 sm:h-3 bg-gray-700 rounded-full overflow-hidden shadow-inner">
+          <div className="h-2.5 sm:h-3 bg-stone-700 rounded-full overflow-hidden shadow-inner">
             <div
               className={`h-full transition-all duration-500 rounded-full ${
                 canBattle
@@ -96,18 +96,18 @@ export function BattleMatchmaking({
         )}
 
         {/* 내 스탯 정보 */}
-        <div className="mb-4 sm:mb-6 p-4 sm:p-5 bg-gradient-to-br from-blue-900/20 to-indigo-900/20 rounded-xl border border-blue-500/20">
-          <div className="flex items-center justify-between mb-3 sm:mb-4 pb-2 sm:pb-3 border-b border-blue-500/20">
-            <span className="text-gray-300 text-xs sm:text-sm font-medium">
+        <div className="mb-4 sm:mb-6 p-4 sm:p-5 bg-gradient-to-br from-amber-900/20 to-stone-900/40 rounded-xl border border-amber-700/30">
+          <div className="flex items-center justify-between mb-3 sm:mb-4 pb-2 sm:pb-3 border-b border-amber-700/30">
+            <span className="text-amber-200/80 text-xs sm:text-sm font-medium">
               내 전투력
             </span>
-            <span className="text-yellow-400 font-bold text-lg sm:text-xl">
+            <span className="text-amber-400 font-bold text-lg sm:text-xl">
               {combatPower.toLocaleString()}
             </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
-            <div className="flex items-center justify-between p-2 sm:p-2.5 bg-gray-800/30 rounded-lg">
-              <span className="text-gray-300 flex items-center gap-1 sm:gap-1.5">
+            <div className="flex items-center justify-between p-2 sm:p-2.5 bg-stone-800/50 rounded-lg">
+              <span className="text-amber-100/80 flex items-center gap-1 sm:gap-1.5">
                 <GiSwordBrandish className="text-red-400 text-sm sm:text-base" />
                 <span className="truncate">공격력</span>
               </span>
@@ -115,8 +115,8 @@ export function BattleMatchmaking({
                 {playerStats.attack.toLocaleString()}
               </span>
             </div>
-            <div className="flex items-center justify-between p-2 sm:p-2.5 bg-gray-800/30 rounded-lg">
-              <span className="text-gray-300 flex items-center gap-1 sm:gap-1.5">
+            <div className="flex items-center justify-between p-2 sm:p-2.5 bg-stone-800/50 rounded-lg">
+              <span className="text-amber-100/80 flex items-center gap-1 sm:gap-1.5">
                 <GiShield className="text-blue-400 text-sm sm:text-base" />
                 <span className="truncate">방어력</span>
               </span>
@@ -124,8 +124,8 @@ export function BattleMatchmaking({
                 {playerStats.defense.toLocaleString()}
               </span>
             </div>
-            <div className="flex items-center justify-between p-2 sm:p-2.5 bg-gray-800/30 rounded-lg">
-              <span className="text-gray-300 flex items-center gap-1 sm:gap-1.5">
+            <div className="flex items-center justify-between p-2 sm:p-2.5 bg-stone-800/50 rounded-lg">
+              <span className="text-amber-100/80 flex items-center gap-1 sm:gap-1.5">
                 <GiBullseye className="text-yellow-400 text-sm sm:text-base" />
                 <span className="truncate">치명타</span>
               </span>
@@ -133,8 +133,8 @@ export function BattleMatchmaking({
                 {formatNumberString(playerStats.critRate)}%
               </span>
             </div>
-            <div className="flex items-center justify-between p-2 sm:p-2.5 bg-gray-800/30 rounded-lg">
-              <span className="text-gray-300 flex items-center gap-1 sm:gap-1.5">
+            <div className="flex items-center justify-between p-2 sm:p-2.5 bg-stone-800/50 rounded-lg">
+              <span className="text-amber-100/80 flex items-center gap-1 sm:gap-1.5">
                 <GiFlame className="text-orange-400 text-sm sm:text-base" />
                 <span className="truncate">치명타데미지</span>
               </span>
@@ -142,8 +142,8 @@ export function BattleMatchmaking({
                 {formatNumberString(playerStats.critDamage)}%
               </span>
             </div>
-            <div className="flex items-center justify-between p-2 sm:p-2.5 bg-gray-800/30 rounded-lg">
-              <span className="text-gray-300 flex items-center gap-1 sm:gap-1.5">
+            <div className="flex items-center justify-between p-2 sm:p-2.5 bg-stone-800/50 rounded-lg">
+              <span className="text-amber-100/80 flex items-center gap-1 sm:gap-1.5">
                 <GiDaggers className="text-purple-400 text-sm sm:text-base" />
                 <span className="truncate">관통력</span>
               </span>
@@ -151,8 +151,8 @@ export function BattleMatchmaking({
                 {formatNumberString(playerStats.penetration)}%
               </span>
             </div>
-            <div className="flex items-center justify-between p-2 sm:p-2.5 bg-gray-800/30 rounded-lg">
-              <span className="text-gray-300 flex items-center gap-1 sm:gap-1.5">
+            <div className="flex items-center justify-between p-2 sm:p-2.5 bg-stone-800/50 rounded-lg">
+              <span className="text-amber-100/80 flex items-center gap-1 sm:gap-1.5">
                 <GiHealthNormal className="text-green-400 text-sm sm:text-base" />
                 <span className="truncate">HP</span>
               </span>
@@ -196,10 +196,10 @@ export function BattleMatchmaking({
                       )}
                     </div>
                     <div className="text-left min-w-0 flex-1">
-                      <p className="text-white font-bold text-sm sm:text-base truncate">
+                      <p className="text-amber-100 font-bold text-sm sm:text-base truncate">
                         {config.name}
                       </p>
-                      <p className="text-gray-400 text-xs mt-0.5 truncate">
+                      <p className="text-amber-200/50 text-xs mt-0.5 truncate">
                         공격력 x{config.multiplier}
                       </p>
                     </div>
@@ -227,9 +227,9 @@ export function BattleMatchmaking({
           })}
         </div>
 
-        <div className="bg-gray-800/30 rounded-lg p-2.5 sm:p-3 border border-gray-700/50">
-          <div className="flex items-start gap-2 text-gray-400 text-[10px] sm:text-xs leading-relaxed">
-            <GiLightBulb className="text-yellow-400 mt-0.5 flex-shrink-0 text-sm sm:text-base" />
+        <div className="bg-stone-800/50 rounded-lg p-2.5 sm:p-3 border border-amber-700/30">
+          <div className="flex items-start gap-2 text-amber-200/60 text-[10px] sm:text-xs leading-relaxed">
+            <GiLightBulb className="text-amber-400 mt-0.5 flex-shrink-0 text-sm sm:text-base" />
             <div>
               <p>공격력 + 30% 랜덤 요소로 승패 결정</p>
               <p className="mt-1">패배해도 참여 보상을 받습니다</p>

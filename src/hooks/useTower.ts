@@ -431,11 +431,12 @@ export function useTower(): UseTowerReturn {
 
       if (error) throw error
 
-      return (data || []).map((entry: { user_id: string; username: string; avatar_url?: string; highest_floor: number; rank: number }) => ({
+      return (data || []).map((entry: { user_id: string; username: string; avatar_url?: string; equipped_border?: string | null; highest_floor: number; rank: number }) => ({
         rank: entry.rank,
         userId: entry.user_id,
         username: entry.username || '익명',
         avatarUrl: entry.avatar_url,
+        equippedBorder: entry.equipped_border,
         highestFloor: entry.highest_floor,
         tier: getTowerTier(entry.highest_floor),
       }))

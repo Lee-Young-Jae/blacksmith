@@ -223,6 +223,7 @@ export interface TowerLeaderboardEntry {
   userId: string
   username: string
   avatarUrl?: string
+  equippedBorder?: string | null
   highestFloor: number
   tier: TowerTier
 }

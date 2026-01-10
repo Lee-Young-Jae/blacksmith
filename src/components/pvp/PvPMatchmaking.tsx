@@ -110,10 +110,10 @@ function CardSelector({
               onClick={() => setActiveSlot(isActive ? null : slotIndex)}
               className={`w-24 h-32 rounded-lg border-2 cursor-pointer transition-all ${
                 isActive
-                  ? "border-yellow-400 bg-yellow-900/20"
+                  ? "border-amber-400 bg-amber-900/20"
                   : card
                   ? `${BATTLE_CARD_TIER_COLORS[card.tier]} border-current`
-                  : "border-gray-600 border-dashed bg-gray-700/30"
+                  : "border-amber-700/30 border-dashed bg-stone-700/30"
               }`}
             >
               {card ? (
@@ -124,13 +124,13 @@ function CardSelector({
                   <p className="text-xs text-center text-white font-medium line-clamp-2">
                     {ownedCardToBattleCard(card).name}
                   </p>
-                  <p className="text-[10px] text-gray-400 mt-1">
+                  <p className="text-[10px] text-amber-200/60 mt-1">
                     {ownedCardToBattleCard(card).description}
                   </p>
                 </div>
               ) : (
                 <div className="h-full flex items-center justify-center">
-                  <span className="text-gray-500 text-sm">
+                  <span className="text-amber-200/50 text-sm">
                     슬롯 {slotIndex + 1}
                   </span>
                 </div>
@@ -160,7 +160,7 @@ function CardSelector({
 
       {/* 카드 목록 */}
       {activeSlot !== null && (
-        <div className="max-h-48 overflow-y-auto bg-gray-700/30 rounded-lg p-2">
+        <div className="max-h-48 overflow-y-auto bg-stone-800/50 rounded-lg p-2 border border-amber-700/30">
           <div className="grid grid-cols-3 gap-2">
             {sortedCards.map((card) => {
               const isSelected = selectedIds.includes(card.id);
@@ -178,7 +178,7 @@ function CardSelector({
                   disabled={isSelected}
                   className={`p-2 rounded-lg text-left transition-all ${
                     isSelected
-                      ? "opacity-40 cursor-not-allowed bg-gray-600"
+                      ? "opacity-40 cursor-not-allowed bg-stone-600"
                       : `${
                           BATTLE_CARD_TIER_COLORS[card.tier]
                         } hover:scale-105 cursor-pointer`
@@ -190,7 +190,7 @@ function CardSelector({
                       {battleCard.name}
                     </span>
                   </div>
-                  <p className="text-[10px] text-gray-400 truncate">
+                  <p className="text-[10px] text-amber-200/60 truncate">
                     {battleCard.description}
                   </p>
                 </button>
@@ -198,7 +198,7 @@ function CardSelector({
             })}
           </div>
           {sortedCards.length === 0 && (
-            <p className="text-gray-500 text-center py-4">
+            <p className="text-amber-200/50 text-center py-4">
               보유한 카드가 없습니다
             </p>
           )}
@@ -395,12 +395,12 @@ export function PvPMatchmaking({
 
         {/* 텍스트 */}
         <div className="text-center space-y-2 mb-6">
-          <p className="text-white font-bold text-xl">상대를 찾는 중...</p>
-          <p className="text-gray-400 text-sm">
+          <p className="text-amber-100 font-bold text-xl">상대를 찾는 중...</p>
+          <p className="text-amber-200/60 text-sm">
             레이팅 {myRating.toLocaleString()} 근처에서 검색
           </p>
-          <p className="text-gray-500 text-xs">최근 대전 상대 제외</p>
-          <div className="flex items-center justify-center gap-1 text-purple-400">
+          <p className="text-amber-200/50 text-xs">최근 대전 상대 제외</p>
+          <div className="flex items-center justify-center gap-1 text-amber-400">
             <span className="animate-bounce" style={{ animationDelay: "0ms" }}>
               .
             </span>
@@ -422,7 +422,7 @@ export function PvPMatchmaking({
         {/* 취소 버튼 */}
         <button
           onClick={handleCancel}
-          className="px-6 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 border border-gray-600 transition-colors flex items-center gap-2"
+          className="px-6 py-2 bg-stone-700/60 text-amber-200/80 rounded-xl hover:bg-stone-600/60 border border-amber-700/30 transition-colors flex items-center gap-2"
         >
           <FaTimes className="text-red-400" /> 취소
         </button>
@@ -532,7 +532,7 @@ export function PvPMatchmaking({
     return (
       <div className="space-y-4">
         {/* VS 헤더 */}
-        <div className="bg-gradient-to-r from-cyan-900/50 via-gray-800 to-red-900/50 rounded-xl p-4 border border-gray-700">
+        <div className="bg-gradient-to-r from-amber-900/40 via-stone-800 to-orange-900/40 rounded-xl p-4 border border-amber-700/30">
           <div className="flex items-center justify-between">
             {/* 플레이어 */}
             <div className="flex-1 text-center">
@@ -545,11 +545,11 @@ export function PvPMatchmaking({
                   fallbackIcon={<FaUser className="text-2xl text-white" />}
                 />
               </div>
-              <p className="text-cyan-400 font-bold">{playerName}</p>
+              <p className="text-amber-400 font-bold">{playerName}</p>
               <p className="text-yellow-400 text-sm font-medium">
                 {combatPower.toLocaleString()}
               </p>
-              <p className="text-gray-500 text-xs">전투력</p>
+              <p className="text-amber-200/50 text-xs">전투력</p>
             </div>
 
             {/* VS */}
@@ -576,17 +576,17 @@ export function PvPMatchmaking({
                   />
                 )}
               </div>
-              <p className="text-red-400 font-bold">{opponent.username}</p>
+              <p className="text-orange-400 font-bold">{opponent.username}</p>
               <p className="text-yellow-400 text-sm font-medium">
                 {opponent.combatPower.toLocaleString()}
               </p>
-              <p className="text-gray-500 text-xs">전투력</p>
+              <p className="text-amber-200/50 text-xs">전투력</p>
             </div>
           </div>
 
           {/* AI 알림 */}
           {opponent.isAI && (
-            <div className="mt-3 p-2 bg-yellow-900/30 border border-yellow-500/50 rounded-lg">
+            <div className="mt-3 p-2 bg-yellow-900/30 border border-yellow-500/50 rounded-xl">
               <p className="text-yellow-400 text-xs text-center flex items-center justify-center gap-1">
                 <FaRobot /> AI 상대입니다 (보상 50%, 승리 시 MMR 30%)
               </p>
@@ -595,9 +595,9 @@ export function PvPMatchmaking({
         </div>
 
         {/* 스탯 비교 */}
-        <div className="bg-gray-800/50 rounded-xl p-3 border border-gray-700">
-          <h4 className="text-white font-bold text-sm mb-3 text-center flex items-center justify-center gap-2">
-            <GiChart className="text-blue-400" /> 스탯 비교
+        <div className="bg-stone-800/50 rounded-xl p-3 border border-amber-700/30">
+          <h4 className="text-amber-100 font-bold text-sm mb-3 text-center flex items-center justify-center gap-2">
+            <GiChart className="text-amber-400" /> 스탯 비교
           </h4>
           <div className="space-y-2">
             {[
@@ -680,12 +680,12 @@ export function PvPMatchmaking({
         </div>
 
         {/* 공격덱 선택 */}
-        <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+        <div className="bg-stone-800/50 rounded-xl p-4 border border-amber-700/30">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-white font-bold flex items-center gap-2">
-              <GiCardDraw className="text-purple-400" /> 공격덱 선택
+            <h4 className="text-amber-100 font-bold flex items-center gap-2">
+              <GiCardDraw className="text-amber-400" /> 공격덱 선택
             </h4>
-            <span className="text-sm text-gray-400">{selectedCardCount}/3</span>
+            <span className="text-sm text-amber-200/60">{selectedCardCount}/3</span>
           </div>
           <CardSelector
             cards={ownedCards}
@@ -698,14 +698,14 @@ export function PvPMatchmaking({
         <div className="flex gap-3">
           <button
             onClick={handleCancel}
-            className="flex-1 px-4 py-3 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 border border-gray-600 transition-colors"
+            className="flex-1 px-4 py-3 bg-stone-700/60 text-amber-200/80 rounded-xl hover:bg-stone-600/60 border border-amber-700/30 transition-colors"
           >
             ← 취소
           </button>
           <button
             onClick={handleStartBattle}
             disabled={isLoading}
-            className="flex-[2] px-4 py-4 bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 text-white font-bold text-lg rounded-lg hover:scale-105 transition-transform disabled:opacity-50 shadow-lg shadow-orange-500/30"
+            className="flex-[2] px-4 py-4 bg-gradient-to-r from-amber-600 via-orange-500 to-red-500 text-white font-bold text-lg rounded-xl hover:scale-105 transition-transform disabled:opacity-50 shadow-lg shadow-orange-500/30"
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
@@ -720,8 +720,8 @@ export function PvPMatchmaking({
           </button>
         </div>
 
-        <p className="text-gray-500 text-xs text-center flex items-center justify-center gap-1">
-          <GiLightBulb className="text-yellow-400" /> 카드를 선택하지 않아도
+        <p className="text-amber-200/50 text-xs text-center flex items-center justify-center gap-1">
+          <GiLightBulb className="text-amber-400" /> 카드를 선택하지 않아도
           대전할 수 있습니다
         </p>
       </div>
@@ -732,65 +732,65 @@ export function PvPMatchmaking({
   return (
     <div className="space-y-4">
       {/* 내 정보 */}
-      <div className="bg-gray-700/50 rounded-lg p-4">
+      <div className="bg-stone-800/50 rounded-xl p-4 border border-amber-700/30">
         <div className="flex items-center justify-between mb-3">
-          <h4 className="text-white font-bold">내 스탯</h4>
+          <h4 className="text-amber-100 font-bold">내 스탯</h4>
           <div className="text-sm">
-            <span className="text-gray-400">레이팅 </span>
-            <span className="text-yellow-400 font-bold">
+            <span className="text-amber-200/60">레이팅 </span>
+            <span className="text-amber-400 font-bold">
               {myRating.toLocaleString()}
             </span>
           </div>
         </div>
         <div className="grid grid-cols-4 gap-2 text-xs">
-          <div className="bg-gray-800/50 rounded p-2 text-center">
+          <div className="bg-stone-700/50 rounded-lg p-2 text-center">
             <p className="text-red-400 font-bold">{playerStats.attack}</p>
-            <p className="text-gray-500">공격력</p>
+            <p className="text-amber-200/50">공격력</p>
           </div>
-          <div className="bg-gray-800/50 rounded p-2 text-center">
+          <div className="bg-stone-700/50 rounded-lg p-2 text-center">
             <p className="text-blue-400 font-bold">{playerStats.defense}</p>
-            <p className="text-gray-500">방어력</p>
+            <p className="text-amber-200/50">방어력</p>
           </div>
-          <div className="bg-gray-800/50 rounded p-2 text-center">
+          <div className="bg-stone-700/50 rounded-lg p-2 text-center">
             <p className="text-green-400 font-bold">{playerStats.hp}</p>
-            <p className="text-gray-500">HP</p>
+            <p className="text-amber-200/50">HP</p>
           </div>
-          <div className="bg-gray-800/50 rounded p-2 text-center">
+          <div className="bg-stone-700/50 rounded-lg p-2 text-center">
             <p className="text-cyan-400 font-bold">
               {formatNumberString(playerStats.attackSpeed)}%
             </p>
-            <p className="text-gray-500">공속</p>
+            <p className="text-amber-200/50">공속</p>
           </div>
         </div>
         <div className="grid grid-cols-4 gap-2 text-xs mt-2">
-          <div className="bg-gray-800/50 rounded p-2 text-center">
+          <div className="bg-stone-700/50 rounded-lg p-2 text-center">
             <p className="text-yellow-400 font-bold">{formatNumberString(playerStats.critRate)}%</p>
-            <p className="text-gray-500">치명타</p>
+            <p className="text-amber-200/50">치명타</p>
           </div>
-          <div className="bg-gray-800/50 rounded p-2 text-center">
+          <div className="bg-stone-700/50 rounded-lg p-2 text-center">
             <p className="text-orange-400 font-bold">
               {formatNumberString(playerStats.critDamage)}%
             </p>
-            <p className="text-gray-500">치명뎀</p>
+            <p className="text-amber-200/50">치명뎀</p>
           </div>
-          <div className="bg-gray-800/50 rounded p-2 text-center">
+          <div className="bg-stone-700/50 rounded-lg p-2 text-center">
             <p className="text-purple-400 font-bold">
               {formatNumberString(playerStats.penetration)}%
             </p>
-            <p className="text-gray-500">관통력</p>
+            <p className="text-amber-200/50">관통력</p>
           </div>
-          <div className="bg-gray-800/50 rounded p-2 text-center">
+          <div className="bg-stone-700/50 rounded-lg p-2 text-center">
             <p className="text-emerald-400 font-bold">
               {formatNumberString(playerStats.evasion)}%
             </p>
-            <p className="text-gray-500">회피율</p>
+            <p className="text-amber-200/50">회피율</p>
           </div>
         </div>
       </div>
 
       {/* 에러 메시지 */}
       {error && (
-        <div className="p-3 bg-red-900/30 border border-red-500/50 rounded-lg">
+        <div className="p-3 bg-red-900/30 border border-red-500/50 rounded-xl">
           <p className="text-red-400 text-sm text-center">{error}</p>
         </div>
       )}
@@ -799,7 +799,7 @@ export function PvPMatchmaking({
       <button
         onClick={handleSearchOpponent}
         disabled={isLoading}
-        className="w-full py-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold text-lg rounded-lg hover:scale-105 transition-transform disabled:opacity-50"
+        className="w-full py-4 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold text-lg rounded-xl hover:scale-105 transition-transform disabled:opacity-50 shadow-lg shadow-amber-500/30"
       >
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">
@@ -811,7 +811,7 @@ export function PvPMatchmaking({
         )}
       </button>
 
-      <p className="text-gray-500 text-xs text-center">
+      <p className="text-amber-200/50 text-xs text-center">
         비슷한 레이팅의 상대를 검색합니다
         <br />
         최근 5경기 상대는 제외됩니다
@@ -820,7 +820,7 @@ export function PvPMatchmaking({
       </p>
 
       {/* 보유 카드 수 */}
-      <div className="text-center text-gray-400 text-sm">
+      <div className="text-center text-amber-200/60 text-sm">
         보유 카드: {ownedCards.length}장
       </div>
     </div>

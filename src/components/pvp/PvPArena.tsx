@@ -85,9 +85,9 @@ export function PvPArena({
   }
 
   return (
-    <div className="bg-gray-800 rounded-xl p-4 w-full max-w-2xl">
+    <div className="bg-gradient-to-b from-stone-900 via-stone-800 to-stone-900 rounded-2xl p-4 w-full max-w-2xl border border-amber-700/30">
       {/* 헤더 - 내 정보 */}
-      <div className="flex items-center justify-between mb-4 p-3 bg-gray-700/50 rounded-lg">
+      <div className="flex items-center justify-between mb-4 p-3 bg-stone-800/60 rounded-xl border border-amber-700/30">
         <div className="flex items-center gap-3">
           <AvatarWithBorder
             avatarUrl={playerAvatarUrl}
@@ -97,8 +97,8 @@ export function PvPArena({
             fallbackIcon={<span className="text-2xl">⚔️</span>}
           />
           <div>
-            <p className="text-white font-bold">{playerName}</p>
-            <p className="text-gray-400 text-sm">전투력 {combatPower.toLocaleString()}</p>
+            <p className="text-amber-100 font-bold">{playerName}</p>
+            <p className="text-amber-200/60 text-sm">전투력 {combatPower.toLocaleString()}</p>
           </div>
         </div>
 
@@ -107,10 +107,10 @@ export function PvPArena({
           {/* 티켓 */}
           <div className="text-center">
             <div className="flex items-center gap-1">
-              <GiTicket className="text-lg text-cyan-400" />
-              <span className="text-cyan-400 font-bold">{pvpRanking.totalTickets}</span>
+              <GiTicket className="text-lg text-amber-400" />
+              <span className="text-amber-400 font-bold">{pvpRanking.totalTickets}</span>
             </div>
-            <p className="text-gray-500 text-xs">티켓</p>
+            <p className="text-amber-200/50 text-xs">티켓</p>
           </div>
 
           {/* 랭킹 정보 */}
@@ -132,8 +132,8 @@ export function PvPArena({
 
       {/* 티켓 안내 (티켓이 있을 때만 표시) */}
       {pvpRanking.totalTickets > 0 && (
-        <div className="mb-4 p-3 bg-cyan-900/20 border border-cyan-500/30 rounded-lg">
-          <p className="text-cyan-400 text-sm text-center">
+        <div className="mb-4 p-3 bg-amber-900/20 border border-amber-500/30 rounded-xl">
+          <p className="text-amber-400 text-sm text-center">
             🎫 티켓은 특별 가챠, 시즌 상점에서 사용할 수 있습니다. (준비 중)
           </p>
         </div>
@@ -142,7 +142,7 @@ export function PvPArena({
       {/* 읽지 않은 방어전 알림 */}
       {pvpBattle.unreadDefenseBattles > 0 && (
         <div
-          className="mb-4 p-3 bg-red-900/30 border border-red-500/50 rounded-lg cursor-pointer hover:bg-red-900/50 transition-colors"
+          className="mb-4 p-3 bg-red-900/30 border border-red-500/50 rounded-xl cursor-pointer hover:bg-red-900/50 transition-colors"
           onClick={() => {
             setActiveTab('history')
             pvpBattle.markDefenseBattlesRead()
@@ -160,10 +160,10 @@ export function PvPArena({
           <button
             key={tab.id}
             onClick={() => handleTabChange(tab.id)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium transition-all whitespace-nowrap ${
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-medium transition-all whitespace-nowrap ${
               activeTab === tab.id
-                ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white'
-                : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'
+                ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white'
+                : 'bg-stone-700/60 text-amber-200/60 hover:bg-stone-600/60 hover:text-amber-100'
             }`}
           >
             <tab.Icon className="text-lg" />
@@ -226,20 +226,20 @@ export function PvPArena({
             <div className="flex gap-2">
               <button
                 onClick={() => setCardSubTab('gacha')}
-                className={`flex-1 py-2 rounded-lg font-medium transition-all ${
+                className={`flex-1 py-2 rounded-xl font-medium transition-all ${
                   cardSubTab === 'gacha'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                    ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white'
+                    : 'bg-stone-700/60 text-amber-200/60 hover:bg-stone-600/60 hover:text-amber-100'
                 }`}
               >
                 🎰 뽑기
               </button>
               <button
                 onClick={() => setCardSubTab('fusion')}
-                className={`flex-1 py-2 rounded-lg font-medium transition-all ${
+                className={`flex-1 py-2 rounded-xl font-medium transition-all ${
                   cardSubTab === 'fusion'
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                    ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white'
+                    : 'bg-stone-700/60 text-amber-200/60 hover:bg-stone-600/60 hover:text-amber-100'
                 }`}
               >
                 🔮 합성
