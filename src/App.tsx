@@ -53,6 +53,7 @@ import { useBattleCards } from "./hooks/useBattleCards";
 import { useEquipment } from "./hooks/useEquipment";
 import { useGift } from "./hooks/useGift";
 import { useEnhancementTickets } from "./hooks/useEnhancementTickets";
+import { useAchievements } from "./hooks/useAchievements";
 import {
   GiftIcon,
   GiftBoxPanel,
@@ -157,6 +158,7 @@ function GameContent() {
   const liveFeed = useLiveFeed();
   const giftSystem = useGift();
   const tutorial = useTutorial();
+  const { updateProgress: updateAchievement } = useAchievements();
 
   const [view, setView] = useState<GameView>("acquire");
   const [activeTab, setActiveTab] = useState<TabType>("equipment");
@@ -212,6 +214,12 @@ function GameContent() {
   const gachaSystem = useGacha({
     onAcquireEquipment: equipmentSystem.acquireEquipment,
     onUpdateGold: userData.updateGold,
+    onGachaPull: (pullCount, newEquipmentCount) => {
+      // 가챠 횟수 업적 업데이트
+      updateAchievement("gacha_count", pullCount);
+      // 장비 보유 수 업적 업데이트
+      updateAchievement("equipment_count", equipmentSystem.inventory.length + newEquipmentCount);
+    },
   });
 
   // 장비 강화 훅
@@ -231,6 +239,9 @@ function GameContent() {
         equipment.consecutiveFails >= 2, // 찬스타임 여부
         0 // 골드 비용은 별도 처리됨
       );
+      // 업적 업데이트: 최고 스타포스, 강화 횟수
+      updateAchievement("max_star", newLevel);
+      updateAchievement("enhance_count", 1); // 누적은 DB에서 처리
     },
     onMaintain: async (equipment, newFails) => {
       await equipmentSystem.updateEquipment(equipment.id, {
@@ -249,6 +260,8 @@ function GameContent() {
         false,
         0
       );
+      // 업적 업데이트: 강화 횟수 (유지도 시도 횟수에 포함)
+      updateAchievement("enhance_count", 1);
     },
     onDestroy: async (equipment) => {
       await equipmentSystem.destroyEquipment(equipment.id);
@@ -265,6 +278,8 @@ function GameContent() {
         false,
         0
       );
+      // 업적 업데이트: 강화 횟수 (파괴도 시도 횟수에 포함)
+      updateAchievement("enhance_count", 1);
     },
     // Sync with inventory for list updates
     inventory: equipmentSystem.inventory,

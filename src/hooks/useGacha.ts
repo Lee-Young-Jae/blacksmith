@@ -7,6 +7,7 @@ import { getRandomEquipment } from '../data/equipment'
 interface UseGachaOptions {
   onAcquireEquipment: (equipment: EquipmentBase) => Promise<unknown>
   onUpdateGold: (newGold: number) => Promise<boolean>
+  onGachaPull?: (pullCount: number, equipmentCount: number) => void
 }
 
 interface UseGachaState {
@@ -15,7 +16,7 @@ interface UseGachaState {
   lastResults: GachaResult[] | null
 }
 
-export function useGacha({ onAcquireEquipment, onUpdateGold }: UseGachaOptions) {
+export function useGacha({ onAcquireEquipment, onUpdateGold, onGachaPull }: UseGachaOptions) {
   const [state, setState] = useState<UseGachaState>({
     pullCount: 0,
     isAnimating: false,
@@ -56,12 +57,16 @@ export function useGacha({ onAcquireEquipment, onUpdateGold }: UseGachaOptions) 
       await onAcquireEquipment(result.equipment)
 
       // Update pull count
+      const newPullCount = state.pullCount + 1
       setState(prev => ({
         ...prev,
-        pullCount: prev.pullCount + 1,
+        pullCount: newPullCount,
         lastResults: [result],
         isAnimating: false,
       }))
+
+      // 업적 콜백 호출
+      onGachaPull?.(newPullCount, 1)
 
       return result
     } catch (error) {
@@ -69,7 +74,7 @@ export function useGacha({ onAcquireEquipment, onUpdateGold }: UseGachaOptions) 
       setState(prev => ({ ...prev, isAnimating: false }))
       return null
     }
-  }, [singlePull, onAcquireEquipment, onUpdateGold])
+  }, [state.pullCount, singlePull, onAcquireEquipment, onUpdateGold, onGachaPull])
 
   /**
    * Execute 10-pull (with discount)
@@ -97,24 +102,28 @@ export function useGacha({ onAcquireEquipment, onUpdateGold }: UseGachaOptions) 
       }
 
       // Update pull count
+      const newPullCount = state.pullCount + 10
       setState(prev => ({
         ...prev,
-        pullCount: prev.pullCount + 10,
+        pullCount: newPullCount,
         lastResults: results,
         isAnimating: false,
       }))
 
+      // 업적 콜백 호출
+      onGachaPull?.(newPullCount, 10)
+
       return {
         results,
         totalCost: GACHA_MULTI_COST,
-        newPullCount: state.pullCount + 10,
+        newPullCount,
       }
     } catch (error) {
       console.error('Gacha multi-pull failed:', error)
       setState(prev => ({ ...prev, isAnimating: false }))
       return null
     }
-  }, [state.pullCount, singlePull, onAcquireEquipment, onUpdateGold])
+  }, [state.pullCount, singlePull, onAcquireEquipment, onUpdateGold, onGachaPull])
 
   /**
    * Clear last results

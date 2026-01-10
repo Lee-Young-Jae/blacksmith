@@ -1,7 +1,10 @@
 import { useState } from 'react'
-import { FiUsers } from 'react-icons/fi'
+import { FiUsers, FiAward } from 'react-icons/fi'
 import { useAuth } from '../contexts/AuthContext'
 import { NicknameEditModal } from './NicknameEditModal'
+import { ProfileBorder } from './achievements/ProfileBorder'
+import { AchievementModal } from './achievements/AchievementModal'
+import { useAchievements } from '../hooks/useAchievements'
 
 interface UserProfileProps {
   username?: string
@@ -15,7 +18,17 @@ export function UserProfile({ username, battlesRemaining, maxBattles, onUpdateUs
   const { user, signOut } = useAuth()
   const [showMenu, setShowMenu] = useState(false)
   const [showNicknameModal, setShowNicknameModal] = useState(false)
+  const [showAchievementModal, setShowAchievementModal] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  const {
+    achievements,
+    equippedBorderId,
+    equipBorder,
+    getEquippedBorder,
+  } = useAchievements()
+
+  const equippedBorder = getEquippedBorder()
 
   if (!user) return null
 
@@ -39,13 +52,15 @@ export function UserProfile({ username, battlesRemaining, maxBattles, onUpdateUs
           onClick={() => setShowMenu(!showMenu)}
           className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 rounded-lg px-3 py-2 transition-colors"
         >
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full" />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-white font-bold">
-              {displayName[0].toUpperCase()}
-            </div>
-          )}
+          <ProfileBorder borderClass={equippedBorder?.borderClass} size="sm">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gray-600 flex items-center justify-center text-white font-bold">
+                {displayName[0].toUpperCase()}
+              </div>
+            )}
+          </ProfileBorder>
           <span className="text-white text-sm hidden sm:block">{displayName}</span>
           <svg
             className={`w-4 h-4 text-gray-400 transition-transform ${showMenu ? 'rotate-180' : ''}`}
@@ -68,13 +83,15 @@ export function UserProfile({ username, battlesRemaining, maxBattles, onUpdateUs
               {/* 유저 정보 */}
               <div className="p-4 border-b border-gray-700">
                 <div className="flex items-center gap-3">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="" className="w-12 h-12 rounded-full" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center text-white text-xl font-bold">
-                      {displayName[0].toUpperCase()}
-                    </div>
-                  )}
+                  <ProfileBorder borderClass={equippedBorder?.borderClass} size="md">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gray-600 flex items-center justify-center text-white text-xl font-bold">
+                        {displayName[0].toUpperCase()}
+                      </div>
+                    )}
+                  </ProfileBorder>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-white font-bold truncate">{displayName}</p>
@@ -130,6 +147,18 @@ export function UserProfile({ username, battlesRemaining, maxBattles, onUpdateUs
                 </button>
               )}
 
+              {/* 업적 버튼 */}
+              <button
+                onClick={() => {
+                  setShowMenu(false)
+                  setShowAchievementModal(true)
+                }}
+                className="w-full p-4 text-left text-amber-400 hover:bg-amber-900/20 transition-colors flex items-center gap-2 border-b border-gray-700"
+              >
+                <FiAward className="w-5 h-5" />
+                업적
+              </button>
+
               {/* 친구 초대 버튼 */}
               {onOpenReferral && (
                 <button
@@ -170,6 +199,18 @@ export function UserProfile({ username, battlesRemaining, maxBattles, onUpdateUs
           currentNickname={displayName}
           onSave={onUpdateUsername}
           onClose={() => setShowNicknameModal(false)}
+        />
+      )}
+
+      {/* 업적 모달 */}
+      {showAchievementModal && (
+        <AchievementModal
+          achievements={achievements}
+          equippedBorderId={equippedBorderId}
+          onEquip={equipBorder}
+          onClose={() => setShowAchievementModal(false)}
+          avatarUrl={avatarUrl}
+          username={displayName}
         />
       )}
     </>

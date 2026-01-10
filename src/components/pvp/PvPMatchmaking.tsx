@@ -20,6 +20,9 @@ import { BATTLE_CARD_TIER_COLORS } from "../../types/battleCard";
 import { calculateTotalGoldBonus } from "../../utils/pvpBattle";
 import { calculateRatingChange } from "../../types/league";
 import { PvPRealtimeBattle } from "./PvPRealtimeBattle";
+import { useAchievements } from "../../hooks/useAchievements";
+import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../contexts/AuthContext";
 import {
   GiCrossedSwords,
   GiCardDraw,
@@ -219,6 +222,10 @@ export function PvPMatchmaking({
   onGoldUpdate,
   ensureDefenseDeck,
 }: PvPMatchmakingProps) {
+  // 업적 시스템
+  const { user } = useAuth();
+  const { updateProgress } = useAchievements();
+
   // 이전 공격덱 복원을 위한 ref (초기 로드 추적)
   const initialLoadDone = useRef(false)
   const lastOwnedCardsLength = useRef(0)
@@ -486,6 +493,26 @@ export function PvPMatchmaking({
               ? loseGold
               : drawGold;
           if (onGoldUpdate) onGoldUpdate(reward);
+
+          // 업적 진행 업데이트 (승리 시)
+          if (result.winner === "player" && user) {
+            try {
+              // 현재 승리 수 조회
+              const { data: rankingData } = await supabase
+                .from("pvp_rankings")
+                .select("wins")
+                .eq("user_id", user.id)
+                .single();
+
+              if (rankingData) {
+                // PvP 승리 업적 업데이트
+                await updateProgress("pvp_wins", rankingData.wins || 0);
+              }
+            } catch (err) {
+              console.error("Failed to update achievement:", err);
+            }
+          }
+
           setMatchedAICards([]); // AI 카드 초기화
           resetBattle();
         }}

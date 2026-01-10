@@ -11,6 +11,7 @@ interface UserProfileRow {
   gold: number
   last_daily_claim: string | null
   avatar_url: string | null
+  equipped_border: string | null
 }
 
 interface UserWeaponRow {
@@ -28,6 +29,7 @@ interface UserProfile {
   gold: number
   lastDailyClaim: string | null
   avatarUrl: string | null
+  equippedBorder: string | null
 }
 
 interface UserDataState {
@@ -67,7 +69,7 @@ export function useUserData() {
         // 프로필 로드
         let { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
-          .select('username, gold, last_daily_claim, avatar_url')
+          .select('username, gold, last_daily_claim, avatar_url, equipped_border')
           .eq('id', user.id)
           .single()
 
@@ -86,7 +88,7 @@ export function useUserData() {
               gold: 20000,
               avatar_url: oauthAvatarUrl,
             })
-            .select('username, gold, last_daily_claim, avatar_url')
+            .select('username, gold, last_daily_claim, avatar_url, equipped_border')
             .single()
 
           if (createError) {
@@ -163,6 +165,7 @@ export function useUserData() {
             gold: typedProfile.gold,
             lastDailyClaim: typedProfile.last_daily_claim,
             avatarUrl: oauthAvatarUrl || typedProfile.avatar_url,
+            equippedBorder: typedProfile.equipped_border,
           },
           weapon,
           isLoading: false,
