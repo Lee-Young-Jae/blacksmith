@@ -600,10 +600,16 @@ export function usePvPBattle(): UsePvPBattleReturn {
       )
       const defenderReward = defenderRewards.gold
 
-      // AI 상대일 경우 레이팅 변경 없음, 보상 감소, 기록 안 함
+      // AI 상대일 경우: 승리 시 30% MMR 지급, 패배 시 0, 보상 50%
       if (opponent.isAI) {
-        attackerRatingChange = 0
-        defenderRatingChange = 0
+        if (battleResult === 'attacker_win') {
+          // 승리 시: 유저전 레이팅 변화의 30% 지급 (최소 3, 최대 10)
+          attackerRatingChange = Math.max(3, Math.min(10, Math.floor(attackerRatingChange * 0.3)))
+        } else {
+          // 패배/무승부 시: 레이팅 변화 없음
+          attackerRatingChange = 0
+        }
+        defenderRatingChange = 0 // AI는 레이팅 변화 없음
         attackerReward = Math.floor(attackerReward * 0.5) // AI전 보상 50%
       }
 
@@ -643,6 +649,56 @@ export function usePvPBattle(): UsePvPBattleReturn {
       // 골드는 PvPMatchmaking의 onBattleEnd에서 onGoldUpdate로 처리됨
       // DB 동기화만 수행
       if (!opponent.isAI) {
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('gold')
+          .eq('id', user.id)
+          .single()
+
+        if (!profileError && profileData) {
+          const newGold = (profileData.gold || 0) + attackerReward
+          await supabase
+            .from('user_profiles')
+            .update({ gold: newGold })
+            .eq('id', user.id)
+        }
+      } else {
+        // AI전: 레이팅 및 전적 업데이트
+        const { data: rankingData, error: rankingError } = await supabase
+          .from('pvp_rankings')
+          .select('rating, wins, losses, draws, highest_rating')
+          .eq('user_id', user.id)
+          .single()
+
+        if (!rankingError && rankingData) {
+          const newRating = rankingData.rating + attackerRatingChange
+          const newHighest = Math.max(rankingData.highest_rating || 0, newRating)
+          const updateData: Record<string, number | string> = {
+            tier: getTierFromRating(newRating),
+          }
+
+          // 레이팅 변화가 있을 때만 레이팅 업데이트
+          if (attackerRatingChange > 0) {
+            updateData.rating = newRating
+            updateData.highest_rating = newHighest
+          }
+
+          // 전적 업데이트 (항상)
+          if (battleResult === 'attacker_win') {
+            updateData.wins = (rankingData.wins || 0) + 1
+          } else if (battleResult === 'defender_win') {
+            updateData.losses = (rankingData.losses || 0) + 1
+          } else {
+            updateData.draws = (rankingData.draws || 0) + 1
+          }
+
+          await supabase
+            .from('pvp_rankings')
+            .update(updateData)
+            .eq('user_id', user.id)
+        }
+
+        // AI전 골드 업데이트
         const { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
           .select('gold')

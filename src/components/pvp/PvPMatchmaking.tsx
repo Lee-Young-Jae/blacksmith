@@ -18,6 +18,7 @@ import {
 } from "../../hooks/usePvPBattle";
 import { BATTLE_CARD_TIER_COLORS } from "../../types/battleCard";
 import { calculateTotalGoldBonus } from "../../utils/pvpBattle";
+import { calculateRatingChange } from "../../types/league";
 import { PvPRealtimeBattle } from "./PvPRealtimeBattle";
 import {
   GiCrossedSwords,
@@ -444,6 +445,18 @@ export function PvPMatchmaking({
         ? matchedAICards
         : opponent.defenseCards || opponent.aiCards || [];
 
+    // 레이팅 변화 계산
+    const opponentRating = opponent.rating || 400;
+    const ratingChanges = calculateRatingChange(myRating, opponentRating, false);
+    const drawRatingChanges = calculateRatingChange(myRating, opponentRating, true);
+
+    // AI전 레이팅 변화: 승리 시 30% (최소 3, 최대 10), 패배/무승부 시 0
+    const winRatingChange = opponent.isAI
+      ? Math.max(3, Math.min(10, Math.floor(ratingChanges.winnerChange * 0.3)))
+      : ratingChanges.winnerChange;
+    const loseRatingChange = opponent.isAI ? 0 : ratingChanges.loserChange;
+    const drawRatingChange = opponent.isAI ? 0 : drawRatingChanges.winnerChange;
+
     return (
       <PvPRealtimeBattle
         playerName={playerName}
@@ -458,6 +471,9 @@ export function PvPMatchmaking({
         winReward={winGold}
         loseReward={loseGold}
         drawReward={drawGold}
+        winRatingChange={winRatingChange}
+        loseRatingChange={loseRatingChange}
+        drawRatingChange={drawRatingChange}
         onBattleEnd={async (result) => {
           // 실제 배틀 결과를 DB에 기록
           await recordBattleResult(result, playerCards, opponentCards);
@@ -546,7 +562,7 @@ export function PvPMatchmaking({
           {opponent.isAI && (
             <div className="mt-3 p-2 bg-yellow-900/30 border border-yellow-500/50 rounded-lg">
               <p className="text-yellow-400 text-xs text-center flex items-center justify-center gap-1">
-                <FaRobot /> AI 상대입니다 (보상 50%, 레이팅 변동 없음)
+                <FaRobot /> AI 상대입니다 (보상 50%, 승리 시 MMR 30%)
               </p>
             </div>
           )}

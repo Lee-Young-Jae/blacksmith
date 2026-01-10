@@ -15,6 +15,7 @@ import {
   GiTrophy,
   GiCardRandom,
   GiStopwatch,
+  GiChart,
 } from "react-icons/gi";
 import { FaUser, FaSkull, FaHandshake } from "react-icons/fa";
 
@@ -40,6 +41,11 @@ interface PvPRealtimeBattleProps {
   winReward?: number; // 승리 시 보상
   loseReward?: number; // 패배 시 보상
   drawReward?: number; // 무승부 시 보상
+
+  // 레이팅 변화 정보
+  winRatingChange?: number; // 승리 시 레이팅 변화
+  loseRatingChange?: number; // 패배 시 레이팅 변화
+  drawRatingChange?: number; // 무승부 시 레이팅 변화
 
   // 콜백
   onBattleEnd: (result: BattleResult) => void;
@@ -86,6 +92,9 @@ export function PvPRealtimeBattle({
   winReward = 500,
   loseReward = 100,
   drawReward = 250,
+  winRatingChange = 0,
+  loseRatingChange = 0,
+  drawRatingChange = 0,
   onBattleEnd,
 }: PvPRealtimeBattleProps) {
   // HP 배율 적용
@@ -2172,6 +2181,60 @@ export function PvPRealtimeBattle({
                         </p>
                       )}
                     </div>
+
+                    {/* 레이팅 변화 */}
+                    {(() => {
+                      const ratingChange = isWin
+                        ? winRatingChange
+                        : isLose
+                        ? loseRatingChange
+                        : drawRatingChange;
+                      if (ratingChange === 0 && opponentIsAI && !isWin) {
+                        return null; // AI전 패배/무승부 시 레이팅 변화 없음
+                      }
+                      return (
+                        <div
+                          className={`rounded-lg p-2 text-center ${
+                            ratingChange > 0
+                              ? "bg-green-900/30 border border-green-500/50"
+                              : ratingChange < 0
+                              ? "bg-red-900/30 border border-red-500/50"
+                              : "bg-gray-800/50 border border-gray-600/50"
+                          }`}
+                        >
+                          <p className="text-xs text-gray-400 mb-1">레이팅 변화</p>
+                          <div className="flex items-center justify-center gap-1">
+                            <GiChart
+                              className={`text-xl ${
+                                ratingChange > 0
+                                  ? "text-green-400"
+                                  : ratingChange < 0
+                                  ? "text-red-400"
+                                  : "text-gray-400"
+                              }`}
+                            />
+                            <span
+                              className={`text-xl font-black ${
+                                ratingChange > 0
+                                  ? "text-green-400"
+                                  : ratingChange < 0
+                                  ? "text-red-400"
+                                  : "text-gray-400"
+                              }`}
+                            >
+                              {ratingChange > 0 ? "+" : ""}
+                              {ratingChange}
+                            </span>
+                            <span className="text-gray-400 text-sm">MMR</span>
+                          </div>
+                          {opponentIsAI && ratingChange > 0 && (
+                            <p className="text-xs text-green-500/70 mt-1">
+                              AI 대전 (승리 시 30%)
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* 승패 결정 방식 */}
                     <div className="text-center">
