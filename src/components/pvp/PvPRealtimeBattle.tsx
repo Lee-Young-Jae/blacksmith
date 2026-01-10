@@ -529,20 +529,26 @@ export function PvPRealtimeBattle({
         addFloatingDamage("player", healAmount, false, true);
         setPlayerHealFatigue(10);
       } else if (effect.type === "first_strike") {
-        const bonusDamage = Math.floor((opponentMaxHp * effect.value) / 100);
-        const newOpponentHp = Math.max(0, opponentHpRef.current - bonusDamage);
-        opponentHpRef.current = newOpponentHp;
-        setOpponentHp(newOpponentHp);
-        addFloatingDamage("opponent", bonusDamage, false, false);
+        // 상대 무적 상태 체크
+        if (!hasActiveEffect(opponentSkillsRef.current, "immunity")) {
+          const bonusDamage = Math.floor((opponentMaxHp * effect.value) / 100);
+          const newOpponentHp = Math.max(0, opponentHpRef.current - bonusDamage);
+          opponentHpRef.current = newOpponentHp;
+          setOpponentHp(newOpponentHp);
+          addFloatingDamage("opponent", bonusDamage, false, false);
+        }
       } else if (effect.type === "shield_bash") {
-        const defense =
-          safePlayerStats.defense *
-          (1 + getPassiveBonus(playerSkillsRef.current, "defense_boost") / 100);
-        const bonusDamage = Math.floor((defense * effect.value) / 100);
-        const newOpponentHp = Math.max(0, opponentHpRef.current - bonusDamage);
-        opponentHpRef.current = newOpponentHp;
-        setOpponentHp(newOpponentHp);
-        addFloatingDamage("opponent", bonusDamage, false, false);
+        // 상대 무적 상태 체크
+        if (!hasActiveEffect(opponentSkillsRef.current, "immunity")) {
+          const defense =
+            safePlayerStats.defense *
+            (1 + getPassiveBonus(playerSkillsRef.current, "defense_boost") / 100);
+          const bonusDamage = Math.floor((defense * effect.value) / 100);
+          const newOpponentHp = Math.max(0, opponentHpRef.current - bonusDamage);
+          opponentHpRef.current = newOpponentHp;
+          setOpponentHp(newOpponentHp);
+          addFloatingDamage("opponent", bonusDamage, false, false);
+        }
       } else if (effect.type === "stun") {
         const stunDuration = card.duration > 0 ? card.duration : 2;
         opponentNextAttackRef.current += stunDuration * 1000;
@@ -565,19 +571,22 @@ export function PvPRealtimeBattle({
         // 도발: 받는 피해 감소 + 적 방어력 감소 (지속 효과로 처리)
         // 즉시 효과 없음, isActive로 관리
       } else if (effect.type === "sacrifice") {
-        // 희생 일격: HP 15% 소모, 소모량의 value% 데미지
-        const hpCost = Math.floor(playerHpRef.current * 0.15);
-        const bonusDamage = Math.floor((hpCost * effect.value) / 100);
-        // HP 소모
-        const newPlayerHp = Math.max(1, playerHpRef.current - hpCost);
-        playerHpRef.current = newPlayerHp;
-        setPlayerHp(newPlayerHp);
-        addFloatingDamage("player", hpCost, false, false);
-        // 적에게 데미지
-        const newOpponentHp = Math.max(0, opponentHpRef.current - bonusDamage);
-        opponentHpRef.current = newOpponentHp;
-        setOpponentHp(newOpponentHp);
-        addFloatingDamage("opponent", bonusDamage, true, false);
+        // 상대 무적 상태 체크 - 무적이면 HP 소모도 하지 않음
+        if (!hasActiveEffect(opponentSkillsRef.current, "immunity")) {
+          // 희생 일격: HP 15% 소모, 소모량의 value% 데미지
+          const hpCost = Math.floor(playerHpRef.current * 0.15);
+          const bonusDamage = Math.floor((hpCost * effect.value) / 100);
+          // HP 소모
+          const newPlayerHp = Math.max(1, playerHpRef.current - hpCost);
+          playerHpRef.current = newPlayerHp;
+          setPlayerHp(newPlayerHp);
+          addFloatingDamage("player", hpCost, false, false);
+          // 적에게 데미지
+          const newOpponentHp = Math.max(0, opponentHpRef.current - bonusDamage);
+          opponentHpRef.current = newOpponentHp;
+          setOpponentHp(newOpponentHp);
+          addFloatingDamage("opponent", bonusDamage, true, false);
+        }
       }
 
       // 지속 효과 활성화 (taunt은 effect.value가 지속시간)
@@ -775,21 +784,27 @@ export function PvPRealtimeBattle({
         addFloatingDamage("opponent", healAmount, false, true);
         setOpponentHealFatigue(10);
       } else if (effect.type === "first_strike") {
-        const bonusDamage = Math.floor((playerMaxHp * effect.value) / 100);
-        const newPlayerHp = Math.max(0, playerHpRef.current - bonusDamage);
-        playerHpRef.current = newPlayerHp;
-        setPlayerHp(newPlayerHp);
-        addFloatingDamage("player", bonusDamage, false, false);
+        // 플레이어 무적 상태 체크
+        if (!hasActiveEffect(playerSkillsRef.current, "immunity")) {
+          const bonusDamage = Math.floor((playerMaxHp * effect.value) / 100);
+          const newPlayerHp = Math.max(0, playerHpRef.current - bonusDamage);
+          playerHpRef.current = newPlayerHp;
+          setPlayerHp(newPlayerHp);
+          addFloatingDamage("player", bonusDamage, false, false);
+        }
       } else if (effect.type === "shield_bash") {
-        const defense =
-          safeOpponentStats.defense *
-          (1 +
-            getPassiveBonus(opponentSkillsRef.current, "defense_boost") / 100);
-        const bonusDamage = Math.floor((defense * effect.value) / 100);
-        const newPlayerHp = Math.max(0, playerHpRef.current - bonusDamage);
-        playerHpRef.current = newPlayerHp;
-        setPlayerHp(newPlayerHp);
-        addFloatingDamage("player", bonusDamage, false, false);
+        // 플레이어 무적 상태 체크
+        if (!hasActiveEffect(playerSkillsRef.current, "immunity")) {
+          const defense =
+            safeOpponentStats.defense *
+            (1 +
+              getPassiveBonus(opponentSkillsRef.current, "defense_boost") / 100);
+          const bonusDamage = Math.floor((defense * effect.value) / 100);
+          const newPlayerHp = Math.max(0, playerHpRef.current - bonusDamage);
+          playerHpRef.current = newPlayerHp;
+          setPlayerHp(newPlayerHp);
+          addFloatingDamage("player", bonusDamage, false, false);
+        }
       } else if (effect.type === "stun") {
         const stunDuration = card.duration > 0 ? card.duration : 2;
         playerNextAttackRef.current += stunDuration * 1000;
@@ -812,19 +827,22 @@ export function PvPRealtimeBattle({
         // 도발: 받는 피해 감소 + 플레이어 방어력 감소 (지속 효과로 처리)
         // 즉시 효과 없음, isActive로 관리
       } else if (effect.type === "sacrifice") {
-        // 희생 일격: HP 15% 소모, 소모량의 value% 데미지
-        const hpCost = Math.floor(opponentHpRef.current * 0.15);
-        const bonusDamage = Math.floor((hpCost * effect.value) / 100);
-        // HP 소모
-        const newOpponentHp = Math.max(1, opponentHpRef.current - hpCost);
-        opponentHpRef.current = newOpponentHp;
-        setOpponentHp(newOpponentHp);
-        addFloatingDamage("opponent", hpCost, false, false);
-        // 플레이어에게 데미지
-        const newPlayerHp = Math.max(0, playerHpRef.current - bonusDamage);
-        playerHpRef.current = newPlayerHp;
-        setPlayerHp(newPlayerHp);
-        addFloatingDamage("player", bonusDamage, true, false);
+        // 플레이어 무적 상태 체크 - 무적이면 HP 소모도 하지 않음
+        if (!hasActiveEffect(playerSkillsRef.current, "immunity")) {
+          // 희생 일격: HP 15% 소모, 소모량의 value% 데미지
+          const hpCost = Math.floor(opponentHpRef.current * 0.15);
+          const bonusDamage = Math.floor((hpCost * effect.value) / 100);
+          // HP 소모
+          const newOpponentHp = Math.max(1, opponentHpRef.current - hpCost);
+          opponentHpRef.current = newOpponentHp;
+          setOpponentHp(newOpponentHp);
+          addFloatingDamage("opponent", hpCost, false, false);
+          // 플레이어에게 데미지
+          const newPlayerHp = Math.max(0, playerHpRef.current - bonusDamage);
+          playerHpRef.current = newPlayerHp;
+          setPlayerHp(newPlayerHp);
+          addFloatingDamage("player", bonusDamage, true, false);
+        }
       }
 
       // 지속 효과 활성화 (taunt은 effect.value가 지속시간)
